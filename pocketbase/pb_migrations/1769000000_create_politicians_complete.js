@@ -16,7 +16,7 @@ migrate((app) => {
     "name": "politicians",
     "type": "base",
     "system": false,
-    "schema": [
+    "fields": [
       {
         "system": false,
         "id": "name_field",
