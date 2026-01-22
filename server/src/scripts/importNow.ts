@@ -9,7 +9,8 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const projectRoot = path.resolve(__dirname, '../..');
+// Go up from server/src/scripts to project root
+const projectRoot = path.resolve(__dirname, '../../..');
 
 const pbUrl = process.env.POCKETBASE_URL || 'http://127.0.0.1:8091';
 const collectionId = 'pbc_3830222512';
