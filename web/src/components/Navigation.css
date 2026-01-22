@@ -21,21 +21,21 @@
   display: flex;
   align-items: center;
   text-decoration: none;
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: #1f2937;
-  transition: color 0.2s;
+  height: 100%;
+  padding: 0.5rem 0;
+  transition: opacity 0.2s;
 }
 
 .nav-logo:hover {
-  color: #3b82f6;
+  opacity: 0.9;
 }
 
-.logo-text {
-  background: linear-gradient(135deg, #1e40af 0%, #dc2626 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.logo-image {
+  height: 48px;
+  width: auto;
+  max-width: 200px;
+  object-fit: contain;
+  object-position: left center;
 }
 
 .nav-links {
@@ -89,8 +89,9 @@
     height: 56px;
   }
 
-  .nav-logo {
-    font-size: 1.125rem;
+  .logo-image {
+    height: 40px;
+    max-width: 160px;
   }
 
   .nav-links {
@@ -118,7 +119,8 @@
     font-size: 0.8125rem;
   }
 
-  .logo-text {
-    font-size: 1rem;
+  .logo-image {
+    height: 36px;
+    max-width: 140px;
   }
 }

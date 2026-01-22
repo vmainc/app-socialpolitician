@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { LOGO_BASE64, LOGO_ALT } from '../assets/logo-base64';
 import './Navigation.css';
 
 export default function Navigation() {
@@ -15,7 +16,11 @@ export default function Navigation() {
     <nav className="main-navigation">
       <div className="nav-container">
         <Link to="/" className="nav-logo">
-          <span className="logo-text">Social Politician</span>
+          <img 
+            src={LOGO_BASE64} 
+            alt={LOGO_ALT}
+            className="logo-image"
+          />
         </Link>
         
         <div className="nav-links">
