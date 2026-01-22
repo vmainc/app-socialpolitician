@@ -40,7 +40,12 @@ migrate((app) => {
         "required": false,
         "options": {
           "maxSelect": 1,
-          "values": ["senator", "representative", "governor", "other"]
+          "values": [
+            "senator",
+            "representative",
+            "governor",
+            "other"
+          ]
         }
       },
       {
