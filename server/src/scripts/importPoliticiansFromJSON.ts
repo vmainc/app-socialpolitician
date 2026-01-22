@@ -11,11 +11,14 @@
 import PocketBase from 'pocketbase';
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 
 const pbUrl = process.env.POCKETBASE_URL || 'http://127.0.0.1:8091';
 const adminEmail = process.env.POCKETBASE_ADMIN_EMAIL || 'admin@vma.agency';
 const adminPassword = process.env.POCKETBASE_ADMIN_PASSWORD || '';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '../..');
 
 interface PoliticianData {
