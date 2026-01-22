@@ -5,14 +5,6 @@ import { getSessionId, getUserName, setUserName } from '../lib/session';
 import { API_BASE } from '../config/runtime';
 import { President } from '../types/president';
 
-interface Source {
-  source: string;
-  title: string;
-  source_url?: string;
-  score: number;
-  doc_id: string;
-}
-
 interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
