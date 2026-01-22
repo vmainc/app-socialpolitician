@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build
+web/dist/
+dist/
+
+# Env and secrets
+.env
+.env.local
+.env.*.local
+
+# PocketBase data (keep migrations, ignore DB and generated files)
+pocketbase/pb_data/
+pb_linux/
+
+# Logs and temp
+*.log
+.DS_Store
+*.tar.gz
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

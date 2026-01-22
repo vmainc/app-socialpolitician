@@ -1,0 +1,27 @@
+{
+  "name": "voices-of-the-presidency",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "preflight": "npm run typecheck && npm run build && npm run verify-build",
+    "verify-build": "bash -c 'if grep -r \"localhost\\|127.0.0.1\" web/dist 2>/dev/null; then echo \"ERROR: Found localhost or 127.0.0.1 in build output!\" && exit 1; else echo \"✓ OK: No localhost found in build\"; fi'"
+  },
+  "dependencies": {
+    "pocketbase": "^0.22.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "typescript": "^5.2.0",
+    "vite": "^5.0.0"
+  }
+}

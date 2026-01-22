@@ -1,0 +1,165 @@
+/**
+ * Directory page for Senators, Representatives, or Governors
+ * Simple card layout: profile placeholder, Name, Position, State, Start of Term
+ */
+
+import { useState, useEffect } from 'react';
+import { useLocation, Link } from 'react-router-dom';
+import { pb } from '../lib/pocketbase';
+import { Politician } from '../types/politician';
+import './PoliticiansDirectory.css';
+
+function AvatarPlaceholder() {
+  return (
+    <span className="politician-card-avatar-placeholder" aria-hidden>
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+      </svg>
+    </span>
+  );
+}
+
+function formatStartOfTerm(dateStr: string | null | undefined): string {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  } catch {
+    return '—';
+  }
+}
+
+function PoliticiansDirectory() {
+  const location = useLocation();
+  const [politicians, setPoliticians] = useState<Politician[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const pathType = location.pathname.split('/')[1];
+  const officeType: 'senator' | 'representative' | 'governor' | null =
+    pathType === 'senators'
+      ? 'senator'
+      : pathType === 'representatives'
+        ? 'representative'
+        : pathType === 'governors'
+          ? 'governor'
+          : null;
+
+  useEffect(() => {
+    if (!officeType) {
+      setLoading(false);
+      return;
+    }
+
+    async function loadPoliticians() {
+      try {
+        const records = await pb.collection('politicians').getFullList<Politician>({
+          filter: `office_type="${officeType}"`,
+          sort: 'name',
+        });
+        setPoliticians(records);
+      } catch (error) {
+        console.error('Failed to load politicians:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadPoliticians();
+  }, [officeType]);
+
+  const getTitle = () => {
+    switch (officeType) {
+      case 'senator':
+        return 'U.S. Senators';
+      case 'representative':
+        return 'U.S. Representatives';
+      case 'governor':
+        return 'U.S. Governors';
+      default:
+        return 'Politicians';
+    }
+  };
+
+  const getSubtitle = () => {
+    const label =
+      officeType === 'senator'
+        ? 'Senators'
+        : officeType === 'representative'
+          ? 'Representatives'
+          : 'Governors';
+    return `${politicians.length} ${label}`;
+  };
+
+  if (loading) {
+    return (
+      <div className="politicians-page">
+        <div className="politicians-loading">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!officeType) {
+    return (
+      <div className="politicians-page">
+        <div className="politicians-invalid">
+          <h1>Invalid Page</h1>
+          <Link to="/" className="back-link">
+            ← Back to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="politicians-page">
+      <header className="page-header">
+        <Link to="/" className="back-link">
+          ← Back to Home
+        </Link>
+        <h1 className="page-title">{getTitle()}</h1>
+        <p className="page-subtitle">{getSubtitle()}</p>
+      </header>
+
+      {politicians.length === 0 ? (
+        <div className="politicians-empty">No politicians found.</div>
+      ) : (
+        <div className="politicians-card-grid">
+          {politicians.map((p) => (
+            <Link
+              key={p.id}
+              to={`/politicians/${p.slug}`}
+              className="politician-card"
+            >
+              <div className="politician-card-avatar">
+                <AvatarPlaceholder />
+                {p.photo && (
+                  <img
+                    src={pb.files.getUrl(p, p.photo)}
+                    alt=""
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                )}
+              </div>
+              <h3 className="politician-card-name">{p.name}</h3>
+              <div className="politician-card-meta">
+                {p.current_position && <span>{p.current_position}</span>}
+                {p.state && <span>{p.state}</span>}
+                <span>Start of term: {formatStartOfTerm(p.position_start_date)}</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default PoliticiansDirectory;

@@ -1,0 +1,54 @@
+// Update the resetChat function in Chat.tsx
+// Find this function and replace the confirmation message:
+
+async function resetChat() {
+  if (!presidentId) return;
+  
+  // Updated confirmation message - more explicit about permanent deletion
+  const confirmed = confirm(
+    '⚠️ PERMANENT DELETION ⚠️\n\n' +
+    'This will PERMANENTLY DELETE this entire conversation.\n\n' +
+    'All messages will be destroyed forever and cannot be recovered.\n\n' +
+    'Are you sure you want to continue?'
+  );
+  
+  if (!confirmed) return;
+
+  try {
+    const sessionId = getSessionId();
+    const response = await fetch(`${API_BASE}/reset-chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        presidentId,
+        sessionId,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(errorData.error || `Failed to reset chat: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    // Clear messages immediately - chat is deleted on server
+    setMessages([]);
+    
+    // Clear any expanded sources state
+    setExpandedSources(new Set());
+    
+    // Show success message
+    if (result.messagesDeleted !== undefined) {
+      console.log(`Chat reset: ${result.messagesDeleted} messages deleted, chat deleted: ${result.chatDeleted}`);
+    }
+    
+    // Optionally show a brief success message
+    // alert('Chat permanently deleted. Starting fresh conversation.');
+  } catch (error: any) {
+    console.error('Failed to reset chat:', error);
+    alert(`Failed to reset chat: ${error.message || 'Please try again.'}`);
+  }
+}

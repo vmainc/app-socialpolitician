@@ -1,0 +1,12 @@
+--- a/server/package.json
++++ b/server/package.json
+@@ -1,6 +1,7 @@
+   "scripts": {
+     "dev": "tsx watch src/index.ts",
+     "build": "tsc",
+     "start": "node dist/index.js",
+     "seed": "tsx src/scripts/seedPresidents.ts",
++    "seed:persona_recent": "tsx src/scripts/seedPersonaRecent.ts",
+     "update-portraits": "tsx src/scripts/updatePortraits.ts",
+     "rag:ingest": "tsx src/scripts/ingestPresidentDocs.ts",
+     "test:intent": "tsx src/scripts/testIntent.ts"
