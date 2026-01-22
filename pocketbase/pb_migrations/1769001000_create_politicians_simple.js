@@ -36,17 +36,9 @@ migrate((app) => {
       },
       {
         "name": "office_type",
-        "type": "select",
+        "type": "text",
         "required": false,
-        "options": {
-          "maxSelect": 1,
-          "values": [
-            "senator",
-            "representative",
-            "governor",
-            "other"
-          ]
-        }
+        "options": {}
       },
       {
         "name": "state",
