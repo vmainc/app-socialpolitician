@@ -49,11 +49,12 @@ function PoliticiansDirectory() {
         console.log(`📊 Total accessible records (no filter): ${allRecords.totalItems}`);
         
         // Now try with filter
-        // For senators, exclude "Previous Senator" to show only current 100 senators
+        // For senators, exclude "Previous/Former Senator" to show only current 100 senators
         // For representatives, also check current_position since office_type might not be set
         let filter = `office_type="${officeType}"`;
         if (officeType === 'senator') {
-          filter = `office_type="${officeType}" && current_position!~"Previous Senator"`;
+          // Exclude previous/former senators - only show current 100
+          filter = `office_type="${officeType}" && current_position!~"Previous" && current_position!~"Former"`;
         } else if (officeType === 'representative') {
           filter = `office_type="${officeType}" || current_position~"U.S. Representative"`;
         }

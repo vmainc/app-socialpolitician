@@ -1,83 +1,159 @@
-# Portrait Scraping Status
+# Portrait Pipeline Status
 
-## Current Status
+## Overview
 
-✅ **20 portraits downloaded** from Wikipedia  
-⏳ **Batch scraping completed** (hit rate limits, but got what we could)  
-📁 **Location**: `/var/www/socialpolitician-app/portraits/to-label/`
+The portrait pipeline downloads politician photos from Wikipedia and uploads them to PocketBase. It's designed to handle 600+ records safely with rate limiting and resume support.
 
-## Downloaded Portraits
+## Directory Structure
 
-The following portraits have been downloaded and are ready for review:
-- Jon Tester
-- Sherrod Brown  
-- Bob Casey Jr.
-- Tom O'Halleran
-- Beto O'Rourke
-- Jim Justice
-- Gavin Newsom
-- Ned Lamont
-- Brian Kemp
-- Jeff Landry
-- Janet Mills
-- Michelle Lujan Grisham
-- And more...
-
-## Rate Limiting
-
-Wikipedia is rate-limiting our requests (HTTP 429). The script:
-- ✅ Handles rate limits gracefully
-- ✅ Waits 10 seconds when rate limited
-- ✅ Continues processing after delays
-- ⚠️  Some portraits couldn't be downloaded due to rate limits
-
-## Next Steps
-
-### 1. Review & Label Portraits
-```bash
-ssh doug@69.169.103.23
-ls -lh /var/www/socialpolitician-app/portraits/to-label/
+```
+portraits/
+├── to-label/      # Downloaded portraits (default location)
+├── labeled/       # Manually reviewed/approved portraits
+├── uploaded/      # Successfully uploaded to PocketBase
+└── index.json     # Progress tracking (recordId → metadata)
 ```
 
-Review each portrait:
-- Verify it matches the politician
-- Check image quality
-- Move verified ones to `portraits/labeled/`
+## Quick Start
 
-### 2. Upload to PocketBase
+### Run Complete Pipeline
 ```bash
 cd /var/www/socialpolitician-app
 POCKETBASE_URL=http://127.0.0.1:8091 \
 POCKETBASE_ADMIN_EMAIL=admin@vma.agency \
-POCKETBASE_ADMIN_PASSWORD='VMAmadmia42O200!' \
-node scripts/upload_portraits.js
+POCKETBASE_ADMIN_PASSWORD='your-password' \
+bash scripts/run_data_enrichment.sh
 ```
 
-### 3. Clear Browser Cache
-See `CLEAR_CACHE.md` for instructions:
-- Hard refresh: `Ctrl+Shift+R` (or `Cmd+Shift+R` on Mac)
-- Or clear site data in DevTools
+This runs:
+1. Nginx verification
+2. Wikipedia enrichment (social links, website, district)
+3. Portrait download (first batch)
+4. Portrait upload
 
-### 4. Continue Scraping (Optional)
-To get more portraits, wait a few hours and run again:
+### Manual Steps
+
+#### 1. Download Portraits
 ```bash
-cd /var/www/socialpolitician-app
-bash scripts/scrape_portraits_batch.sh
+node scripts/scrape_portraits.js [--use-labeled] [--limit=N]
 ```
 
-## Cache-Busting Implemented
+Options:
+- `--use-labeled`: Download to `portraits/labeled/` instead of `portraits/to-label/`
+- `--limit=N`: Limit to N records (useful for testing)
 
-✅ Added timestamp query params to image URLs:
-- `PoliticiansDirectory.tsx`: `?t=${Date.now()}`
-- `PoliticianProfile.tsx`: `?t=${Date.now()}`
+#### 2. Review Portraits (Optional)
+Manually review portraits in `portraits/to-label/`:
+- Verify image matches politician
+- Check image quality
+- Move approved ones to `portraits/labeled/`
 
-This ensures images are always fetched fresh.
+#### 3. Upload Portraits
+```bash
+node scripts/upload_portraits.js [--use-labeled] [--dry-run]
+```
 
-## Files Created
+Options:
+- `--use-labeled`: Upload from `portraits/labeled/` instead of `portraits/to-label/`
+- `--dry-run`: Preview what would be uploaded without actually uploading
 
-- `scripts/scrape_portraits.js` - Main scraping script
-- `scripts/upload_portraits.js` - Upload script
-- `scripts/scrape_portraits_batch.sh` - Batch scraping with delays
-- `portraits/to-label/` - Downloaded portraits (needs review)
-- `portraits/labeled/` - Verified portraits (ready to upload)
-- `portraits/uploaded/` - Successfully uploaded portraits
+#### 4. Batch Processing
+For large-scale downloads, use the batch wrapper:
+```bash
+BATCH_SIZE=25 BATCH_DELAY=60 bash scripts/scrape_portraits_batch.sh
+```
+
+This runs in batches of 25 with 60-second delays between batches.
+
+## How It Works
+
+### Download Process
+1. Fetches politicians without photos from PocketBase
+2. Extracts Wikipedia title from `wikipedia_url` field
+3. Uses MediaWiki API to get page image URL
+4. Downloads image to `portraits/to-label/{slug}_{recordId}.{ext}`
+5. Updates `portraits/index.json` with metadata
+
+### Upload Process
+1. Scans `portraits/to-label/` (or `portraits/labeled/`) for image files
+2. Extracts record ID from filename (`{slug}_{recordId}.ext`)
+3. Uploads to PocketBase `photo` field using multipart form data
+4. Moves file to `portraits/uploaded/` on success
+5. Updates index with upload status
+
+### Resume Support
+- Progress is saved in `portraits/index.json`
+- Already-downloaded files are skipped
+- Can stop and resume at any time
+- Index tracks: filepath, status, timestamps, Wikipedia URLs
+
+## Rate Limiting
+
+Wikipedia API rate limiting is handled automatically:
+- **Baseline**: 1 request per second
+- **429/503 errors**: Exponential backoff with jitter
+- **Consecutive errors**: Max 5 before aborting record
+- **Batch delays**: 60 seconds between batches (configurable)
+
+## File Naming
+
+Portraits are named deterministically:
+```
+{slug}_{recordId}.{ext}
+```
+
+Example: `joe_biden_abc123xyz456.jpg`
+
+This ensures:
+- No filename conflicts
+- Easy record ID extraction
+- Deterministic downloads (skip if exists)
+
+## Status Tracking
+
+The `portraits/index.json` file tracks:
+```json
+{
+  "recordId": {
+    "recordId": "abc123xyz456",
+    "slug": "joe_biden",
+    "name": "Joe Biden",
+    "filepath": "portraits/to-label/joe_biden_abc123xyz456.jpg",
+    "wikipedia_url": "https://en.wikipedia.org/wiki/Joe_Biden",
+    "wikipedia_title": "Joe Biden",
+    "image_url": "https://upload.wikimedia.org/...",
+    "status": "to-label" | "labeled" | "uploaded",
+    "downloaded_at": "2026-01-23T12:00:00Z",
+    "uploaded_at": "2026-01-23T12:30:00Z"
+  }
+}
+```
+
+## Troubleshooting
+
+### Portraits Not Downloading
+- Check Wikipedia URL exists in PocketBase record
+- Verify MediaWiki API is accessible
+- Check rate limiting (429 errors)
+- Review `portraits/index.json` for errors
+
+### Upload Failures
+- Verify PocketBase authentication
+- Check file size (max 5MB per PocketBase schema)
+- Ensure record ID matches filename
+- Check PocketBase logs for errors
+
+### Nginx File Serving Issues
+If images return 404 through nginx:
+```bash
+sudo bash scripts/fix_nginx_pb_files.sh
+sudo bash scripts/verify_nginx_pb_files.sh
+```
+
+## Related Scripts
+
+- `scripts/run_data_enrichment.sh` - Complete pipeline runner
+- `scripts/scrape_portraits.js` - Portrait downloader
+- `scripts/upload_portraits.js` - Portrait uploader
+- `scripts/scrape_portraits_batch.sh` - Batch wrapper
+- `server/src/scripts/enrichPoliticiansFromWikipedia.ts` - Wikipedia enrichment

@@ -141,7 +141,7 @@ function PoliticianProfile() {
             {politician.photo && (
               <div className="flex-shrink-0">
                 <img
-                  src={`${pb.files.getUrl(politician, politician.photo)}?t=${Date.now()}`}
+                  src={`${pb.files.getURL(politician, politician.photo)}?t=${Date.now()}`}
                   alt={politician.name}
                   className="w-48 h-48 object-cover rounded-lg"
                   onError={(e) => {
