@@ -326,6 +326,61 @@ function extractSocialLinks(html: string): {
 }
 
 /**
+ * Extract bio (first paragraph) from Wikipedia HTML
+ * Gets the first substantial paragraph after the infobox
+ */
+function extractBio(html: string): string | null {
+  try {
+    // Remove HTML comments
+    let cleanHtml = html.replace(/<!--[\s\S]*?-->/g, '');
+    
+    // Find the first paragraph after the infobox
+    // Wikipedia structure: infobox table, then first <p> tag with actual content
+    const infoboxEnd = cleanHtml.indexOf('</table>');
+    const startPos = infoboxEnd > 0 ? infoboxEnd : 0;
+    
+    // Find first substantial paragraph (at least 100 characters)
+    const paragraphRegex = /<p[^>]*>([\s\S]*?)<\/p>/g;
+    let match;
+    
+    while ((match = paragraphRegex.exec(cleanHtml.substring(startPos))) !== null) {
+      // Extract text content from paragraph
+      let text = match[1]
+        .replace(/<[^>]+>/g, '') // Remove HTML tags
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .trim();
+      
+      // Skip if too short, contains navigation elements, or is just a reference
+      if (text.length < 100) continue;
+      if (text.includes('may refer to:') || text.includes('disambiguation')) continue;
+      if (text.match(/^\[?\d+\]?$/)) continue; // Just a reference number
+      
+      // Clean up: remove multiple spaces, normalize
+      text = text.replace(/\s+/g, ' ').trim();
+      
+      // Limit to first 500 characters for brevity
+      if (text.length > 500) {
+        text = text.substring(0, 497) + '...';
+      }
+      
+      if (text.length >= 100) {
+        return text;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`   ⚠️  Error extracting bio: ${error}`);
+    return null;
+  }
+}
+
+/**
  * Get Wikipedia title from URL
  */
 function getWikipediaTitle(wikipediaUrl: string | null | undefined): string | null {
@@ -393,6 +448,15 @@ async function enrichPolitician(record: any): Promise<EnrichmentResult> {
       if (value && !record[field]) {
         updates[field] = value;
         result.updatedFields.push(field);
+      }
+    }
+    
+    // Bio (first paragraph from Wikipedia)
+    if (!record.bio) {
+      const bio = extractBio(html);
+      if (bio) {
+        updates.bio = bio;
+        result.updatedFields.push('bio');
       }
     }
     
@@ -553,7 +617,8 @@ async function main() {
       !record.website_url ||
       !record.x_url ||
       !record.facebook_url ||
-      !record.instagram_url;
+      !record.instagram_url ||
+      !record.bio;
     
     return needsEnrichment && record.wikipedia_url;
   });
