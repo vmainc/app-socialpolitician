@@ -128,53 +128,82 @@ function PoliticianProfile() {
   const hasFeeds = feeds.length > 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Back link */}
         <Link
           to={`/${politician.office_type === 'senator' ? 'senators' : politician.office_type === 'representative' ? 'representatives' : politician.office_type === 'governor' ? 'governors' : '/'}`}
-          className="text-blue-600 hover:text-blue-800 mb-4 inline-block"
+          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 font-medium transition-colors"
         >
-          ← Back to {politician.office_type === 'senator' ? 'Senators' : politician.office_type === 'representative' ? 'Representatives' : politician.office_type === 'governor' ? 'Governors' : 'Home'}
+          <span>←</span>
+          <span>Back to {politician.office_type === 'senator' ? 'Senators' : politician.office_type === 'representative' ? 'Representatives' : politician.office_type === 'governor' ? 'Governors' : 'Home'}</span>
         </Link>
 
-        {/* Profile Header - Compact and Clean */}
-        <div className="bg-white rounded-lg shadow-md p-5 mb-6">
-          <div className="flex gap-4 items-start">
-            {politician.photo && (
-              <div className="flex-shrink-0">
-                <img
-                  src={`${pb.files.getURL(politician, politician.photo)}?t=${Date.now()}`}
-                  alt={politician.name}
-                  className="w-20 h-20 object-cover rounded-lg shadow-sm"
-                  style={{ maxWidth: '80px', maxHeight: '80px', width: '80px', height: '80px' }}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80"%3E%3Crect fill="%23e5e7eb" width="80" height="80"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="10" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
-                  }}
-                />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-gray-900 mb-1.5">{politician.name}</h1>
-              <div className="space-y-0.5">
-                <p className="text-sm text-gray-600">
-                  {getOfficeTypeLabel(politician.office_type)}
-                  {politician.state && ` • ${politician.state}`}
-                  {politician.political_party && ` • ${politician.political_party}`}
-                </p>
+        {/* Profile Header - Styled */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-6">
+          <div className="p-6">
+            <div className="flex gap-5 items-start">
+              {politician.photo && (
+                <div className="flex-shrink-0">
+                  <div className="relative">
+                    <img
+                      src={`${pb.files.getURL(politician, politician.photo)}?t=${Date.now()}`}
+                      alt={politician.name}
+                      className="w-24 h-24 object-cover rounded-xl shadow-md ring-2 ring-gray-100"
+                      style={{ maxWidth: '96px', maxHeight: '96px', width: '96px', height: '96px' }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="96" height="96"%3E%3Crect fill="%23e5e7eb" width="96" height="96" rx="12"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="11" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">{politician.name}</h1>
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                    {getOfficeTypeLabel(politician.office_type)}
+                  </span>
+                  {politician.state && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+                      {politician.state}
+                    </span>
+                  )}
+                  {politician.political_party && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+                      {politician.political_party}
+                    </span>
+                  )}
+                </div>
                 {politician.current_position && (
-                  <p className="text-xs text-gray-700 font-medium">{politician.current_position}</p>
+                  <p className="text-base text-gray-700 font-medium">{politician.current_position}</p>
                 )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Social Links */}
+        {/* Bio Section */}
+        {politician.bio && (
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <span className="w-1 h-6 bg-blue-600 rounded-full"></span>
+              Biography
+            </h2>
+            <p className="text-gray-700 leading-relaxed text-base">
+              {politician.bio}
+            </p>
+          </div>
+        )}
+
+        {/* Social Links - Styled */}
         {socialLinks.length > 0 && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Links</h2>
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <span className="w-1 h-6 bg-blue-600 rounded-full"></span>
+              Links & Resources
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {socialLinks.map((link) => (
                 <a
@@ -182,31 +211,35 @@ function PoliticianProfile() {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 group"
                 >
-                  <span className="text-2xl">{link.icon}</span>
-                  <span className="text-blue-600 hover:text-blue-800">{link.label}</span>
+                  <span className="text-2xl group-hover:scale-110 transition-transform">{link.icon}</span>
+                  <span className="text-gray-700 group-hover:text-blue-600 font-medium transition-colors">{link.label}</span>
+                  <span className="ml-auto text-gray-400 group-hover:text-blue-500">→</span>
                 </a>
               ))}
             </div>
           </div>
         )}
 
-        {/* Feeds Section */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Full Feeds</h2>
+        {/* Feeds Section - Styled */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span className="w-1 h-6 bg-blue-600 rounded-full"></span>
+            Social Media Feeds
+          </h2>
           {hasFeeds ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {feeds.map((feed) => (
-                <div key={feed.id} className="border border-gray-200 rounded-lg p-4">
+                <div key={feed.id} className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-semibold text-gray-900 capitalize">{feed.platform}</span>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-gray-500">
                       {new Date(feed.fetched_at).toLocaleDateString()}
                     </span>
                   </div>
                   {Array.isArray(feed.normalized_items) ? (
-                    <div className="text-sm text-gray-700">
+                    <div className="text-sm text-gray-600">
                       {feed.normalized_items.length} items
                     </div>
                   ) : null}
@@ -214,8 +247,9 @@ function PoliticianProfile() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-600">
-              <p className="mb-2">Feeds will appear after the next daily refresh.</p>
+            <div className="text-center py-12 text-gray-500">
+              <div className="text-4xl mb-3">📡</div>
+              <p className="mb-1 font-medium">Feeds will appear after the next daily refresh.</p>
               <p className="text-sm">Our system refreshes politician feeds daily.</p>
             </div>
           )}
