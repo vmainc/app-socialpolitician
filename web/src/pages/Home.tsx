@@ -298,10 +298,10 @@ function Home() {
                       <img
                         src={getPhotoUrl(politician)}
                         alt={politician.name}
-                        className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                        className="w-16 h-16 object-cover rounded-full flex-shrink-0"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src =
-                            'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="64" height="64"%3E%3Crect fill="%23e5e7eb" width="64" height="64" rx="8"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="10" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
+                            'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="64" height="64"%3E%3Crect fill="%23e5e7eb" width="64" height="64" rx="32"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="10" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
                         }}
                       />
                       <div className="flex-1 min-w-0">

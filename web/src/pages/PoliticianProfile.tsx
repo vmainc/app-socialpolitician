@@ -148,11 +148,11 @@ function PoliticianProfile() {
                     <img
                       src={`${pb.files.getURL(politician, politician.photo)}?t=${Date.now()}`}
                       alt={politician.name}
-                      className="w-24 h-24 object-cover rounded-xl shadow-md ring-2 ring-gray-100"
+                      className="w-24 h-24 object-cover rounded-full shadow-md ring-2 ring-gray-100"
                       style={{ maxWidth: '96px', maxHeight: '96px', width: '96px', height: '96px' }}
                       onError={(e) => {
                         (e.target as HTMLImageElement).src =
-                          'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="96" height="96"%3E%3Crect fill="%23e5e7eb" width="96" height="96" rx="12"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="11" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
+                          'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="96" height="96"%3E%3Ccircle fill="%23e5e7eb" cx="48" cy="48" r="48"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="11" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
                       }}
                     />
                   </div>
