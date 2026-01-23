@@ -285,7 +285,7 @@ function Home() {
 
         {!loading && !error && result && result.items.length > 0 && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-8">
               {result.items.map((politician) => (
                 <Link
                   key={politician.id}
@@ -293,16 +293,16 @@ function Home() {
                   className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden border border-gray-100 block group"
                 >
                   {/* Photo Section - Centered */}
-                  <div className="flex justify-center pt-6 pb-3">
+                  <div className="flex justify-center pt-5 pb-3">
                     <div className="relative">
                       <img
                         src={getPhotoUrl(politician)}
                         alt={politician.name}
-                        className="w-20 h-20 object-cover rounded-full border-2 border-gray-200 group-hover:border-blue-300 transition-colors"
-                        style={{ width: '80px', height: '80px' }}
+                        className="w-14 h-14 object-cover rounded-full border-2 border-gray-200 group-hover:border-blue-300 transition-colors"
+                        style={{ width: '56px', height: '56px' }}
                         onError={(e) => {
                           (e.target as HTMLImageElement).src =
-                            'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80"%3E%3Ccircle fill="%23e5e7eb" cx="40" cy="40" r="40"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="11" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
+                            'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="56" height="56"%3E%3Ccircle fill="%23e5e7eb" cx="28" cy="28" r="28"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="10" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
                         }}
                       />
                     </div>
@@ -310,25 +310,25 @@ function Home() {
 
                   {/* Info Section */}
                   <div className="px-4 pb-4">
-                    <h3 className="font-semibold text-gray-900 mb-1.5 text-center line-clamp-2 group-hover:text-blue-600 transition-colors">
+                    <h3 className="font-semibold text-gray-900 mb-1 text-center line-clamp-2 group-hover:text-blue-600 transition-colors text-sm">
                       {politician.name}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-2 text-center">
+                    <p className="text-xs text-gray-600 mb-2.5 text-center">
                       {politician.current_position || getOfficeLabel(politician.office_type)}
                     </p>
-                    <div className="flex flex-wrap justify-center gap-1.5 mb-3">
+                    <div className="flex flex-wrap justify-center gap-1 mb-3">
                       {politician.state && (
-                        <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-md text-xs font-medium">
+                        <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
                           {politician.state}
                         </span>
                       )}
                       {politician.political_party && (
-                        <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-md text-xs font-medium">
+                        <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
                           {politician.political_party}
                         </span>
                       )}
                       {politician.district && (
-                        <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-md text-xs font-medium">
+                        <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
                           D-{politician.district}
                         </span>
                       )}
