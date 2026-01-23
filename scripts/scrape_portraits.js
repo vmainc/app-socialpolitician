@@ -9,7 +9,7 @@
  *   POCKETBASE_URL=http://127.0.0.1:8091 \
  *   POCKETBASE_ADMIN_EMAIL=admin@vma.agency \
  *   POCKETBASE_ADMIN_PASSWORD=password \
- *   node scripts/scrape_portraits.js [--use-labeled] [--limit=N]
+ *   node scripts/scrape_portraits.js [--use-labeled] [--limit=N] [--office-type=TYPE]
  */
 
 import PocketBase from 'pocketbase';
@@ -46,6 +46,8 @@ const args = process.argv.slice(2);
 const useLabeled = args.includes('--use-labeled');
 const limitArg = args.find(arg => arg.startsWith('--limit='));
 const limit = limitArg ? parseInt(limitArg.split('=')[1]) : null;
+const officeTypeArg = args.find(arg => arg.startsWith('--office-type='));
+const officeType = officeTypeArg ? officeTypeArg.split('=')[1] : null;
 
 /**
  * Rate-limited fetch
@@ -225,15 +227,23 @@ async function main() {
   
   // Fetch politicians without photos
   console.log('📥 Fetching politicians from PocketBase...');
+  if (officeType) {
+    console.log(`   Filtering by office_type: ${officeType}`);
+  }
   let allRecords = [];
   let page = 1;
   const perPage = 500;
   
   while (true) {
     try {
+      let filter = 'photo = "" || photo = null';
+      if (officeType) {
+        filter = `(${filter}) && office_type="${officeType}"`;
+      }
+      
       const response = await pb.collection('politicians').getList(page, perPage, {
         sort: 'id',
-        filter: 'photo = "" || photo = null',
+        filter: filter,
       });
       
       allRecords.push(...response.items);
@@ -249,7 +259,7 @@ async function main() {
     }
   }
   
-  console.log(`✅ Found ${allRecords.length} politicians without photos`);
+  console.log(`✅ Found ${allRecords.length} politicians without photos${officeType ? ` (${officeType}s)` : ''}`);
   console.log('');
   
   // Filter to those with Wikipedia URLs
