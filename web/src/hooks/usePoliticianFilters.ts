@@ -8,13 +8,14 @@ import { useSearchParams } from 'react-router-dom';
 
 export type OfficeType = 'senator' | 'representative' | 'governor' | 'all';
 export type PartyType = 'Democratic' | 'Republican' | 'Independent' | 'Other' | 'all';
-export type SortOption = 'name' | 'state' | 'party' | '-created' | 'created';
+export type SortOption = 'name' | '-name' | '-created' | 'created' | 'state' | 'party';
 
 export interface PoliticianFilters {
   searchText: string;
   selectedState: string;
   selectedOffice: OfficeType;
   selectedParty: PartyType;
+  hasPhoto: boolean;
   sort: SortOption;
   page: number;
   perPage: number;
@@ -25,6 +26,7 @@ const DEFAULT_FILTERS: PoliticianFilters = {
   selectedState: 'all',
   selectedOffice: 'all',
   selectedParty: 'all',
+  hasPhoto: false,
   sort: 'name',
   page: 1,
   perPage: 24,
@@ -48,15 +50,24 @@ function normalizePartyForFilter(party: string | null | undefined): string | nul
 }
 
 /**
+ * Escape special characters in PocketBase filter strings
+ */
+function escapeFilterValue(value: string): string {
+  // PocketBase uses double quotes, so escape them
+  return value.replace(/"/g, '\\"');
+}
+
+/**
  * Build PocketBase filter string from filter state
  */
 export function buildPocketBaseFilter(filters: PoliticianFilters): string {
   const conditions: string[] = [];
   
-  // Search text (name)
+  // Search text (name OR current_position)
   if (filters.searchText.trim()) {
-    const searchTerm = filters.searchText.trim();
-    conditions.push(`name~"${searchTerm}"`);
+    const searchTerm = escapeFilterValue(filters.searchText.trim());
+    // Use OR for search across multiple fields
+    conditions.push(`(name~"${searchTerm}" || current_position~"${searchTerm}")`);
   }
   
   // Office type
@@ -64,19 +75,27 @@ export function buildPocketBaseFilter(filters: PoliticianFilters): string {
     conditions.push(`office_type="${filters.selectedOffice}"`);
   }
   
-  // State - try multiple field names
+  // State
   if (filters.selectedState !== 'all') {
-    // Support both 'state' and 'tag' fields
-    conditions.push(`(state="${filters.selectedState}" || tag="${filters.selectedState}")`);
+    conditions.push(`state="${filters.selectedState}"`);
   }
   
-  // Party - normalize and filter
+  // Party - try exact match first, then fallback to contains
   if (filters.selectedParty !== 'all') {
     const normalizedParty = normalizePartyForFilter(filters.selectedParty);
     if (normalizedParty) {
-      // Try both 'political_party' and 'party' fields
-      conditions.push(`(political_party~"${normalizedParty}" || party~"${normalizedParty}")`);
+      // Try exact match first
+      const exactMatch = `political_party="${normalizedParty}"`;
+      // Fallback to contains match (case-insensitive)
+      const containsMatch = `political_party~"${normalizedParty}"`;
+      // Use OR to try both
+      conditions.push(`(${exactMatch} || ${containsMatch})`);
     }
+  }
+  
+  // Has Photo filter
+  if (filters.hasPhoto) {
+    conditions.push(`photo != ""`);
   }
   
   // Exclude previous/former senators for senator filter
@@ -100,6 +119,7 @@ export function usePoliticianFilters() {
       selectedState: searchParams.get('state') || DEFAULT_FILTERS.selectedState,
       selectedOffice: (searchParams.get('office') as OfficeType) || DEFAULT_FILTERS.selectedOffice,
       selectedParty: (searchParams.get('party') as PartyType) || DEFAULT_FILTERS.selectedParty,
+      hasPhoto: searchParams.get('hasPhoto') === 'true',
       sort: (searchParams.get('sort') as SortOption) || DEFAULT_FILTERS.sort,
       page: parseInt(searchParams.get('page') || '1', 10),
       perPage: parseInt(searchParams.get('perPage') || String(DEFAULT_FILTERS.perPage), 10),
@@ -114,6 +134,7 @@ export function usePoliticianFilters() {
     if (filters.selectedState !== 'all') params.set('state', filters.selectedState);
     if (filters.selectedOffice !== 'all') params.set('office', filters.selectedOffice);
     if (filters.selectedParty !== 'all') params.set('party', filters.selectedParty);
+    if (filters.hasPhoto) params.set('hasPhoto', 'true');
     if (filters.sort !== DEFAULT_FILTERS.sort) params.set('sort', filters.sort);
     if (filters.page > 1) params.set('page', String(filters.page));
     if (filters.perPage !== DEFAULT_FILTERS.perPage) params.set('perPage', String(filters.perPage));
@@ -139,6 +160,10 @@ export function usePoliticianFilters() {
   
   const updateParty = useCallback((party: PartyType) => {
     setFilters(prev => ({ ...prev, selectedParty: party, page: 1 }));
+  }, []);
+  
+  const updateHasPhoto = useCallback((hasPhoto: boolean) => {
+    setFilters(prev => ({ ...prev, hasPhoto, page: 1 }));
   }, []);
   
   const updateSort = useCallback((sort: SortOption) => {
@@ -174,6 +199,7 @@ export function usePoliticianFilters() {
     updateState,
     updateOffice,
     updateParty,
+    updateHasPhoto,
     updateSort,
     updatePage,
     resetFilters,
@@ -254,9 +280,8 @@ export const PARTY_OPTIONS = [
 ];
 
 export const SORT_OPTIONS = [
-  { value: 'name', label: 'Name (A-Z)' },
-  { value: 'state', label: 'State' },
-  { value: 'party', label: 'Party' },
-  { value: '-created', label: 'Most Recent' },
-  { value: 'created', label: 'Oldest First' },
+  { value: 'name', label: 'A-Z' },
+  { value: '-name', label: 'Z-A' },
+  { value: '-created', label: 'Newest' },
+  { value: 'created', label: 'Oldest' },
 ];

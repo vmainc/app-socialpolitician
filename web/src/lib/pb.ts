@@ -5,6 +5,35 @@
 
 import { pb } from './pocketbase';
 import { Politician } from '../types/politician';
+import { PB_BASE } from '../config/runtime';
+
+/**
+ * Get base URL for PocketBase API
+ */
+export function getBaseUrl(): string {
+  return PB_BASE || '/pb';
+}
+
+/**
+ * Build file URL for a politician's photo
+ * Uses collection name "politicians" if collectionId is not available
+ */
+export function buildFileUrl(record: Politician, filename: string | null | undefined): string {
+  if (!filename) {
+    return '';
+  }
+  
+  const baseUrl = getBaseUrl();
+  // PocketBase SDK's getUrl handles collection ID automatically, but we provide a fallback
+  // The SDK method is preferred, but this can be used if needed
+  try {
+    return pb.files.getUrl(record, filename);
+  } catch (error) {
+    // Fallback: construct URL manually using collection name
+    // Format: /pb/api/files/{collectionName}/{recordId}/{filename}
+    return `${baseUrl}/api/files/politicians/${record.id}/${filename}`;
+  }
+}
 
 export interface ListPoliticiansParams {
   page?: number;
