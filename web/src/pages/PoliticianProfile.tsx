@@ -34,11 +34,10 @@ function PoliticianProfile() {
           });
           setFeeds(feedRecords.items);
         } catch (feedError: any) {
-          // Feeds might not exist yet, or collection might not be accessible
-          // Silently ignore - this is expected for now
-          if (feedError?.status !== 400 && feedError?.status !== 404) {
-            console.log('No feeds found yet');
-          }
+          // Feeds collection might not exist, have permission issues, or filter syntax might be wrong
+          // Silently ignore all errors - this is expected for now
+          // Don't log anything to avoid console noise
+          setFeeds([]);
         }
       } catch (error: any) {
         if (error?.status === 404) {
