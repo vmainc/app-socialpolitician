@@ -473,8 +473,16 @@ function saveResults(results: EnrichmentResult[]) {
  * Main function
  */
 async function main() {
+  // Parse command line arguments
+  const args = process.argv.slice(2);
+  const officeTypeArg = args.find(arg => arg.startsWith('--office-type='));
+  const officeType = officeTypeArg ? officeTypeArg.split('=')[1] : null;
+  
   console.log('🔄 Enriching Politicians from Wikipedia');
   console.log('=======================================');
+  if (officeType) {
+    console.log(`   Filtering by office_type: ${officeType}`);
+  }
   console.log('');
   
   if (!adminEmail || !adminPassword) {
@@ -498,7 +506,7 @@ async function main() {
   console.log(`📊 Progress: ${progress.processedCount} processed, ${progress.updatedCount} updated, ${progress.errorCount} errors`);
   console.log('');
   
-  // Fetch all politicians
+  // Fetch politicians
   console.log('📥 Fetching politicians from PocketBase...');
   let allRecords: any[] = [];
   let page = 1;
@@ -506,8 +514,14 @@ async function main() {
   
   while (true) {
     try {
+      let filter = '';
+      if (officeType) {
+        filter = `office_type="${officeType}"`;
+      }
+      
       const response = await pb.collection('politicians').getList(page, perPage, {
         sort: 'id',
+        filter: filter || undefined,
       });
       
       allRecords.push(...response.items);
@@ -523,7 +537,7 @@ async function main() {
     }
   }
   
-  console.log(`✅ Found ${allRecords.length} politicians`);
+  console.log(`✅ Found ${allRecords.length} politicians${officeType ? ` (${officeType}s)` : ''}`);
   console.log('');
   
   // Filter records that need enrichment
