@@ -19,20 +19,6 @@ function AvatarPlaceholder() {
   );
 }
 
-function formatStartOfTerm(dateStr: string | null | undefined): string {
-  if (!dateStr) return '—';
-  try {
-    const d = new Date(dateStr);
-    if (Number.isNaN(d.getTime())) return '—';
-    return d.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  } catch {
-    return '—';
-  }
-}
 
 function PoliticiansDirectory() {
   const location = useLocation();
@@ -57,13 +43,25 @@ function PoliticiansDirectory() {
 
     async function loadPoliticians() {
       try {
+        console.log(`🔍 Loading ${officeType}s...`);
+        // First, try without filter to see if ANY records are accessible
+        const allRecords = await pb.collection('politicians').getList<Politician>(1, 5);
+        console.log(`📊 Total accessible records (no filter): ${allRecords.totalItems}`);
+        
+        // Now try with filter
         const records = await pb.collection('politicians').getFullList<Politician>({
           filter: `office_type="${officeType}"`,
           sort: 'name',
         });
+        console.log(`✅ Loaded ${records.length} ${officeType}s`);
         setPoliticians(records);
-      } catch (error) {
-        console.error('Failed to load politicians:', error);
+      } catch (error: any) {
+        console.error('❌ Failed to load politicians:', error);
+        console.error('   Error details:', {
+          message: error?.message,
+          status: error?.status,
+          response: error?.response,
+        });
       } finally {
         setLoading(false);
       }
@@ -140,7 +138,7 @@ function PoliticiansDirectory() {
                 <AvatarPlaceholder />
                 {p.photo && (
                   <img
-                    src={pb.files.getUrl(p, p.photo)}
+                    src={`${pb.files.getUrl(p, p.photo)}?t=${Date.now()}`}
                     alt=""
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = 'none';
@@ -149,11 +147,6 @@ function PoliticiansDirectory() {
                 )}
               </div>
               <h3 className="politician-card-name">{p.name}</h3>
-              <div className="politician-card-meta">
-                {p.current_position && <span>{p.current_position}</span>}
-                {p.state && <span>{p.state}</span>}
-                <span>Start of term: {formatStartOfTerm(p.position_start_date)}</span>
-              </div>
             </Link>
           ))}
         </div>

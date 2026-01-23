@@ -134,8 +134,8 @@ migrate((app) => {
       }
     ],
     "indexes": [],
-    "listRule": "",
-    "viewRule": "",
+    "listRule": "@request.auth.id = \"\" || @request.auth.id != \"\"",
+    "viewRule": "@request.auth.id = \"\" || @request.auth.id != \"\"",
     "createRule": null,
     "updateRule": null,
     "deleteRule": null

@@ -14,4 +14,18 @@ export const MODE = import.meta.env.MODE;
 // Log configuration on startup (non-sensitive)
 if (typeof window !== "undefined") {
   console.log("Runtime Config:", { MODE, API_BASE, PB_BASE });
+  
+  // Diagnostic: Test PocketBase health endpoint
+  if (isProd) {
+    fetch(`${PB_BASE}/api/health`)
+      .then(res => res.json())
+      .then(data => {
+        console.log("✅ PocketBase health check:", data);
+      })
+      .catch(err => {
+        console.error("❌ PocketBase health check failed:", err);
+        console.error("   PB_BASE:", PB_BASE);
+        console.error("   Full URL would be:", window.location.origin + PB_BASE + "/api/health");
+      });
+  }
 }
