@@ -18,6 +18,15 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
+// Try to import sharp for image compression (optional)
+let sharp = null;
+try {
+  const sharpModule = await import('sharp');
+  sharp = sharpModule.default;
+} catch (error) {
+  // sharp not available, will skip compression
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
@@ -78,14 +87,73 @@ function extractRecordId(filename) {
 }
 
 /**
+ * Compress image if it's too large (>4MB to leave room)
+ */
+async function compressImageIfNeeded(filepath) {
+  const MAX_SIZE = 4 * 1024 * 1024; // 4MB (leaving room under 5MB limit)
+  const stats = fs.statSync(filepath);
+  
+  if (stats.size <= MAX_SIZE || !sharp) {
+    return filepath; // No compression needed or sharp not available
+  }
+  
+  try {
+    const ext = path.extname(filepath).toLowerCase();
+    const tempPath = filepath.replace(/\.(jpg|jpeg|png|webp)$/i, '_compressed$&');
+    
+    let image = sharp(filepath);
+    
+    // Resize if needed (max 1200px width/height, maintain aspect ratio)
+    image = image.resize(1200, 1200, {
+      fit: 'inside',
+      withoutEnlargement: true,
+    });
+    
+    // Compress based on format
+    if (ext === '.png') {
+      await image.png({ quality: 85, compressionLevel: 9 }).toFile(tempPath);
+    } else if (ext === '.webp') {
+      await image.webp({ quality: 85 }).toFile(tempPath);
+    } else {
+      // jpg/jpeg
+      await image.jpeg({ quality: 85, mozjpeg: true }).toFile(tempPath);
+    }
+    
+    const newStats = fs.statSync(tempPath);
+    if (newStats.size < stats.size && newStats.size <= MAX_SIZE) {
+      // Replace original with compressed version
+      fs.renameSync(tempPath, filepath);
+      console.log(`   📦 Compressed: ${(stats.size / 1024 / 1024).toFixed(2)}MB → ${(newStats.size / 1024 / 1024).toFixed(2)}MB`);
+      return filepath;
+    } else {
+      // Compression didn't help or still too large, use original
+      fs.unlinkSync(tempPath);
+      return filepath;
+    }
+  } catch (error) {
+    console.log(`   ⚠️  Compression failed, using original: ${error.message}`);
+    return filepath;
+  }
+}
+
+/**
  * Upload portrait to PocketBase
  * Uses PocketBase SDK's file upload support with FormData
  */
 async function uploadPortrait(recordId, filepath) {
   try {
-    const fileBuffer = fs.readFileSync(filepath);
-    const filename = path.basename(filepath);
-    const mimeType = getMimeType(filepath);
+    // Compress image if needed
+    const finalPath = await compressImageIfNeeded(filepath);
+    
+    const fileBuffer = fs.readFileSync(finalPath);
+    const filename = path.basename(finalPath);
+    const mimeType = getMimeType(finalPath);
+    
+    // Check file size one more time
+    if (fileBuffer.length > 5 * 1024 * 1024) {
+      console.error(`   ❌ File still too large after compression: ${(fileBuffer.length / 1024 / 1024).toFixed(2)}MB`);
+      return false;
+    }
     
     // Create FormData with Blob (Node.js 18+ supports this)
     const formData = new FormData();
