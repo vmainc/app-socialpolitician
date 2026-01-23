@@ -139,31 +139,32 @@ function PoliticianProfile() {
         </Link>
 
         {/* Profile Header - Compact and Clean */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex gap-5 items-start">
+        <div className="bg-white rounded-lg shadow-md p-5 mb-6">
+          <div className="flex gap-4 items-start">
             {politician.photo && (
               <div className="flex-shrink-0">
                 <img
                   src={`${pb.files.getURL(politician, politician.photo)}?t=${Date.now()}`}
                   alt={politician.name}
-                  className="w-28 h-28 object-cover rounded-lg shadow-sm"
+                  className="w-20 h-20 object-cover rounded-lg shadow-sm"
+                  style={{ maxWidth: '80px', maxHeight: '80px', width: '80px', height: '80px' }}
                   onError={(e) => {
                     (e.target as HTMLImageElement).src =
-                      'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="112" height="112"%3E%3Crect fill="%23e5e7eb" width="112" height="112"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="11" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
+                      'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80"%3E%3Crect fill="%23e5e7eb" width="80" height="80"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="10" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
                   }}
                 />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{politician.name}</h1>
-              <div className="space-y-1">
-                <p className="text-base text-gray-600">
+              <h1 className="text-2xl font-bold text-gray-900 mb-1.5">{politician.name}</h1>
+              <div className="space-y-0.5">
+                <p className="text-sm text-gray-600">
                   {getOfficeTypeLabel(politician.office_type)}
                   {politician.state && ` • ${politician.state}`}
                   {politician.political_party && ` • ${politician.political_party}`}
                 </p>
                 {politician.current_position && (
-                  <p className="text-sm text-gray-700 font-medium">{politician.current_position}</p>
+                  <p className="text-xs text-gray-700 font-medium">{politician.current_position}</p>
                 )}
               </div>
             </div>
