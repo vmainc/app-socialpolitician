@@ -13,6 +13,7 @@ export interface Politician {
   current_position?: string | null;
   position_start_date?: string | null;
   office_type?: 'senator' | 'representative' | 'governor' | 'other' | null;
+  bio?: string | null;
   /** PocketBase file field – use pb.files.getUrl(record, record.photo) */
   photo?: string | null;
   website_url?: string | null;
