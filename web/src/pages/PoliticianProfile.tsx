@@ -26,16 +26,19 @@ function PoliticianProfile() {
 
         setPolitician(politicianRecord);
 
-        // Load feeds
+        // Load feeds (silently fail if collection doesn't exist or has errors)
         try {
-          const feedRecords = await pb.collection('feeds').getFullList<Feed>({
+          const feedRecords = await pb.collection('feeds').getList<Feed>(1, 50, {
             filter: `politician="${politicianRecord.id}"`,
             sort: '-fetched_at',
           });
-          setFeeds(feedRecords);
-        } catch (feedError) {
-          // Feeds might not exist yet, that's okay
-          console.log('No feeds found yet');
+          setFeeds(feedRecords.items);
+        } catch (feedError: any) {
+          // Feeds might not exist yet, or collection might not be accessible
+          // Silently ignore - this is expected for now
+          if (feedError?.status !== 400 && feedError?.status !== 404) {
+            console.log('No feeds found yet');
+          }
         }
       } catch (error: any) {
         if (error?.status === 404) {
@@ -135,35 +138,34 @@ function PoliticianProfile() {
           ← Back to {politician.office_type === 'senator' ? 'Senators' : politician.office_type === 'representative' ? 'Representatives' : politician.office_type === 'governor' ? 'Governors' : 'Home'}
         </Link>
 
-        {/* Profile Header - Compact */}
+        {/* Profile Header - Compact and Clean */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex gap-4">
+          <div className="flex gap-5 items-start">
             {politician.photo && (
               <div className="flex-shrink-0">
                 <img
                   src={`${pb.files.getURL(politician, politician.photo)}?t=${Date.now()}`}
                   alt={politician.name}
-                  className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200"
+                  className="w-28 h-28 object-cover rounded-lg shadow-sm"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src =
-                      'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="128" height="128"%3E%3Crect fill="%23ddd" width="128" height="128"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="12" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
+                      'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="112" height="112"%3E%3Crect fill="%23e5e7eb" width="112" height="112"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="11" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
                   }}
                 />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h1 className="text-3xl font-bold text-gray-900 mb-1">{politician.name}</h1>
-              <p className="text-lg text-gray-600 mb-2">
-                {getOfficeTypeLabel(politician.office_type)}
-                {politician.state && ` • ${politician.state}`}
-                {politician.political_party && ` • ${politician.political_party}`}
-              </p>
-              {politician.current_position && (
-                <p className="text-base text-gray-700 mb-3">{politician.current_position}</p>
-              )}
-              {politician.bio && (
-                <p className="text-sm text-gray-700 leading-relaxed">{politician.bio}</p>
-              )}
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{politician.name}</h1>
+              <div className="space-y-1">
+                <p className="text-base text-gray-600">
+                  {getOfficeTypeLabel(politician.office_type)}
+                  {politician.state && ` • ${politician.state}`}
+                  {politician.political_party && ` • ${politician.political_party}`}
+                </p>
+                {politician.current_position && (
+                  <p className="text-sm text-gray-700 font-medium">{politician.current_position}</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
