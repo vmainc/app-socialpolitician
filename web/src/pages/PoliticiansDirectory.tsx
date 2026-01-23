@@ -54,7 +54,10 @@ function PoliticiansDirectory() {
         let filter = `office_type="${officeType}"`;
         if (officeType === 'senator') {
           // Exclude previous/former senators - only show current 100
-          filter = `office_type="${officeType}" && current_position!~"Previous" && current_position!~"Former"`;
+          // Try multiple filter approaches - PocketBase filter syntax
+          // Option 1: Exclude Previous/Former
+          // Option 2: Only include those with "U.S. Senator" (current ones)
+          filter = `office_type="${officeType}" && current_position~"U.S. Senator" && current_position!~"Previous" && current_position!~"Former"`;
         } else if (officeType === 'representative') {
           filter = `office_type="${officeType}" || current_position~"U.S. Representative"`;
         }
