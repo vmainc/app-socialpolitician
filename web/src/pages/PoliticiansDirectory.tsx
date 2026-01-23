@@ -49,8 +49,17 @@ function PoliticiansDirectory() {
         console.log(`📊 Total accessible records (no filter): ${allRecords.totalItems}`);
         
         // Now try with filter
+        // For senators, exclude "Previous Senator" to show only current 100 senators
+        // For representatives, also check current_position since office_type might not be set
+        let filter = `office_type="${officeType}"`;
+        if (officeType === 'senator') {
+          filter = `office_type="${officeType}" && current_position!~"Previous Senator"`;
+        } else if (officeType === 'representative') {
+          filter = `office_type="${officeType}" || current_position~"U.S. Representative"`;
+        }
+        
         const records = await pb.collection('politicians').getFullList<Politician>({
-          filter: `office_type="${officeType}"`,
+          filter,
           sort: 'name',
         });
         console.log(`✅ Loaded ${records.length} ${officeType}s`);
@@ -138,7 +147,7 @@ function PoliticiansDirectory() {
                 <AvatarPlaceholder />
                 {p.photo && (
                   <img
-                    src={`${pb.files.getUrl(p, p.photo)}?t=${Date.now()}`}
+                    src={`${pb.files.getURL(p, p.photo)}?t=${Date.now()}`}
                     alt=""
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = 'none';

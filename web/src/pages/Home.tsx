@@ -19,7 +19,7 @@ function Home() {
       try {
         const [senators, representatives, governors] = await Promise.all([
           pb.collection('politicians').getList(1, 1, {
-            filter: 'office_type="senator"',
+            filter: 'office_type="senator" && current_position!~"Previous Senator"',
           }),
           pb.collection('politicians').getList(1, 1, {
             filter: 'office_type="representative"',
