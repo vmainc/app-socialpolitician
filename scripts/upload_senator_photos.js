@@ -5,16 +5,18 @@
  * Reads from portraits/senators/ directory and uploads to politicians collection
  */
 
-import fs from 'fs';
-import path from 'path';
-import FormData from 'form-data';
-import fetch from 'node-fetch';
+import PocketBase from 'pocketbase';
+import * as fs from 'fs';
+import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const projectRoot = path.resolve(__dirname, '..');
 
 // Configuration
-const PORTRAITS_DIR = path.join(__dirname, '../portraits/senators');
+const PORTRAITS_DIR = path.join(projectRoot, 'portraits/senators');
 const INDEX_FILE = path.join(PORTRAITS_DIR, 'index.json');
 
 // PocketBase config from environment
@@ -22,45 +24,12 @@ const PB_URL = process.env.POCKETBASE_URL || 'http://127.0.0.1:8091';
 const PB_ADMIN_EMAIL = process.env.POCKETBASE_ADMIN_EMAIL || 'admin@example.com';
 const PB_ADMIN_PASSWORD = process.env.POCKETBASE_ADMIN_PASSWORD || 'admin';
 
-let authToken = null;
+const pb = new PocketBase(PB_URL);
 
 async function authenticate() {
   console.log('🔐 Authenticating with PocketBase...');
   try {
-    // Try modern endpoint first
-    let endpoint = `${PB_URL}/api/admins/auth-with-password`;
-    let response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        identity: PB_ADMIN_EMAIL,
-        password: PB_ADMIN_PASSWORD,
-      }),
-    });
-
-    if (!response.ok && response.status === 404) {
-      // Try legacy endpoint
-      endpoint = `${PB_URL}/api/auth/admin`;
-      response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: PB_ADMIN_EMAIL,
-          password: PB_ADMIN_PASSWORD,
-        }),
-      });
-    }
-
-    if (!response.ok) {
-      throw new Error(`Auth failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    authToken = data.token || data.admin?.token;
-    if (!authToken) {
-      console.error('Response:', JSON.stringify(data));
-      throw new Error('No token in response');
-    }
+    await pb.admins.authWithPassword(PB_ADMIN_EMAIL, PB_ADMIN_PASSWORD);
     console.log('✅ Authenticated\n');
   } catch (error) {
     console.error('❌ Authentication failed:', error.message);
@@ -70,41 +39,27 @@ async function authenticate() {
 
 async function findSenatorInPocketBase(senatorName) {
   try {
-    // Try to find senator by name with fuzzy matching
+    // Try to find senator by name
     const names = senatorName.split(' ');
     const lastName = names[names.length - 1];
     
-    // Try exact name first
-    let filter = `name="${senatorName}"`;
-    let response = await fetch(
-      `${PB_URL}/api/collections/politicians/records?filter=${encodeURIComponent(filter)}&limit=1`,
-      {
-        headers: { Authorization: authToken },
-      }
-    );
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.items?.length > 0) {
-        return data.items[0];
-      }
+    // Try exact match first
+    let records = await pb.collection('politicians').getFullList({
+      filter: `name="${senatorName}"`,
+      requestKey: null,
+    });
+    
+    if (records.length > 0) {
+      return records[0];
     }
-
-    // Try last name match
-    filter = `name~"${lastName}" && office_type="senator"`;
-    response = await fetch(
-      `${PB_URL}/api/collections/politicians/records?filter=${encodeURIComponent(filter)}&limit=1`,
-      {
-        headers: { Authorization: authToken },
-      }
-    );
-
-    if (response.ok) {
-      const data = await response.json();
-      return data.items?.[0] || null;
-    }
-
-    return null;
+    
+    // Try last name match with senator filter
+    records = await pb.collection('politicians').getFullList({
+      filter: `name~"${lastName}" && office_type="senator"`,
+      requestKey: null,
+    });
+    
+    return records[0] || null;
   } catch (error) {
     console.error(`Error finding senator ${senatorName}:`, error.message);
     return null;
@@ -113,28 +68,15 @@ async function findSenatorInPocketBase(senatorName) {
 
 async function uploadPhoto(senatorName, filePath, recordId) {
   try {
-    const fileBuffer = fs.readFileSync(filePath);
     const fileName = path.basename(filePath);
+    const fileBuffer = fs.readFileSync(filePath);
 
-    const formData = new FormData();
-    formData.append('photo', fileBuffer, { filename: fileName });
+    // Create a File-like object for PocketBase
+    const file = new File([fileBuffer], fileName, { type: 'image/jpeg' });
 
-    const response = await fetch(
-      `${PB_URL}/api/collections/politicians/records/${recordId}`,
-      {
-        method: 'PATCH',
-        headers: { 
-          Authorization: authToken,
-          ...formData.getHeaders(),
-        },
-        body: formData,
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`${response.status}: ${errorText}`);
-    }
+    const record = await pb.collection('politicians').update(recordId, {
+      photo: file,
+    });
 
     console.log(`   ✅ Uploaded: ${fileName}`);
     return true;
@@ -189,7 +131,7 @@ async function uploadSenatorPhotos() {
       failed++;
     }
 
-    // Small delay between uploads to avoid hammering the server
+    // Small delay between uploads
     await new Promise(resolve => setTimeout(resolve, 100));
   }
 
