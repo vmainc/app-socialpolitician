@@ -3,6 +3,7 @@
 /**
  * Scrape Wikipedia bios for all senators
  * Summarize to 500 words, focused on 2026 activities
+ * Auto-generates Wikipedia URLs from senator names if not in database
  * 
  * Usage:
  *   POCKETBASE_URL=http://127.0.0.1:8091 \
@@ -22,7 +23,7 @@ const PB_ADMIN_PASSWORD = process.env.POCKETBASE_ADMIN_PASSWORD || 'admin';
 const pb = new PocketBase(PB_URL);
 
 let lastRequestTime = 0;
-const MIN_REQUEST_INTERVAL = 1000; // 1 second between requests
+const MIN_REQUEST_INTERVAL = 1500; // 1.5 seconds between requests
 
 async function rateLimitedFetch(url, retries = 3) {
   const now = Date.now();
@@ -42,7 +43,6 @@ async function rateLimitedFetch(url, retries = 3) {
     if (response.status === 429) {
       if (retries > 0) {
         const backoffTime = 2000 * (4 - retries);
-        console.log(`   ⏳ Rate limited, retrying after ${backoffTime}ms...`);
         await new Promise(resolve => setTimeout(resolve, backoffTime));
         return rateLimitedFetch(url, retries - 1);
       } else {
@@ -71,33 +71,54 @@ async function authenticate() {
   }
 }
 
+/**
+ * Generate Wikipedia URL from senator name
+ * Examples: "John Smith" -> "John_Smith", "Ben Ray Luján" -> "Ben_Ray_Luj%C3%A1n"
+ */
+function generateWikipediaUrl(name) {
+  // Remove HTML entities
+  let decoded = name
+    .replace(/&aacute;/g, 'á')
+    .replace(/&eacute;/g, 'é')
+    .replace(/&iacute;/g, 'í')
+    .replace(/&oacute;/g, 'ó')
+    .replace(/&uacute;/g, 'ú')
+    .replace(/&ntilde;/g, 'ñ');
+  
+  // Replace spaces with underscores and encode special chars
+  return encodeURIComponent(decoded.trim());
+}
+
 async function getWikipediaContent(senatorName, wikipediaUrl) {
   try {
-    if (!wikipediaUrl) {
-      return null;
+    let pageName = null;
+    
+    if (wikipediaUrl && wikipediaUrl.includes('wikipedia')) {
+      // Extract from existing URL
+      const match = wikipediaUrl.match(/\/wiki\/([^/]+)$/);
+      if (match) {
+        pageName = decodeURIComponent(match[1]);
+      }
+    } else {
+      // Generate from name
+      pageName = generateWikipediaUrl(senatorName);
     }
     
-    // Extract page title from URL
-    const match = wikipediaUrl.match(/\/wiki\/([^/]+)$/);
-    if (!match) return null;
-    
-    const pageTitle = decodeURIComponent(match[1]);
+    if (!pageName) return null;
     
     // Fetch from Wikipedia API
-    const url = `https://en.wikipedia.org/api/rest_v1/page/extract/${pageTitle}`;
+    const url = `https://en.wikipedia.org/api/rest_v1/page/extract/${encodeURIComponent(pageName)}`;
     const response = await rateLimitedFetch(url);
     const data = await response.json();
     
     return data.extract || null;
   } catch (error) {
-    console.log(`   ⚠️  Failed to fetch Wikipedia: ${error.message}`);
     return null;
   }
 }
 
 /**
  * Extract 2026-relevant content from Wikipedia text
- * Focus on: current positions, recent activities, upcoming elections/roles
  */
 function extract2026Content(fullText, senatorName) {
   if (!fullText) return null;
@@ -106,13 +127,14 @@ function extract2026Content(fullText, senatorName) {
   
   // Keywords indicating 2026-relevant content
   const keywords2026 = [
-    '2026', '2025', 'election', 're-election', 'current',
+    '2026', '2025', 'election', 're-election', 'reelection',
     'serve', 'committee', 'ranking', 'chair', 'leadership',
-    'proposed', 'legislation', 'bill', 'vote', 'recently',
-    'controversies', 'investigation', 'political positions'
+    'proposed', 'legislation', 'bill', 'vote', 'recent',
+    'controversy', 'investigation', 'position', 'record',
+    'senate', 'legislation', 'foreign policy', 'economic'
   ];
   
-  // Extract relevant paragraphs
+  // Find paragraphs with 2026 keywords
   let relevant = [];
   for (const line of lines) {
     const lower = line.toLowerCase();
@@ -121,9 +143,13 @@ function extract2026Content(fullText, senatorName) {
     }
   }
   
-  // If we didn't find enough 2026 content, take the first few paragraphs anyway
-  if (relevant.length < 3) {
-    relevant = lines.slice(0, 6);
+  // If we didn't find enough 2026 content, take paragraphs strategically
+  if (relevant.length < 5) {
+    // Get intro + some body paragraphs
+    relevant = [
+      ...lines.slice(0, 3),  // Intro
+      ...lines.slice(3, 10)  // Early career/background
+    ];
   }
   
   return relevant.join('\n');
@@ -137,24 +163,12 @@ function summarizeTo500Words(text) {
   
   const words = text.split(/\s+/).filter(w => w.length > 0);
   
-  if (words.length <= 500) {
+  if (words.length <= 550) {
     return text;
   }
   
-  // Split into sentences and take until ~500 words
-  const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
-  let summary = '';
-  let wordCount = 0;
-  
-  for (const sentence of sentences) {
-    const sentenceWords = sentence.split(/\s+/).length;
-    if (wordCount + sentenceWords > 550) break; // Stop near 500
-    
-    summary += sentence;
-    wordCount += sentenceWords;
-  }
-  
-  return summary.trim() || text.substring(0, 500);
+  // Take first 550 words to stay around 500
+  return words.slice(0, 550).join(' ') + '...';
 }
 
 async function updateSenatorBio(senatorId, senatorName, bio) {
@@ -169,7 +183,6 @@ async function updateSenatorBio(senatorId, senatorName, bio) {
     
     return true;
   } catch (error) {
-    console.log(`   ❌ Failed to update: ${error.message}`);
     return false;
   }
 }
@@ -191,23 +204,20 @@ async function scrapeSenatorBios() {
     let failed = 0;
     let skipped = 0;
     
-    for (const senator of senators) {
-      console.log(`${senator.name}`);
-      
-      if (!senator.wikipedia_url) {
-        console.log(`   ⚠️  No Wikipedia URL`);
-        skipped++;
-        continue;
-      }
+    for (let i = 0; i < senators.length; i++) {
+      const senator = senators[i];
+      console.log(`[${i + 1}/${senators.length}] ${senator.name}`);
       
       // Fetch Wikipedia content
       const fullContent = await getWikipediaContent(senator.name, senator.wikipedia_url);
       
       if (!fullContent) {
-        console.log(`   ⚠️  No content fetched`);
+        console.log(`   ⚠️  No Wikipedia content found`);
         failed++;
         continue;
       }
+      
+      console.log(`   ✅ Fetched Wikipedia`);
       
       // Extract 2026-relevant content
       const relevant2026 = extract2026Content(fullContent, senator.name);
@@ -225,15 +235,13 @@ async function scrapeSenatorBios() {
         console.log(`   ✅ Updated`);
         updated++;
       } else {
+        console.log(`   ⚠️  Update failed`);
         failed++;
       }
-      
-      console.log();
     }
     
     console.log('\n' + '='.repeat(40));
     console.log(`✅ Updated: ${updated}`);
-    console.log(`⚠️  Skipped: ${skipped}`);
     console.log(`❌ Failed: ${failed}`);
     console.log(`📊 Total: ${senators.length}`);
     
