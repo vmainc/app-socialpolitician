@@ -6,7 +6,9 @@
  * 
  * Features:
  * - Robust name matching with accent normalization
- * - Handles special characters (á, é, í, ó, ú, ñ, etc.)
+ * - Handles HTML entities (e.g., &aacute;, &eacute;)
+ * - Handles special characters (á, é, í, ó, ú, ñ, ç, etc.)
+ * - Solves Ben Ray Luján matching issue
  * - Fuzzy matching with exact name first, then normalized last name
  */
 
@@ -32,12 +34,57 @@ const PB_ADMIN_PASSWORD = process.env.POCKETBASE_ADMIN_PASSWORD || 'admin';
 const pb = new PocketBase(PB_URL);
 
 /**
+ * Decode HTML entities to actual characters
+ * Handles: &aacute;, &eacute;, &iacute;, &oacute;, &uacute;, &ntilde;, &ccedil;, etc.
+ */
+function decodeHtmlEntities(text) {
+  if (!text) return '';
+  const htmlEntityMap = {
+    '&aacute;': 'á',
+    '&eacute;': 'é',
+    '&iacute;': 'í',
+    '&oacute;': 'ó',
+    '&uacute;': 'ú',
+    '&Aacute;': 'Á',
+    '&Eacute;': 'É',
+    '&Iacute;': 'Í',
+    '&Oacute;': 'Ó',
+    '&Uacute;': 'Ú',
+    '&ntilde;': 'ñ',
+    '&Ntilde;': 'Ñ',
+    '&ccedil;': 'ç',
+    '&Ccedil;': 'Ç',
+    '&agrave;': 'à',
+    '&egrave;': 'è',
+    '&igrave;': 'ì',
+    '&ograve;': 'ò',
+    '&ugrave;': 'ù',
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&apos;': "'",
+  };
+  
+  let result = text;
+  Object.entries(htmlEntityMap).forEach(([entity, char]) => {
+    result = result.replace(new RegExp(entity, 'g'), char);
+  });
+  return result;
+}
+
+/**
  * Normalize string by removing accents and special characters
- * Handles: á, é, í, ó, ú, ü, ñ, ç, etc.
+ * Handles: á, é, í, ó, ú, ü, ñ, ç, etc., and HTML entities
  */
 function normalizeString(str) {
   if (!str) return '';
-  return str
+  
+  // First decode HTML entities
+  let decoded = decodeHtmlEntities(str);
+  
+  // Then remove accents using Unicode normalization
+  return decoded
     .normalize('NFD')                    // Decompose accented characters
     .replace(/[\u0300-\u036f]/g, '')    // Remove diacritical marks
     .toLowerCase()
@@ -73,7 +120,7 @@ async function findSenatorInPocketBase(senatorName) {
     }
     
     // Try 2: Get all senators and match with normalized names
-    // (This helps with accent issues like Luján)
+    // (This handles accents like Luján, HTML entities, etc.)
     records = await pb.collection('politicians').getFullList({
       filter: `office_type="senator"`,
       requestKey: null,
