@@ -33,6 +33,7 @@ export interface Feed {
   id: string;
   politician: string;
   platform: 'twitter' | 'instagram' | 'youtube' | 'truth' | 'tiktok' | 'rss' | 'website';
+  source?: string | null;
   fetched_at: string;
   payload?: unknown;
   normalized_items?: unknown;
