@@ -67,18 +67,6 @@ function PoliticianProfile() {
     }
   };
 
-  const getOfficeTypeColor = (type: string | null | undefined) => {
-    switch (type) {
-      case 'senator':
-        return 'bg-blue-100 text-blue-800';
-      case 'representative':
-        return 'bg-purple-100 text-purple-800';
-      case 'governor':
-        return 'bg-amber-100 text-amber-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   const getPartyColor = (party: string | null | undefined) => {
     if (!party) return 'bg-gray-100 text-gray-700';
