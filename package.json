@@ -12,6 +12,8 @@
     "verify-build": "bash -c 'if grep -r \"localhost\\|127.0.0.1\" web/dist 2>/dev/null; then echo \"ERROR: Found localhost or 127.0.0.1 in build output!\" && exit 1; else echo \"✓ OK: No localhost found in build\"; fi'"
   },
   "dependencies": {
+    "form-data": "^4.0.5",
+    "node-fetch": "^2.7.0",
     "pocketbase": "^0.22.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
