@@ -27,7 +27,9 @@ let authToken = null;
 async function authenticate() {
   console.log('🔐 Authenticating with PocketBase...');
   try {
-    const response = await fetch(`${PB_URL}/api/admins/auth-with-password`, {
+    // Try modern endpoint first
+    let endpoint = `${PB_URL}/api/admins/auth-with-password`;
+    let response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -36,12 +38,29 @@ async function authenticate() {
       }),
     });
 
+    if (!response.ok && response.status === 404) {
+      // Try legacy endpoint
+      endpoint = `${PB_URL}/api/auth/admin`;
+      response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: PB_ADMIN_EMAIL,
+          password: PB_ADMIN_PASSWORD,
+        }),
+      });
+    }
+
     if (!response.ok) {
       throw new Error(`Auth failed: ${response.status}`);
     }
 
     const data = await response.json();
-    authToken = data.token;
+    authToken = data.token || data.admin?.token;
+    if (!authToken) {
+      console.error('Response:', JSON.stringify(data));
+      throw new Error('No token in response');
+    }
     console.log('✅ Authenticated\n');
   } catch (error) {
     console.error('❌ Authentication failed:', error.message);
