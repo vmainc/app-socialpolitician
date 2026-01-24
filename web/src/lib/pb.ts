@@ -70,8 +70,8 @@ export async function listPoliticians(
       page,
       perPage,
       {
-        filter: filter || undefined,
-        sort: sort || undefined,
+        filter: filter && filter.trim() ? filter : undefined,
+        sort: sort && sort.trim() ? sort : undefined,
         signal,
       }
     );

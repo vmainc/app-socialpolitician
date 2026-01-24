@@ -32,7 +32,17 @@ function PoliticianProfile() {
             filter: `politician="${politicianRecord.id}"`,
             sort: '-fetched_at',
           });
-          setFeeds(feedRecords.items);
+          
+          // Filter out low-quality sources (Reddit, Quora, etc.)
+          const filteredFeeds = feedRecords.items.filter(feed => {
+            if (!feed.source) return true;
+            const source = feed.source.toLowerCase();
+            // Exclude these sources
+            const excludedSources = ['reddit', 'quora', 'medium.com', 'nextdoor'];
+            return !excludedSources.some(excluded => source.includes(excluded));
+          });
+          
+          setFeeds(filteredFeeds);
         } catch (feedError: any) {
           // Feeds collection might not exist, have permission issues, or filter syntax might be wrong
           // Silently ignore all errors - this is expected for now

@@ -43,7 +43,7 @@ function Home() {
     listPoliticians({
       page: filters.page,
       perPage: filters.perPage,
-      filter: pbFilter || undefined,
+      filter: pbFilter && pbFilter.trim() ? pbFilter : undefined,
       sort: filters.sort,
       signal: controller.signal,
     })
