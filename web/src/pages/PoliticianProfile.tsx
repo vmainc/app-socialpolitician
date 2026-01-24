@@ -222,7 +222,7 @@ function PoliticianProfile() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 group"
                 >
-                  <span className="text-lg group-hover:scale-110 transition-transform">{link.icon}</span>
+                  <span className="text-xs group-hover:scale-110 transition-transform">{link.icon}</span>
                   <span className="text-gray-700 group-hover:text-blue-600 font-medium transition-colors">{link.label}</span>
                   <span className="ml-auto text-gray-400 group-hover:text-blue-500">→</span>
                 </a>
