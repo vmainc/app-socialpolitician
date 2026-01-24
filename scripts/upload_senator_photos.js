@@ -3,6 +3,11 @@
 /**
  * Upload senator portraits to PocketBase
  * Reads from portraits/senators/ directory and uploads to politicians collection
+ * 
+ * Features:
+ * - Robust name matching with accent normalization
+ * - Handles special characters (á, é, í, ó, ú, ñ, etc.)
+ * - Fuzzy matching with exact name first, then normalized last name
  */
 
 import PocketBase from 'pocketbase';
@@ -26,6 +31,19 @@ const PB_ADMIN_PASSWORD = process.env.POCKETBASE_ADMIN_PASSWORD || 'admin';
 
 const pb = new PocketBase(PB_URL);
 
+/**
+ * Normalize string by removing accents and special characters
+ * Handles: á, é, í, ó, ú, ü, ñ, ç, etc.
+ */
+function normalizeString(str) {
+  if (!str) return '';
+  return str
+    .normalize('NFD')                    // Decompose accented characters
+    .replace(/[\u0300-\u036f]/g, '')    // Remove diacritical marks
+    .toLowerCase()
+    .trim();
+}
+
 async function authenticate() {
   console.log('🔐 Authenticating with PocketBase...');
   try {
@@ -39,11 +57,12 @@ async function authenticate() {
 
 async function findSenatorInPocketBase(senatorName) {
   try {
-    // Try to find senator by name
     const names = senatorName.split(' ');
     const lastName = names[names.length - 1];
+    const normalizedSenatorName = normalizeString(senatorName);
+    const normalizedLastName = normalizeString(lastName);
     
-    // Try exact match first
+    // Try 1: Exact name match
     let records = await pb.collection('politicians').getFullList({
       filter: `name="${senatorName}"`,
       requestKey: null,
@@ -53,13 +72,30 @@ async function findSenatorInPocketBase(senatorName) {
       return records[0];
     }
     
-    // Try last name match with senator filter
+    // Try 2: Get all senators and match with normalized names
+    // (This helps with accent issues like Luján)
     records = await pb.collection('politicians').getFullList({
-      filter: `name~"${lastName}" && office_type="senator"`,
+      filter: `office_type="senator"`,
       requestKey: null,
     });
     
-    return records[0] || null;
+    // Find best match by normalized name
+    for (const record of records) {
+      const normalizedRecordName = normalizeString(record.name);
+      const recordLastName = normalizeString(record.name.split(' ').pop());
+      
+      // Check for exact normalized match
+      if (normalizedRecordName === normalizedSenatorName) {
+        return record;
+      }
+      
+      // Check for last name match with normalized names
+      if (recordLastName === normalizedLastName && normalizedLastName.length > 2) {
+        return record;
+      }
+    }
+    
+    return null;
   } catch (error) {
     console.error(`Error finding senator ${senatorName}:`, error.message);
     return null;
@@ -100,6 +136,7 @@ async function uploadSenatorPhotos() {
   let uploaded = 0;
   let failed = 0;
   let notFound = 0;
+  const notFoundList = [];
 
   for (const entry of index) {
     const imagePath = path.join(PORTRAITS_DIR, entry.filename);
@@ -117,6 +154,7 @@ async function uploadSenatorPhotos() {
     
     if (!senator) {
       console.log(`   ⚠️  Not found in PocketBase`);
+      notFoundList.push(entry.name);
       notFound++;
       continue;
     }
@@ -140,6 +178,11 @@ async function uploadSenatorPhotos() {
   console.log(`⚠️  Not found: ${notFound}`);
   console.log(`❌ Failed: ${failed}`);
   console.log(`📊 Total: ${index.length}`);
+  
+  if (notFoundList.length > 0) {
+    console.log('\n❓ Not found senators:');
+    notFoundList.forEach(name => console.log(`   - ${name}`));
+  }
 }
 
 async function main() {
