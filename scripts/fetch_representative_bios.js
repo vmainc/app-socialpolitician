@@ -107,9 +107,13 @@ async function fetchWikipediaBio(representativeName, wikipediaUrl) {
 
 async function updateRepresentativeBio(representativeId, bio) {
   try {
-    await pb.collection('politicians').update(representativeId, { bio });
+    if (!bio || bio.trim().length < 50) {
+      return false;
+    }
+    await pb.collection('politicians').update(representativeId, { bio: bio.trim() });
     return true;
   } catch (error) {
+    console.error(`   Error updating: ${error.message}`);
     return false;
   }
 }
