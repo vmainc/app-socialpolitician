@@ -85,27 +85,6 @@ function Home() {
     return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80"%3E%3Ccircle fill="%23f3f4f6" cx="40" cy="40" r="40"/%3E%3Ctext fill="%23d1d5db" font-family="system-ui, sans-serif" font-size="12" font-weight="500" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
   };
 
-  const getOfficeLabel = (officeType: string | null | undefined): string => {
-    switch (officeType) {
-      case 'senator':
-        return 'U.S. Senator';
-      case 'representative':
-        return 'U.S. Representative';
-      case 'governor':
-        return 'Governor';
-      default:
-        return 'Politician';
-    }
-  };
-
-  const getPartyColor = (party: string | null | undefined): string => {
-    if (!party) return 'bg-gray-100 text-gray-700';
-    const lower = party.toLowerCase();
-    if (lower.includes('republican')) return 'bg-red-50 text-red-700 border-red-200';
-    if (lower.includes('democrat')) return 'bg-blue-50 text-blue-700 border-blue-200';
-    if (lower.includes('independent')) return 'bg-green-50 text-green-700 border-green-200';
-    return 'bg-gray-100 text-gray-700 border-gray-200';
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
