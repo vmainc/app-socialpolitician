@@ -141,9 +141,9 @@ function PoliticianProfile() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      {/* Header - Aligned with Navigation */}
+      <header className="border-b border-gray-200 bg-white sticky top-[64px] z-10">
+        <div className="max-w-[1280px] mx-auto px-6 py-4">
           <Link to="/" className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors">
             <span>←</span>
             <span>Back</span>
@@ -151,7 +151,7 @@ function PoliticianProfile() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-[1280px] mx-auto px-6 py-12">
         
         {/* Hero Section with Photo and Basic Info */}
         <div className="mb-12">

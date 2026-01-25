@@ -3,12 +3,13 @@
 .politicians-page {
   min-height: 100vh;
   background-color: #f9fafb;
-  padding: 1.5rem 1rem 3rem;
+  padding: 1.5rem 0 3rem;
 }
 
 .politicians-page .page-header {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto 2rem;
+  padding: 0 1.5rem;
 }
 
 .politicians-page .back-link {
@@ -38,8 +39,9 @@
 }
 
 .politicians-card-grid {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
+  padding: 0 1.5rem;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1.25rem;
