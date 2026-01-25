@@ -87,6 +87,38 @@ export function isPresident(politician: Politician): boolean {
 /**
  * Check if a politician record is a media organization (should be excluded)
  */
+/**
+ * Check if a politician is a previous/former representative who should be excluded
+ */
+export function isPreviousRepresentative(politician: Politician): boolean {
+  const name = (politician.name || '').toLowerCase();
+  const currentPosition = (politician.current_position || '').toLowerCase();
+  
+  // Check for "Previous" or "Former" in current_position
+  if (currentPosition.includes('previous') || currentPosition.includes('former')) {
+    if (currentPosition.includes('representative') || 
+        currentPosition.includes('congress') ||
+        politician.office_type === 'representative') {
+      return true;
+    }
+  }
+  
+  // Known previous representatives
+  const previousReps = [
+    'beto o\'rourke',
+    'robert o\'rourke',
+    'beto o rourke',
+    'robert o rourke',
+  ];
+  
+  const normalizedName = name.toLowerCase().trim();
+  if (previousReps.some(prev => normalizedName.includes(prev))) {
+    return true;
+  }
+  
+  return false;
+}
+
 export function isMediaEntry(politician: Politician): boolean {
   const name = (politician.name || '').toLowerCase();
   const slug = (politician.slug || '').toLowerCase();
@@ -279,8 +311,12 @@ export async function listPoliticians(
       options
     );
 
-    // Filter out media entries and presidents
-    const filteredItems = response.items.filter(p => !isMediaEntry(p) && !isPresident(p));
+    // Filter out media entries, presidents, and previous representatives
+    const filteredItems = response.items.filter(p => 
+      !isMediaEntry(p) && 
+      !isPresident(p) && 
+      !isPreviousRepresentative(p)
+    );
     
     // Adjust totalItems to account for filtered entries
     // Note: This is an approximation since we're filtering after fetching

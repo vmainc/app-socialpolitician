@@ -70,8 +70,12 @@ function PoliticiansDirectory() {
           sort: 'name',
         });
         
-        // Filter out media entries and presidents
-        const filteredRecords = records.filter(p => !isMediaEntry(p) && !isPresident(p));
+        // Filter out media entries, presidents, and previous representatives
+        const filteredRecords = records.filter(p => 
+          !isMediaEntry(p) && 
+          !isPresident(p) && 
+          !isPreviousRepresentative(p)
+        );
         
         const filteredCount = records.length - filteredRecords.length;
         console.log(`✅ Loaded ${filteredRecords.length} ${officeType}s (filtered ${filteredCount} entries: media/presidents)`);
