@@ -8,7 +8,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
 import { Politician } from '../types/politician';
 import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
-import { isMediaEntry, isPresident } from '../lib/pb';
+import { isMediaEntry, isPresident, isPreviousRepresentative } from '../lib/pb';
 import './PoliticiansDirectory.css';
 
 function AvatarPlaceholder() {
