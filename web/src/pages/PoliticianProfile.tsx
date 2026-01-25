@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
 import { Politician, Feed } from '../types/politician';
+import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
 
 function PoliticianProfile() {
   const { slug } = useParams<{ slug: string }>();
@@ -180,7 +181,7 @@ function PoliticianProfile() {
             {/* Name & Title */}
             <div className="flex-1">
               <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
-                {politician.name}
+                {decodeHtmlEntities(politician.name)}
               </h1>
               
               <div className="mb-4">

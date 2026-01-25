@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
 import { Politician } from '../types/politician';
+import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
 import './PoliticiansDirectory.css';
 
 function AvatarPlaceholder() {
@@ -159,7 +160,7 @@ function PoliticiansDirectory() {
                   />
                 )}
               </div>
-              <h3 className="politician-card-name">{p.name}</h3>
+              <h3 className="politician-card-name">{decodeHtmlEntities(p.name)}</h3>
             </Link>
           ))}
         </div>

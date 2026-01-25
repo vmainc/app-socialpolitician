@@ -9,6 +9,7 @@ import { listPoliticians, ListPoliticiansResult } from '../lib/pb';
 import { usePoliticianFilters, US_STATES, OFFICE_OPTIONS, PARTY_OPTIONS, SORT_OPTIONS } from '../hooks/usePoliticianFilters';
 import { Politician } from '../types/politician';
 import { pb } from '../lib/pocketbase';
+import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
 
 function Home() {
   const {
@@ -324,7 +325,7 @@ function Home() {
                   
                   {/* Name */}
                   <h3 className="text-base font-semibold text-gray-900 leading-tight">
-                    {politician.name}
+                    {decodeHtmlEntities(politician.name)}
                   </h3>
                 </Link>
               ))}
