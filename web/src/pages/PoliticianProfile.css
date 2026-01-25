@@ -1,0 +1,308 @@
+/* PoliticianProfile - Matching PoliticiansDirectory style */
+
+.profile-page {
+  min-height: 100vh;
+  background-color: #f9fafb;
+  padding: 1.5rem 0 3rem;
+}
+
+.profile-page .profile-header {
+  max-width: 1280px;
+  margin: 0 auto 2rem;
+  padding: 0 1.5rem;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.profile-page .back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: color 0.2s;
+}
+
+.profile-page .back-link:hover {
+  color: #1d4ed8;
+}
+
+.profile-page .profile-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.profile-hero {
+  background: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .profile-hero {
+    flex-direction: row;
+    align-items: center;
+    gap: 2rem;
+  }
+}
+
+.profile-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.profile-avatar-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 3rem;
+}
+
+.profile-avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.profile-name {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.75rem;
+  line-height: 1.2;
+}
+
+.profile-office {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 1rem;
+}
+
+.profile-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.profile-badge {
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.profile-badge.party-democrat {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.profile-badge.party-republican {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.profile-badge.party-independent {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.profile-position {
+  font-size: 0.9375rem;
+  color: #6b7280;
+  font-style: italic;
+  margin: 0;
+}
+
+.profile-section {
+  background: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile-section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.profile-section-title::before {
+  content: '';
+  width: 4px;
+  height: 1.5rem;
+  background: linear-gradient(to bottom, #2563eb, #3b82f6);
+  border-radius: 2px;
+}
+
+.profile-bio {
+  color: #374151;
+  line-height: 1.6;
+  font-size: 0.9375rem;
+  margin: 0;
+}
+
+.profile-social-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.profile-social-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s;
+  background: #fff;
+}
+
+.profile-social-link:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.profile-social-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.profile-social-label {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.9375rem;
+}
+
+.profile-social-subtext {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.profile-feeds-empty {
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+
+.profile-feeds-empty-icon {
+  font-size: 3rem;
+  opacity: 0.5;
+  margin-bottom: 1rem;
+}
+
+.profile-feeds-empty-text {
+  color: #6b7280;
+  font-weight: 500;
+  margin: 0 0 0.25rem;
+}
+
+.profile-feeds-empty-subtext {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.profile-loading {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+}
+
+.profile-not-found {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1rem;
+}
+
+.profile-not-found h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.profile-not-found p {
+  color: #6b7280;
+  margin: 0;
+}
+
+.profile-not-found .back-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.profile-not-found .back-link:hover {
+  color: #1d4ed8;
+}
+
+@media (min-width: 640px) {
+  .profile-social-links {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .profile-hero {
+    padding: 2.5rem;
+  }
+  
+  .profile-section {
+    padding: 2rem;
+  }
+  
+  .profile-avatar {
+    width: 140px;
+    height: 140px;
+  }
+  
+  .profile-name {
+    font-size: 2.25rem;
+  }
+}
