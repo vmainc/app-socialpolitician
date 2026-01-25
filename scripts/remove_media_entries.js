@@ -54,9 +54,18 @@ function isMediaEntry(politician) {
   }
   
   // Check slug (common patterns like "cnn-com")
-  if (slug.includes('cnn') || slug.includes('com') || slug.includes('media') || slug.includes('news')) {
-    // But exclude if it's clearly a person's name
-    if (!slug.match(/^[a-z]+-[a-z]+$/)) {
+  // Only flag if slug ends with "-com" or contains media keywords as standalone words
+  if (slug.endsWith('-com') || slug.endsWith('.com') || 
+      slug.includes('-cnn-') || slug.includes('-media-') || 
+      slug === 'cnn-com' || slug === 'cnn.com') {
+    return true;
+  }
+  
+  // Check for media domain patterns in slug (but not if it's part of a state name like "massachusetts")
+  const mediaSlugPatterns = ['cnn', 'foxnews', 'msnbc', 'abcnews', 'cbsnews', 'nbcnews'];
+  if (mediaSlugPatterns.some(pattern => slug.includes(pattern) && !slug.includes('massachusetts'))) {
+    // Only flag if it's clearly a media domain, not a person's name
+    if (slug.match(/^[a-z]+(-com|-org)$/)) {
       return true;
     }
   }
