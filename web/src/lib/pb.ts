@@ -15,6 +15,66 @@ export function getBaseUrl(): string {
 }
 
 /**
+ * List of all U.S. Presidents (for filtering)
+ */
+const US_PRESIDENTS = [
+  'George Washington', 'John Adams', 'Thomas Jefferson', 'James Madison',
+  'James Monroe', 'John Quincy Adams', 'Andrew Jackson', 'Martin Van Buren',
+  'William Henry Harrison', 'John Tyler', 'James K. Polk', 'Zachary Taylor',
+  'Millard Fillmore', 'Franklin Pierce', 'James Buchanan', 'Abraham Lincoln',
+  'Andrew Johnson', 'Ulysses S. Grant', 'Rutherford B. Hayes', 'James A. Garfield',
+  'Chester A. Arthur', 'Grover Cleveland', 'Benjamin Harrison', 'William McKinley',
+  'Theodore Roosevelt', 'William Howard Taft', 'Woodrow Wilson', 'Warren G. Harding',
+  'Calvin Coolidge', 'Herbert Hoover', 'Franklin D. Roosevelt', 'Harry S. Truman',
+  'Dwight D. Eisenhower', 'John F. Kennedy', 'Lyndon B. Johnson', 'Richard Nixon',
+  'Gerald Ford', 'Jimmy Carter', 'Ronald Reagan', 'George H. W. Bush',
+  'Bill Clinton', 'George W. Bush', 'Barack Obama', 'Donald Trump', 'Joe Biden'
+];
+
+/**
+ * Check if a politician record is a U.S. President (should be excluded)
+ */
+export function isPresident(politician: Politician): boolean {
+  const name = (politician.name || '').trim();
+  const currentPosition = (politician.current_position || '').toLowerCase();
+  
+  // Check if name matches any president (exact or partial match)
+  const normalizedName = name.toLowerCase();
+  for (const president of US_PRESIDENTS) {
+    const normalizedPresident = president.toLowerCase().trim();
+    // Exact match
+    if (normalizedName === normalizedPresident) {
+      return true;
+    }
+    // Check if name contains president's last name (for cases like "Warren G. Harding")
+    const presidentParts = normalizedPresident.split(' ');
+    const nameParts = normalizedName.split(' ');
+    if (presidentParts.length > 1 && nameParts.length > 1) {
+      // Match last name
+      const presidentLastName = presidentParts[presidentParts.length - 1];
+      const nameLastName = nameParts[nameParts.length - 1];
+      if (presidentLastName === nameLastName && presidentLastName.length > 3) {
+        // Also check first name to reduce false positives
+        const presidentFirstName = presidentParts[0];
+        const nameFirstName = nameParts[0];
+        if (presidentFirstName === nameFirstName || 
+            (presidentFirstName.length > 2 && nameFirstName.startsWith(presidentFirstName.substring(0, 3)))) {
+          return true;
+        }
+      }
+    }
+  }
+  
+  // Check current_position for president-related terms
+  if (currentPosition.includes('president') && 
+      (currentPosition.includes('united states') || currentPosition.includes('u.s.') || currentPosition.includes('us'))) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
  * Check if a politician record is a media organization (should be excluded)
  */
 export function isMediaEntry(politician: Politician): boolean {
@@ -163,8 +223,8 @@ export async function listPoliticians(
       options
     );
 
-    // Filter out media entries
-    const filteredItems = response.items.filter(p => !isMediaEntry(p));
+    // Filter out media entries and presidents
+    const filteredItems = response.items.filter(p => !isMediaEntry(p) && !isPresident(p));
     
     // Adjust totalItems to account for filtered entries
     // Note: This is an approximation since we're filtering after fetching

@@ -8,7 +8,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
 import { Politician } from '../types/politician';
 import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
-import { isMediaEntry } from '../lib/pb';
+import { isMediaEntry, isPresident } from '../lib/pb';
 import './PoliticiansDirectory.css';
 
 function AvatarPlaceholder() {
@@ -69,10 +69,11 @@ function PoliticiansDirectory() {
           sort: 'name',
         });
         
-        // Filter out media entries
-        const filteredRecords = records.filter(p => !isMediaEntry(p));
+        // Filter out media entries and presidents
+        const filteredRecords = records.filter(p => !isMediaEntry(p) && !isPresident(p));
         
-        console.log(`✅ Loaded ${filteredRecords.length} ${officeType}s (filtered ${records.length - filteredRecords.length} media entries)`);
+        const filteredCount = records.length - filteredRecords.length;
+        console.log(`✅ Loaded ${filteredRecords.length} ${officeType}s (filtered ${filteredCount} entries: media/presidents)`);
         setPoliticians(filteredRecords);
       } catch (error: any) {
         console.error('❌ Failed to load politicians:', error);
