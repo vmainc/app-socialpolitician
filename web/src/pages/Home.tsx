@@ -88,9 +88,9 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white sticky top-0 z-20 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Header - Aligned with Navigation */}
+      <header className="border-b border-gray-200 bg-white sticky top-[64px] z-20 shadow-sm">
+        <div className="max-w-[1280px] mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-1">Politician Directory</h1>
@@ -108,9 +108,9 @@ function Home() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-[1280px] mx-auto px-6 py-8">
         {/* Filter Bar */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 sticky top-[120px] z-10">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 sticky top-[180px] z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Search */}
             <div className="lg:col-span-2">
@@ -126,8 +126,8 @@ function Home() {
                   placeholder="Name or position..."
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
@@ -297,7 +297,7 @@ function Home() {
         {/* Results Grid - Matching PoliticiansDirectory style */}
         {!loading && !error && result && result.items.length > 0 && (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 mb-8" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 mb-8">
               {result.items.map((politician) => (
                 <Link
                   key={politician.id}
