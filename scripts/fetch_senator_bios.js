@@ -93,6 +93,10 @@ async function updateSenatorBio(senatorId, bio) {
     await pb.collection('politicians').update(senatorId, { bio });
     return true;
   } catch (error) {
+    console.error(`   ❌ Update failed: ${error.message}`);
+    if (error.message.includes('field') || error.message.includes('schema')) {
+      console.error(`   ⚠️  Bio field may not exist in PocketBase schema!`);
+    }
     return false;
   }
 }
