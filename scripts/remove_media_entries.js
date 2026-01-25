@@ -46,26 +46,66 @@ function isMediaEntry(politician) {
     'press',
     '.com',
     '.org',
+    '.co.uk',
   ];
   
-  // Check name
+  // Social media platforms
+  const socialMediaPlatforms = [
+    'facebook',
+    'quora',
+    'reddit',
+    'tiktok',
+    'truth social',
+    'tumblr',
+    'wechat',
+    'we chat',
+    'twitter',
+    'instagram',
+    'linkedin',
+    'youtube',
+    'snapchat',
+    'pinterest',
+  ];
+  
+  // Check name for media keywords
   if (mediaKeywords.some(keyword => name.includes(keyword))) {
     return true;
   }
   
-  // Check slug (common patterns like "cnn-com")
-  // Only flag if slug ends with "-com" or contains media keywords as standalone words
+  // Check name for social media platforms
+  if (socialMediaPlatforms.some(platform => name.includes(platform))) {
+    return true;
+  }
+  
+  // Check if name is just a social media platform (exact match or with .com)
+  const nameWithoutCom = name.replace(/\.com$/, '').trim();
+  if (socialMediaPlatforms.some(platform => nameWithoutCom === platform || nameWithoutCom === platform.replace(' ', ''))) {
+    return true;
+  }
+  
+  // Check slug (common patterns like "cnn-com", "facebook-com", etc.)
+  // Only flag if slug ends with "-com", "-org", "-co-uk" or contains media keywords
   if (slug.endsWith('-com') || slug.endsWith('.com') || 
+      slug.endsWith('-org') || slug.endsWith('.org') ||
+      slug.endsWith('-co-uk') || slug.endsWith('.co.uk') ||
       slug.includes('-cnn-') || slug.includes('-media-') || 
       slug === 'cnn-com' || slug === 'cnn.com') {
     return true;
   }
   
+  // Check for social media platforms in slug
+  if (socialMediaPlatforms.some(platform => {
+    const platformSlug = platform.replace(' ', '-');
+    return slug === platformSlug || slug === `${platformSlug}-com` || slug.startsWith(`${platformSlug}-`);
+  })) {
+    return true;
+  }
+  
   // Check for media domain patterns in slug (but not if it's part of a state name like "massachusetts")
-  const mediaSlugPatterns = ['cnn', 'foxnews', 'msnbc', 'abcnews', 'cbsnews', 'nbcnews'];
+  const mediaSlugPatterns = ['cnn', 'foxnews', 'msnbc', 'abcnews', 'cbsnews', 'nbcnews', 'telegraph', 'facebook', 'quora', 'reddit', 'tiktok', 'tumblr', 'wechat'];
   if (mediaSlugPatterns.some(pattern => slug.includes(pattern) && !slug.includes('massachusetts'))) {
     // Only flag if it's clearly a media domain, not a person's name
-    if (slug.match(/^[a-z]+(-com|-org)$/)) {
+    if (slug.match(/^[a-z]+(-com|-org|-co-uk)$/) || slug.match(/^[a-z-]+(facebook|quora|reddit|tiktok|tumblr|wechat)/)) {
       return true;
     }
   }
@@ -75,7 +115,7 @@ function isMediaEntry(politician) {
     return true;
   }
   
-  // Check if website is a media domain
+  // Check if website is a media domain or social media platform
   const mediaDomains = [
     'cnn.com',
     'foxnews.com',
@@ -89,6 +129,14 @@ function isMediaEntry(politician) {
     'wsj.com',
     'nytimes.com',
     'washingtonpost.com',
+    'telegraph.co.uk',
+    'facebook.com',
+    'quora.com',
+    'reddit.com',
+    'tiktok.com',
+    'truthsocial.com',
+    'tumblr.com',
+    'wechat.com',
   ];
   
   if (mediaDomains.some(domain => website.includes(domain))) {

@@ -49,9 +49,19 @@ function isPresident(politician) {
     if (normalizedName === normalizedPresident) {
       return true;
     }
-    // Check if name contains president's last name (for cases like "Warren G. Harding")
-    const presidentParts = normalizedPresident.split(' ');
-    const nameParts = normalizedName.split(' ');
+    
+    // Remove middle initials and periods for matching (e.g., "Warren G. Harding" -> "warren harding")
+    const nameWithoutMiddle = normalizedName.replace(/\s+[a-z]\.\s+/g, ' ').replace(/\s+/g, ' ').trim();
+    const presidentWithoutMiddle = normalizedPresident.replace(/\s+[a-z]\.\s+/g, ' ').replace(/\s+/g, ' ').trim();
+    
+    if (nameWithoutMiddle === presidentWithoutMiddle) {
+      return true;
+    }
+    
+    // Check if name contains president's last name (for cases like "Warren G. Harding", "Ulysses S. Grant")
+    const presidentParts = normalizedPresident.split(/\s+/).filter(p => p.length > 1 && !p.match(/^[a-z]\.?$/));
+    const nameParts = normalizedName.split(/\s+/).filter(p => p.length > 1 && !p.match(/^[a-z]\.?$/));
+    
     if (presidentParts.length > 1 && nameParts.length > 1) {
       // Match last name
       const presidentLastName = presidentParts[presidentParts.length - 1];
