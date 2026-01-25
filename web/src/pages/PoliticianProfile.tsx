@@ -26,6 +26,7 @@ function PoliticianProfile() {
 
         setPolitician(politicianRecord);
 
+        // Silently fetch feeds - 400/404 errors are expected when no feeds exist
         try {
           const feedRecords = await pb.collection('feeds').getList<Feed>(1, 50, {
             filter: `politician="${politicianRecord.id}"`,
@@ -41,6 +42,13 @@ function PoliticianProfile() {
           
           setFeeds(filteredFeeds);
         } catch (feedError: any) {
+          // Silently ignore 400/404 errors - these are expected when politician has no feeds
+          // Status 400 = Bad Request (often means filter is invalid or collection doesn't exist)
+          // Status 404 = Not Found (politician has no feeds)
+          if (feedError?.status !== 400 && feedError?.status !== 404) {
+            // Only log unexpected errors
+            console.warn('Unexpected error loading feeds:', feedError);
+          }
           setFeeds([]);
         }
       } catch (error: any) {
