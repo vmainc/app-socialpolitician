@@ -1,5 +1,6 @@
 /**
- * Home page - Politician Directory with search, filters, and pagination
+ * Home page - Modern Politician Directory
+ * Clean, beautiful design with search, filters, and pagination
  */
 
 import { useState, useEffect, useMemo } from 'react';
@@ -30,7 +31,6 @@ function Home() {
 
   // Fetch politicians
   useEffect(() => {
-    // Cancel previous request
     if (abortController) {
       abortController.abort();
     }
@@ -55,7 +55,7 @@ function Home() {
       })
       .catch((err) => {
         if (err.name === 'AbortError') {
-          return; // Request was cancelled, ignore
+          return;
         }
         if (!controller.signal.aborted) {
           setError(err.message || 'Failed to load politicians');
@@ -68,7 +68,6 @@ function Home() {
     };
   }, [filters.page, filters.perPage, pbFilter, filters.sort]);
 
-  // Check if any filters are active
   const hasActiveFilters = useMemo(() => {
     return (
       filters.searchText !== '' ||
@@ -83,7 +82,7 @@ function Home() {
     if (politician.photo) {
       return pb.files.getUrl(politician, politician.photo);
     }
-    return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23e5e7eb" width="200" height="200"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="14" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
+    return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80"%3E%3Ccircle fill="%23f3f4f6" cx="40" cy="40" r="40"/%3E%3Ctext fill="%23d1d5db" font-family="system-ui, sans-serif" font-size="12" font-weight="500" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
   };
 
   const getOfficeLabel = (officeType: string | null | undefined): string => {
@@ -99,45 +98,73 @@ function Home() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Politician Directory</h1>
-          <p className="text-gray-600">
-            Search and filter U.S. Senators, Representatives, and Governors
-          </p>
-        </div>
+  const getPartyColor = (party: string | null | undefined): string => {
+    if (!party) return 'bg-gray-100 text-gray-700';
+    const lower = party.toLowerCase();
+    if (lower.includes('republican')) return 'bg-red-50 text-red-700 border-red-200';
+    if (lower.includes('democrat')) return 'bg-blue-50 text-blue-700 border-blue-200';
+    if (lower.includes('independent')) return 'bg-green-50 text-green-700 border-green-200';
+    return 'bg-gray-100 text-gray-700 border-gray-200';
+  };
 
-        {/* Filter Bar - Sticky on desktop */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6 sticky top-4 z-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      {/* Header */}
+      <header className="border-b border-gray-200 bg-white sticky top-0 z-20 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-1">Politician Directory</h1>
+              <p className="text-gray-600 text-sm">
+                Search and explore U.S. Senators, Representatives, and Governors
+              </p>
+            </div>
+            {result && (
+              <div className="hidden md:block text-right">
+                <div className="text-2xl font-bold text-gray-900">{result.totalItems.toLocaleString()}</div>
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Total Politicians</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Filter Bar */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 sticky top-[120px] z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Search */}
             <div className="lg:col-span-2">
-              <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="search" className="block text-sm font-semibold text-gray-700 mb-2">
                 Search
               </label>
-              <input
-                id="search"
-                type="text"
-                value={filters.searchText}
-                onChange={(e) => updateSearchText(e.target.value)}
-                placeholder="Search by name or position..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+              <div className="relative">
+                <input
+                  id="search"
+                  type="text"
+                  value={filters.searchText}
+                  onChange={(e) => updateSearchText(e.target.value)}
+                  placeholder="Name or position..."
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
             </div>
 
             {/* State */}
             <div>
-              <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="state" className="block text-sm font-semibold text-gray-700 mb-2">
                 State
               </label>
               <select
                 id="state"
                 value={filters.selectedState}
                 onChange={(e) => updateState(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
               >
                 {US_STATES.map((state) => (
                   <option key={state.value} value={state.value}>
@@ -149,14 +176,14 @@ function Home() {
 
             {/* Office */}
             <div>
-              <label htmlFor="office" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="office" className="block text-sm font-semibold text-gray-700 mb-2">
                 Office
               </label>
               <select
                 id="office"
                 value={filters.selectedOffice}
                 onChange={(e) => updateOffice(e.target.value as any)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
               >
                 {OFFICE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -168,14 +195,14 @@ function Home() {
 
             {/* Party */}
             <div>
-              <label htmlFor="party" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="party" className="block text-sm font-semibold text-gray-700 mb-2">
                 Party
               </label>
               <select
                 id="party"
                 value={filters.selectedParty}
                 onChange={(e) => updateParty(e.target.value as any)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
               >
                 {PARTY_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -184,23 +211,23 @@ function Home() {
                 ))}
               </select>
             </div>
-
-            {/* Has Photo Toggle */}
-            <div className="flex items-end">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={filters.hasPhoto}
-                  onChange={(e) => updateHasPhoto(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-gray-700">Has Photo</span>
-              </label>
-            </div>
           </div>
 
-          {/* Sort and Clear */}
-          <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-gray-200">
+          {/* Secondary Filters */}
+          <div className="flex flex-wrap items-center gap-4 mt-6 pt-6 border-t border-gray-100">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="hasPhoto"
+                checked={filters.hasPhoto}
+                onChange={(e) => updateHasPhoto(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="hasPhoto" className="text-sm font-medium text-gray-700 cursor-pointer">
+                Has Photo
+              </label>
+            </div>
+
             <div className="flex items-center gap-2">
               <label htmlFor="sort" className="text-sm font-medium text-gray-700">
                 Sort:
@@ -209,7 +236,7 @@ function Home() {
                 id="sort"
                 value={filters.sort}
                 onChange={(e) => updateSort(e.target.value as any)}
-                className="px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white text-sm"
               >
                 {SORT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -224,50 +251,56 @@ function Home() {
                 onClick={resetFilters}
                 className="px-4 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                Clear Filters
+                Clear All
               </button>
             )}
 
             {result && (
               <div className="ml-auto text-sm text-gray-600">
-                Showing {result.items.length} of {result.totalItems} results
-                {result.totalPages > 1 && ` (Page ${result.page} of ${result.totalPages})`}
+                <span className="font-semibold text-gray-900">{result.items.length}</span> of{' '}
+                <span className="font-semibold text-gray-900">{result.totalItems.toLocaleString()}</span> results
+                {result.totalPages > 1 && (
+                  <span className="text-gray-500"> • Page {result.page} of {result.totalPages}</span>
+                )}
               </div>
             )}
           </div>
         </div>
 
-        {/* Results */}
+        {/* Loading State */}
         {loading && !result && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[...Array(12)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg shadow-md p-6 animate-pulse">
-                <div className="w-20 h-20 bg-gray-200 rounded-lg mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+              <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-pulse">
+                <div className="w-20 h-20 bg-gray-200 rounded-full mx-auto mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded mb-2 w-3/4 mx-auto"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2 mx-auto"></div>
               </div>
             ))}
           </div>
         )}
 
+        {/* Error State */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <p className="text-red-800 font-medium mb-2">Error loading politicians</p>
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
+            <div className="text-4xl mb-3">⚠️</div>
+            <p className="text-red-800 font-semibold mb-2">Error loading politicians</p>
             <p className="text-red-600 text-sm mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              className="px-6 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium"
             >
               Retry
             </button>
           </div>
         )}
 
+        {/* Empty State */}
         {!loading && !error && result && result.items.length === 0 && (
-          <div className="bg-white rounded-lg shadow-md p-12 text-center">
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No politicians found</h3>
-            <p className="text-gray-600 mb-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-16 text-center">
+            <div className="text-6xl mb-4 opacity-50">🔍</div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">No politicians found</h3>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">
               {hasActiveFilters
                 ? 'Try adjusting your filters to see more results.'
                 : 'No politicians are available at this time.'}
@@ -275,7 +308,7 @@ function Home() {
             {hasActiveFilters && (
               <button
                 onClick={resetFilters}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
               >
                 Clear All Filters
               </button>
@@ -283,70 +316,72 @@ function Home() {
           </div>
         )}
 
+        {/* Results Grid */}
         {!loading && !error && result && result.items.length > 0 && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
               {result.items.map((politician) => (
                 <Link
                   key={politician.id}
                   to={`/politicians/${politician.slug}`}
-                  className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden border border-gray-100 block group"
+                  className="group bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-gray-200 transition-all duration-300 overflow-hidden"
                 >
-                  {/* Photo Section - Centered */}
-                  <div className="flex justify-center pt-5 pb-3">
+                  {/* Photo */}
+                  <div className="flex justify-center pt-6 pb-4">
                     <div className="relative">
                       <img
                         src={getPhotoUrl(politician)}
                         alt={politician.name}
-                        className="w-14 h-14 object-cover rounded-full border-2 border-gray-200 group-hover:border-blue-300 transition-colors"
-                        style={{ width: '56px', height: '56px' }}
+                        className="w-20 h-20 object-cover rounded-full border-3 border-white shadow-lg group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src =
-                            'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="56" height="56"%3E%3Ccircle fill="%23e5e7eb" cx="28" cy="28" r="28"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="10" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
+                            'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80"%3E%3Ccircle fill="%23f3f4f6" cx="40" cy="40" r="40"/%3E%3Ctext fill="%23d1d5db" font-family="system-ui, sans-serif" font-size="12" font-weight="500" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
                         }}
                       />
                     </div>
                   </div>
 
-                  {/* Info Section */}
-                  <div className="px-4 pb-4">
-                    <h3 className="font-semibold text-gray-900 mb-1 text-center line-clamp-2 group-hover:text-blue-600 transition-colors text-sm">
+                  {/* Info */}
+                  <div className="px-5 pb-5">
+                    <h3 className="font-bold text-gray-900 mb-1.5 text-center line-clamp-2 group-hover:text-blue-600 transition-colors text-base">
                       {politician.name}
                     </h3>
-                    <p className="text-xs text-gray-600 mb-2.5 text-center">
+                    <p className="text-xs text-gray-600 mb-3 text-center font-medium">
                       {politician.current_position || getOfficeLabel(politician.office_type)}
                     </p>
-                    <div className="flex flex-wrap justify-center gap-1 mb-3">
+                    
+                    {/* Badges */}
+                    <div className="flex flex-wrap justify-center gap-1.5 mb-4">
                       {politician.state && (
-                        <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+                        <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium border border-gray-200">
                           {politician.state}
                         </span>
                       )}
                       {politician.political_party && (
-                        <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getPartyColor(politician.political_party)}`}>
                           {politician.political_party}
                         </span>
                       )}
                       {politician.district && (
-                        <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+                        <span className="px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium border border-purple-200">
                           D-{politician.district}
                         </span>
                       )}
                     </div>
 
-                    {/* Quick Links Row - Centered */}
+                    {/* Social Links */}
                     {(politician.wikipedia_url || politician.website_url || politician.x_url || politician.facebook_url) && (
-                      <div className="flex items-center justify-center gap-1.5 pt-2.5 border-t border-gray-100">
+                      <div className="flex items-center justify-center gap-2 pt-3 border-t border-gray-100">
                         {politician.wikipedia_url && (
                           <a
                             href={politician.wikipedia_url}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="text-gray-400 hover:text-blue-600 transition-colors p-0.5 rounded hover:bg-blue-50"
+                            className="text-gray-400 hover:text-gray-700 transition-colors p-1.5 rounded-lg hover:bg-gray-100"
                             title="Wikipedia"
                           >
-                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm1.25 17.292c-.646.646-1.417.958-2.25.958s-1.604-.312-2.25-.958c-.646-.646-.958-1.417-.958-2.25s.312-1.604.958-2.25c.646-.646 1.417-.958 2.25-.958s1.604.312 2.25.958c.646.646.958 1.417.958 2.25s-.312 1.604-.958 2.25zm-1.25-4.292c-.552 0-1 .448-1 1s.448 1 1 1 1-.448 1-1-.448-1-1-1zm-2-1c-.552 0-1 .448-1 1s.448 1 1 1 1-.448 1-1-.448-1-1-1zm4 0c-.552 0-1 .448-1 1s.448 1 1 1 1-.448 1-1-.448-1-1-1z"/>
                             </svg>
                           </a>
@@ -357,10 +392,10 @@ function Home() {
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="text-gray-400 hover:text-blue-600 transition-colors p-0.5 rounded hover:bg-blue-50"
+                            className="text-gray-400 hover:text-blue-600 transition-colors p-1.5 rounded-lg hover:bg-blue-50"
                             title="Website"
                           >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                             </svg>
                           </a>
@@ -371,10 +406,10 @@ function Home() {
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="text-gray-400 hover:text-black transition-colors p-0.5 rounded hover:bg-gray-100"
+                            className="text-gray-400 hover:text-black transition-colors p-1.5 rounded-lg hover:bg-gray-100"
                             title="X (Twitter)"
                           >
-                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                             </svg>
                           </a>
@@ -385,10 +420,10 @@ function Home() {
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="text-gray-400 hover:text-blue-600 transition-colors p-0.5 rounded hover:bg-blue-50"
+                            className="text-gray-400 hover:text-blue-600 transition-colors p-1.5 rounded-lg hover:bg-blue-50"
                             title="Facebook"
                           >
-                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                             </svg>
                           </a>
@@ -406,25 +441,25 @@ function Home() {
                 <button
                   onClick={() => updatePage(result.page - 1)}
                   disabled={result.page === 1}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-5 py-2.5 border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-gray-700"
                 >
-                  Previous
+                  ← Previous
                 </button>
-                <span className="text-sm text-gray-600">
+                <div className="px-4 py-2.5 bg-gray-50 rounded-xl text-sm font-medium text-gray-700">
                   Page {result.page} of {result.totalPages}
-                </span>
+                </div>
                 <button
                   onClick={() => updatePage(result.page + 1)}
                   disabled={result.page >= result.totalPages}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-5 py-2.5 border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-gray-700"
                 >
-                  Next
+                  Next →
                 </button>
               </div>
             )}
           </>
         )}
-      </div>
+      </main>
     </div>
   );
 }
