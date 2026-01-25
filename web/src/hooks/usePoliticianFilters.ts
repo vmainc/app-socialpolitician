@@ -98,8 +98,8 @@ export function buildPocketBaseFilter(filters: PoliticianFilters): string {
     conditions.push(`photo != ""`);
   }
   
-  // Exclude previous/former senators for senator filter
-  if (filters.selectedOffice === 'senator') {
+  // Exclude previous/former senators and representatives
+  if (filters.selectedOffice === 'senator' || filters.selectedOffice === 'representative') {
     conditions.push(`current_position!~"Previous" && current_position!~"Former"`);
   }
   

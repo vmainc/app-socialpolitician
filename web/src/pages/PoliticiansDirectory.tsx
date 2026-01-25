@@ -61,7 +61,8 @@ function PoliticiansDirectory() {
           // Option 2: Only include those with "U.S. Senator" (current ones)
           filter = `office_type="${officeType}" && current_position~"U.S. Senator" && current_position!~"Previous" && current_position!~"Former"`;
         } else if (officeType === 'representative') {
-          filter = `office_type="${officeType}" || current_position~"U.S. Representative"`;
+          // Exclude previous/former representatives - only show current ones
+          filter = `office_type="${officeType}" && current_position!~"Previous" && current_position!~"Former"`;
         }
         
         const records = await pb.collection('politicians').getFullList<Politician>({
