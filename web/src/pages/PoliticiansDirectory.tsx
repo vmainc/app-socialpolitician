@@ -8,6 +8,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
 import { Politician } from '../types/politician';
 import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
+import { isMediaEntry } from '../lib/pb';
 import './PoliticiansDirectory.css';
 
 function AvatarPlaceholder() {
@@ -67,8 +68,12 @@ function PoliticiansDirectory() {
           filter,
           sort: 'name',
         });
-        console.log(`✅ Loaded ${records.length} ${officeType}s`);
-        setPoliticians(records);
+        
+        // Filter out media entries
+        const filteredRecords = records.filter(p => !isMediaEntry(p));
+        
+        console.log(`✅ Loaded ${filteredRecords.length} ${officeType}s (filtered ${records.length - filteredRecords.length} media entries)`);
+        setPoliticians(filteredRecords);
       } catch (error: any) {
         console.error('❌ Failed to load politicians:', error);
         console.error('   Error details:', {

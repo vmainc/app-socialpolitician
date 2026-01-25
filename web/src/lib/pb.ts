@@ -15,6 +15,76 @@ export function getBaseUrl(): string {
 }
 
 /**
+ * Check if a politician record is a media organization (should be excluded)
+ */
+export function isMediaEntry(politician: Politician): boolean {
+  const name = (politician.name || '').toLowerCase();
+  const slug = (politician.slug || '').toLowerCase();
+  const currentPosition = (politician.current_position || '').toLowerCase();
+  const website = (politician.website_url || '').toLowerCase();
+  
+  // Media-related keywords
+  const mediaKeywords = [
+    'media',
+    'cnn',
+    'fox news',
+    'msnbc',
+    'abc news',
+    'cbs news',
+    'nbc news',
+    'news network',
+    'broadcast',
+    'television',
+    'tv station',
+    'radio station',
+    'newspaper',
+    'magazine',
+    'publication',
+    'press',
+  ];
+  
+  // Check name
+  if (mediaKeywords.some(keyword => name.includes(keyword))) {
+    return true;
+  }
+  
+  // Check slug (common patterns like "cnn-com")
+  if (slug.includes('cnn') || slug.includes('com') || slug.includes('media') || slug.includes('news')) {
+    // But exclude if it's clearly a person's name (firstname-lastname pattern)
+    if (!slug.match(/^[a-z]+-[a-z]+(-[a-z]+)?$/)) {
+      return true;
+    }
+  }
+  
+  // Check current_position
+  if (currentPosition.includes('media') || currentPosition.includes('news organization') || currentPosition.includes('journalist')) {
+    return true;
+  }
+  
+  // Check if website is a media domain
+  const mediaDomains = [
+    'cnn.com',
+    'foxnews.com',
+    'msnbc.com',
+    'abcnews.com',
+    'cbsnews.com',
+    'nbcnews.com',
+    'reuters.com',
+    'ap.org',
+    'bloomberg.com',
+    'wsj.com',
+    'nytimes.com',
+    'washingtonpost.com',
+  ];
+  
+  if (mediaDomains.some(domain => website.includes(domain))) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
  * Build file URL for a politician's photo
  * Uses collection name "politicians" if collectionId is not available
  */
@@ -84,12 +154,19 @@ export async function listPoliticians(
       options
     );
 
+    // Filter out media entries
+    const filteredItems = response.items.filter(p => !isMediaEntry(p));
+    
+    // Adjust totalItems to account for filtered entries
+    // Note: This is an approximation since we're filtering after fetching
+    const filteredTotal = response.totalItems - (response.items.length - filteredItems.length);
+
     return {
-      items: response.items,
-      totalItems: response.totalItems,
+      items: filteredItems,
+      totalItems: filteredTotal,
       page: response.page,
       perPage: response.perPage,
-      totalPages: response.totalPages,
+      totalPages: Math.ceil(filteredTotal / perPage),
     };
   } catch (error: any) {
     // Handle abort errors gracefully
