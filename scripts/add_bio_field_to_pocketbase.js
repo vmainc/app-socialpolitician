@@ -61,22 +61,23 @@ async function addBioField() {
       return;
     }
     
-    // Add bio field to schema
+    // Add bio field to schema - use PocketBase field format
     const newField = {
       name: 'bio',
       type: 'text',
       required: false,
-      unique: false,
       system: false,
-      options: {
-        min: null,
-        max: 5000,
-        pattern: ''
-      }
+      hidden: false,
+      presentable: false,
+      min: 0,
+      max: 5000,
+      pattern: ''
     };
     
     // Update collection with new schema
     const updatedSchema = [...currentSchema, newField];
+    
+    console.log(`   Adding field: ${JSON.stringify(newField, null, 2)}\n`);
     
     await pb.collections.update(collectionId, {
       schema: updatedSchema
