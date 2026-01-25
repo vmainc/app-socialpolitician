@@ -80,7 +80,7 @@ function Home() {
 
   const getPhotoUrl = (politician: Politician): string => {
     if (politician.photo) {
-      return pb.files.getUrl(politician, politician.photo);
+      return pb.files.getURL(politician, politician.photo);
     }
     return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80"%3E%3Ccircle fill="%23f3f4f6" cx="40" cy="40" r="40"/%3E%3Ctext fill="%23d1d5db" font-family="system-ui, sans-serif" font-size="12" font-weight="500" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
   };

@@ -27,7 +27,7 @@ export function buildFileUrl(record: Politician, filename: string | null | undef
   // PocketBase SDK's getUrl handles collection ID automatically, but we provide a fallback
   // The SDK method is preferred, but this can be used if needed
   try {
-    return pb.files.getUrl(record, filename);
+    return pb.files.getURL(record, filename);
   } catch (error) {
     // Fallback: construct URL manually using collection name
     // Format: /pb/api/files/{collectionName}/{recordId}/{filename}
@@ -66,14 +66,22 @@ export async function listPoliticians(
   } = params;
 
   try {
+    // Build options object, only including defined non-empty values
+    // This prevents PocketBase from seeing undefined or empty string values
+    const options: any = { signal };
+    
+    if (filter && filter.trim()) {
+      options.filter = filter;
+    }
+    
+    if (sort && sort.trim()) {
+      options.sort = sort;
+    }
+
     const response = await pb.collection('politicians').getList<Politician>(
       page,
       perPage,
-      {
-        filter: filter && filter.trim() ? filter : undefined,
-        sort: sort && sort.trim() ? sort : undefined,
-        signal,
-      }
+      options
     );
 
     return {
