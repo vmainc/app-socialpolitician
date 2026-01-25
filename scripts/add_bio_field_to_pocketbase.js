@@ -61,7 +61,7 @@ async function addBioField() {
       return;
     }
     
-    // Add bio field to schema - use PocketBase field format
+    // Add bio field to schema - match exact PocketBase text field format
     const newField = {
       name: 'bio',
       type: 'text',
@@ -69,6 +69,7 @@ async function addBioField() {
       system: false,
       hidden: false,
       presentable: false,
+      autogeneratePattern: '',
       min: 0,
       max: 5000,
       pattern: ''
@@ -79,9 +80,18 @@ async function addBioField() {
     
     console.log(`   Adding field: ${JSON.stringify(newField, null, 2)}\n`);
     
-    await pb.collections.update(collectionId, {
-      schema: updatedSchema
-    });
+    try {
+      await pb.collections.update(collectionId, {
+        schema: updatedSchema
+      });
+      console.log('✅ Collection update call succeeded\n');
+    } catch (updateError: any) {
+      console.error('❌ Update failed:', updateError.message);
+      if (updateError.response) {
+        console.error('   Response:', JSON.stringify(updateError.response, null, 2));
+      }
+      throw updateError;
+    }
     
     console.log('✅ Bio field added successfully!\n');
     console.log('📋 Field details:');
@@ -90,14 +100,19 @@ async function addBioField() {
     console.log(`   Max length: 5000`);
     console.log(`   Required: false\n`);
     
-    // Verify it was added
+    // Verify it was added - check both 'schema' and 'fields'
     const updatedCollection = await pb.collections.getOne(collectionId);
-    const bioField = updatedCollection.schema.find(f => f.name === 'bio');
+    const verifySchema = (updatedCollection as any).schema || (updatedCollection as any).fields || [];
+    const bioField = verifySchema.find((f: any) => f.name === 'bio');
     
     if (bioField) {
-      console.log('✅ Verification: Bio field confirmed in schema\n');
+      console.log('✅ Verification: Bio field confirmed in schema');
+      console.log(`   Field ID: ${bioField.id || '(auto-generated)'}`);
+      console.log(`   Type: ${bioField.type}`);
+      console.log(`   Max: ${bioField.max}\n`);
     } else {
-      console.log('⚠️  Warning: Bio field not found after adding. May need manual verification.\n');
+      console.log('⚠️  Warning: Bio field not found after adding.');
+      console.log('   The field may need to be added manually in PocketBase Admin UI.\n');
     }
     
   } catch (error: any) {
