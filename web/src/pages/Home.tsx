@@ -108,7 +108,7 @@ function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="border-b border-gray-200 bg-white sticky top-0 z-20 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -269,12 +269,11 @@ function Home() {
 
         {/* Loading State */}
         {loading && !result && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(12)].map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-pulse">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            {[...Array(20)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg shadow-sm p-5 animate-pulse">
                 <div className="w-20 h-20 bg-gray-200 rounded-full mx-auto mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded mb-2 w-3/4 mx-auto"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2 mx-auto"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
               </div>
             ))}
           </div>
@@ -316,121 +315,38 @@ function Home() {
           </div>
         )}
 
-        {/* Results Grid */}
+        {/* Results Grid - Matching PoliticiansDirectory style */}
         {!loading && !error && result && result.items.length > 0 && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 mb-8" style={{ maxWidth: '1200px', margin: '0 auto' }}>
               {result.items.map((politician) => (
                 <Link
                   key={politician.id}
                   to={`/politicians/${politician.slug}`}
-                  className="group bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-gray-200 transition-all duration-300 overflow-hidden"
+                  className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col items-center text-center"
                 >
-                  {/* Photo */}
-                  <div className="flex justify-center pt-6 pb-4">
-                    <div className="relative">
+                  {/* Avatar */}
+                  <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center mb-4 overflow-hidden relative flex-shrink-0">
+                    {politician.photo ? (
                       <img
                         src={getPhotoUrl(politician)}
                         alt={politician.name}
-                        className="w-20 h-20 object-cover rounded-full border-3 border-white shadow-lg group-hover:scale-105 transition-transform duration-300"
+                        className="absolute inset-0 w-full h-full object-cover rounded-full"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80"%3E%3Ccircle fill="%23f3f4f6" cx="40" cy="40" r="40"/%3E%3Ctext fill="%23d1d5db" font-family="system-ui, sans-serif" font-size="12" font-weight="500" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Photo%3C/text%3E%3C/svg%3E';
+                          (e.target as HTMLImageElement).style.display = 'none';
                         }}
                       />
-                    </div>
-                  </div>
-
-                  {/* Info */}
-                  <div className="px-5 pb-5">
-                    <h3 className="font-bold text-gray-900 mb-1.5 text-center line-clamp-2 group-hover:text-blue-600 transition-colors text-base">
-                      {politician.name}
-                    </h3>
-                    <p className="text-xs text-gray-600 mb-3 text-center font-medium">
-                      {politician.current_position || getOfficeLabel(politician.office_type)}
-                    </p>
-                    
-                    {/* Badges */}
-                    <div className="flex flex-wrap justify-center gap-1.5 mb-4">
-                      {politician.state && (
-                        <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium border border-gray-200">
-                          {politician.state}
-                        </span>
-                      )}
-                      {politician.political_party && (
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getPartyColor(politician.political_party)}`}>
-                          {politician.political_party}
-                        </span>
-                      )}
-                      {politician.district && (
-                        <span className="px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium border border-purple-200">
-                          D-{politician.district}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Social Links */}
-                    {(politician.wikipedia_url || politician.website_url || politician.x_url || politician.facebook_url) && (
-                      <div className="flex items-center justify-center gap-2 pt-3 border-t border-gray-100">
-                        {politician.wikipedia_url && (
-                          <a
-                            href={politician.wikipedia_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-gray-400 hover:text-gray-700 transition-colors p-1.5 rounded-lg hover:bg-gray-100"
-                            title="Wikipedia"
-                          >
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm1.25 17.292c-.646.646-1.417.958-2.25.958s-1.604-.312-2.25-.958c-.646-.646-.958-1.417-.958-2.25s.312-1.604.958-2.25c.646-.646 1.417-.958 2.25-.958s1.604.312 2.25.958c.646.646.958 1.417.958 2.25s-.312 1.604-.958 2.25zm-1.25-4.292c-.552 0-1 .448-1 1s.448 1 1 1 1-.448 1-1-.448-1-1-1zm-2-1c-.552 0-1 .448-1 1s.448 1 1 1 1-.448 1-1-.448-1-1-1zm4 0c-.552 0-1 .448-1 1s.448 1 1 1 1-.448 1-1-.448-1-1-1z"/>
-                            </svg>
-                          </a>
-                        )}
-                        {politician.website_url && (
-                          <a
-                            href={politician.website_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-gray-400 hover:text-blue-600 transition-colors p-1.5 rounded-lg hover:bg-blue-50"
-                            title="Website"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                            </svg>
-                          </a>
-                        )}
-                        {politician.x_url && (
-                          <a
-                            href={politician.x_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-gray-400 hover:text-black transition-colors p-1.5 rounded-lg hover:bg-gray-100"
-                            title="X (Twitter)"
-                          >
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                            </svg>
-                          </a>
-                        )}
-                        {politician.facebook_url && (
-                          <a
-                            href={politician.facebook_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-gray-400 hover:text-blue-600 transition-colors p-1.5 rounded-lg hover:bg-blue-50"
-                            title="Facebook"
-                          >
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                            </svg>
-                          </a>
-                        )}
-                      </div>
+                    ) : (
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" className="text-gray-400">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                      </svg>
                     )}
                   </div>
+                  
+                  {/* Name */}
+                  <h3 className="text-base font-semibold text-gray-900 leading-tight">
+                    {politician.name}
+                  </h3>
                 </Link>
               ))}
             </div>
