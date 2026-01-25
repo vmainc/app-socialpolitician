@@ -57,6 +57,19 @@ function isPreviousRepresentative(politician) {
     }
   }
   
+  // Known previous representatives (including Beto O'Rourke)
+  const previousReps = [
+    'beto o\'rourke',
+    'robert o\'rourke',
+    'beto o rourke',
+    'robert o rourke',
+  ];
+  
+  const normalizedName = name.toLowerCase().trim();
+  if (previousReps.some(prev => normalizedName.includes(prev))) {
+    return true;
+  }
+  
   return false;
 }
 
