@@ -14,7 +14,9 @@
     "pb:backfill": "node scripts/pb_backfill_politicians.mjs",
     "pb:backfill:live": "DRY_RUN=false node scripts/pb_backfill_politicians.mjs",
     "pb:fetch-wiki": "node scripts/fetch_wikipedia_urls.mjs",
-    "pb:fetch-wiki:live": "DRY_RUN=false node scripts/fetch_wikipedia_urls.mjs"
+    "pb:fetch-wiki:live": "DRY_RUN=false node scripts/fetch_wikipedia_urls.mjs",
+    "pb:fetch-website": "node scripts/fetch_website_urls.mjs",
+    "pb:fetch-website:live": "DRY_RUN=false node scripts/fetch_website_urls.mjs"
   },
   "dependencies": {
     "cheerio": "^1.2.0",
