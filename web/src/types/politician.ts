@@ -1,6 +1,6 @@
 /**
  * TypeScript types for Politician – matches PocketBase collection "politicians"
- * (pbc_3830222512) at http://127.0.0.1:8091
+ * Collection ID: pbc_3830222512
  */
 
 export interface Politician {
@@ -9,14 +9,15 @@ export interface Politician {
   name: string;
   state?: string | null;
   district?: string | null;
-  political_party?: string | null;
-  current_position?: string | null;
-  position_start_date?: string | null;
-  office_type?: 'senator' | 'representative' | 'governor' | 'other' | null;
+  party?: 'Democrat' | 'Republican' | 'Independent' | 'Other' | 'Unknown' | null; // Schema: select field
+  office_title?: string | null; // Schema: text field
+  office_type?: string | null; // Schema: text field (fallback)
+  chamber?: 'Senator' | 'Representative' | 'Governor' | 'Other' | 'Unknown' | null; // Schema: select field
+  status?: 'Incumbent' | 'Challenger' | 'Former' | 'Retired' | 'Deceased' | 'Candidate' | 'Unknown' | null; // Schema: select field
   bio?: string | null;
   /** PocketBase file field – use pb.files.getUrl(record, record.photo) */
   photo?: string | null;
-  website_url?: string | null;
+  official_website_domain?: string | null; // Schema field (was website_url)
   wikipedia_url?: string | null;
   facebook_url?: string | null;
   youtube_url?: string | null;
@@ -25,8 +26,15 @@ export interface Politician {
   linkedin_url?: string | null;
   tiktok_url?: string | null;
   truth_social_url?: string | null;
+  birth_date?: string | null;
+  term_end_date?: string | null;
   created?: string;
   updated?: string;
+  
+  // Legacy field names for backward compatibility (map to new fields)
+  political_party?: string | null; // Maps to party
+  current_position?: string | null; // Maps to office_title
+  website_url?: string | null; // Maps to official_website_domain
 }
 
 export interface Feed {
