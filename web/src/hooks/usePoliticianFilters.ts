@@ -58,6 +58,25 @@ function escapeFilterValue(value: string): string {
 }
 
 /**
+ * State abbreviation to full name mapping
+ */
+const STATE_NAMES: Record<string, string> = {
+  'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas',
+  'CA': 'California', 'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware',
+  'FL': 'Florida', 'GA': 'Georgia', 'HI': 'Hawaii', 'ID': 'Idaho',
+  'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa', 'KS': 'Kansas',
+  'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+  'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi',
+  'MO': 'Missouri', 'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada',
+  'NH': 'New Hampshire', 'NJ': 'New Jersey', 'NM': 'New Mexico', 'NY': 'New York',
+  'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio', 'OK': 'Oklahoma',
+  'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+  'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah',
+  'VT': 'Vermont', 'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia',
+  'WI': 'Wisconsin', 'WY': 'Wyoming', 'DC': 'District of Columbia',
+};
+
+/**
  * Build PocketBase filter string from filter state
  */
 export function buildPocketBaseFilter(filters: PoliticianFilters): string {
@@ -83,9 +102,20 @@ export function buildPocketBaseFilter(filters: PoliticianFilters): string {
     }
   }
   
-  // State
+  // State - handle both abbreviations (AL) and full names (Alabama), case-insensitive
   if (filters.selectedState !== 'all') {
-    conditions.push(`state="${filters.selectedState}"`);
+    const stateAbbr = filters.selectedState.toUpperCase();
+    const stateFullName = STATE_NAMES[stateAbbr];
+    
+    // Build OR condition: check for abbreviation (case-insensitive) OR full name
+    // Use ~ for case-insensitive contains match
+    if (stateFullName) {
+      // Check for both abbreviation and full name (case-insensitive)
+      conditions.push(`(state~"${stateAbbr}" || state~"${escapeFilterValue(stateFullName)}")`);
+    } else {
+      // Fallback: just use case-insensitive match on abbreviation
+      conditions.push(`state~"${stateAbbr}"`);
+    }
   }
   
   // Party - use exact match (schema field is 'party' with select values)
