@@ -11,14 +11,14 @@ migrate((app) => {
   }
   
   // Check if bio field already exists
-  const existingBioField = collection.schema.find(f => f.name === 'bio');
+  const existingBioField = collection.fields.find(f => f.name === 'bio');
   if (existingBioField) {
     console.log('Bio field already exists');
     return;
   }
   
   // Add bio field
-  collection.schema.add(new Field({
+  collection.fields.add(new Field({
     "system": false,
     "id": "bio_field_1769200000",
     "name": "bio",
@@ -41,9 +41,9 @@ migrate((app) => {
   }
   
   // Remove bio field on rollback
-  const bioField = collection.schema.find(f => f.name === 'bio');
+  const bioField = collection.fields.find(f => f.name === 'bio');
   if (bioField) {
-    collection.schema.removeById(bioField.id);
+    collection.fields.removeById(bioField.id);
   }
   
   return app.save(collection);

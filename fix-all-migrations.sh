@@ -43,6 +43,7 @@ PROBLEMATIC_MIGRATIONS=(
     "1769051554_deleted_presidents.js"
     # Politicians problematic migrations
     "1768865019_updated_politicians.js"  # Tries to add duplicate office_type field
+    "1769200000_add_bio_field.js"  # JavaScript error - uses collection.schema instead of collection.fields
 )
 
 echo "   Will remove ${#PROBLEMATIC_MIGRATIONS[@]} problematic migrations"
