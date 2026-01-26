@@ -7,8 +7,8 @@ import { chromium } from "playwright";
 const PB_BASE_URL = process.env.PB_BASE_URL || "http://127.0.0.1:8091";
 const COLLECTION = "politicians";
 
-const PB_ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL || "";
-const PB_ADMIN_PASSWORD = process.env.PB_ADMIN_PASSWORD || "";
+const PB_ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL || process.env.POCKETBASE_ADMIN_EMAIL || "";
+const PB_ADMIN_PASSWORD = process.env.PB_ADMIN_PASSWORD || process.env.POCKETBASE_ADMIN_PASSWORD || "";
 
 // Limits
 const MAX_RECORDS = Number(process.env.MAX_RECORDS || 99999);

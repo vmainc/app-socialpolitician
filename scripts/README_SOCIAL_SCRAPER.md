@@ -38,7 +38,7 @@ git pull origin main
 
 PB_BASE_URL="http://127.0.0.1:8091" \
 PB_ADMIN_EMAIL="admin@vma.agency" \
-POCKETBASE_ADMIN_PASSWORD="VMAmadmia42O200!" \
+PB_ADMIN_PASSWORD="VMAmadmia42O200!" \
 MAX_RECORDS=100 \
 node scripts/pb_social_hybrid.mjs
 ```
@@ -46,8 +46,8 @@ node scripts/pb_social_hybrid.mjs
 ## Environment Variables
 
 - `PB_BASE_URL`: PocketBase URL (default: `http://127.0.0.1:8091`)
-- `PB_ADMIN_EMAIL`: Admin email for authentication
-- `POCKETBASE_ADMIN_PASSWORD`: Admin password (note: variable name typo in script, should be `PB_ADMIN_PASSWORD`)
+- `PB_ADMIN_EMAIL` or `POCKETBASE_ADMIN_EMAIL`: Admin email for authentication
+- `PB_ADMIN_PASSWORD` or `POCKETBASE_ADMIN_PASSWORD`: Admin password
 - `MAX_RECORDS`: Maximum number of politicians to process (default: 99999)
 - `MAX_SITE_PAGES`: Maximum pages to crawl per official site (default: 15)
 - `NAV_TIMEOUT_MS`: Playwright navigation timeout (default: 15000ms)
