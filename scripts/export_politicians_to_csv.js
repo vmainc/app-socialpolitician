@@ -15,13 +15,8 @@ import path from 'path';
 
 const POCKETBASE_URL = process.env.POCKETBASE_URL || 'http://127.0.0.1:8091';
 const POCKETBASE_ADMIN_EMAIL = process.env.POCKETBASE_ADMIN_EMAIL || 'admin@vma.agency';
-const POCKETBASE_ADMIN_PASSWORD = process.env.POCKETBASE_ADMIN_PASSWORD;
+const POCKETBASE_ADMIN_PASSWORD = process.env.POCKETBASE_ADMIN_PASSWORD || 'VMAmadmia42O200!';
 const OUTPUT_FILE = process.env.OUTPUT_FILE || path.join(process.cwd(), 'politicians_export.csv');
-
-if (!POCKETBASE_ADMIN_PASSWORD) {
-  console.error('❌ POCKETBASE_ADMIN_PASSWORD environment variable is required');
-  process.exit(1);
-}
 
 const pb = new PocketBase(POCKETBASE_URL);
 
@@ -65,6 +60,10 @@ function formatValue(value) {
 async function main() {
   try {
     console.log('🔐 Authenticating with PocketBase...');
+    console.log(`   URL: ${POCKETBASE_URL}`);
+    console.log(`   Email: ${POCKETBASE_ADMIN_EMAIL}`);
+    console.log(`   Password: ${POCKETBASE_ADMIN_PASSWORD ? '***' : '(not set)'}\n`);
+    
     await pb.admins.authWithPassword(POCKETBASE_ADMIN_EMAIL, POCKETBASE_ADMIN_PASSWORD);
     console.log('✅ Authenticated\n');
 
@@ -170,8 +169,16 @@ async function main() {
     
   } catch (error) {
     console.error('\n❌ Error:', error.message);
+    if (error.status) {
+      console.error(`   Status: ${error.status}`);
+    }
     if (error.response) {
-      console.error('   Response:', error.response);
+      console.error('   Response:', JSON.stringify(error.response, null, 2));
+    }
+    if (error.message.includes('Failed to authenticate')) {
+      console.error('\n💡 Tip: Make sure POCKETBASE_ADMIN_PASSWORD is set correctly.');
+      console.error('   You can override the default password with:');
+      console.error('   export POCKETBASE_ADMIN_PASSWORD="your-actual-password"');
     }
     process.exit(1);
   }
