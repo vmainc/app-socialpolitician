@@ -36,15 +36,16 @@ npm run build
 
 # Step 4: Verify build
 echo "🔍 Verifying build..."
-if grep -r "localhost\|127.0.0.1" web/dist 2>/dev/null; then
-  echo "❌ ERROR: Found localhost in build!"
+# Check for actual localhost URLs (http://localhost or https://localhost), not just the word "localhost"
+if grep -rE "(https?://localhost|https?://127\.0\.0\.1)" web/dist 2>/dev/null; then
+  echo "❌ ERROR: Found localhost URL in build!"
   exit 1
 fi
 if grep -r "current_position!~" web/dist 2>/dev/null; then
   echo "❌ ERROR: Found old filter syntax (!~) in build!"
   exit 1
 fi
-echo "✅ Build OK - no localhost, no old filter syntax"
+echo "✅ Build OK - no localhost URLs, no old filter syntax"
 
 # Step 5: Restart services
 echo "🔄 Restarting services..."
