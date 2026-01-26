@@ -63,16 +63,24 @@ function escapeFilterValue(value: string): string {
 export function buildPocketBaseFilter(filters: PoliticianFilters): string {
   const conditions: string[] = [];
   
-  // Search text (name OR current_position)
+  // Search text (name OR office_title)
   if (filters.searchText.trim()) {
     const searchTerm = escapeFilterValue(filters.searchText.trim());
     // Use OR for search across multiple fields
-    conditions.push(`(name~"${searchTerm}" || current_position~"${searchTerm}")`);
+    conditions.push(`(name~"${searchTerm}" || office_title~"${searchTerm}")`);
   }
   
-  // Office type
+  // Office type - use office_type (text) as primary, chamber (select) as fallback
   if (filters.selectedOffice !== 'all') {
-    conditions.push(`office_type="${filters.selectedOffice}"`);
+    if (filters.selectedOffice === 'senator') {
+      conditions.push(`(office_type="senator" || chamber="Senator")`);
+    } else if (filters.selectedOffice === 'representative') {
+      conditions.push(`(office_type="representative" || chamber="Representative")`);
+    } else if (filters.selectedOffice === 'governor') {
+      conditions.push(`(office_type="governor" || chamber="Governor")`);
+    } else {
+      conditions.push(`office_type="${filters.selectedOffice}"`);
+    }
   }
   
   // State
@@ -80,16 +88,20 @@ export function buildPocketBaseFilter(filters: PoliticianFilters): string {
     conditions.push(`state="${filters.selectedState}"`);
   }
   
-  // Party - try exact match first, then fallback to contains
+  // Party - use exact match (schema field is 'party' with select values)
   if (filters.selectedParty !== 'all') {
     const normalizedParty = normalizePartyForFilter(filters.selectedParty);
     if (normalizedParty) {
-      // Try exact match first
-      const exactMatch = `political_party="${normalizedParty}"`;
-      // Fallback to contains match (case-insensitive)
-      const containsMatch = `political_party~"${normalizedParty}"`;
-      // Use OR to try both
-      conditions.push(`(${exactMatch} || ${containsMatch})`);
+      // Map to schema values: "Democrat", "Republican", "Independent"
+      let partyValue = normalizedParty;
+      if (normalizedParty.toLowerCase().includes('democrat')) {
+        partyValue = 'Democrat';
+      } else if (normalizedParty.toLowerCase().includes('republican')) {
+        partyValue = 'Republican';
+      } else if (normalizedParty.toLowerCase().includes('independent')) {
+        partyValue = 'Independent';
+      }
+      conditions.push(`party="${partyValue}"`);
     }
   }
   
@@ -98,12 +110,27 @@ export function buildPocketBaseFilter(filters: PoliticianFilters): string {
     conditions.push(`photo != ""`);
   }
   
-  // Exclude previous/former senators and representatives
-  if (filters.selectedOffice === 'senator' || filters.selectedOffice === 'representative') {
-    conditions.push(`current_position!~"Previous" && current_position!~"Former"`);
+  // Note: Former/Retired filtering is done in frontend using status field
+  
+  const filterString = conditions.length > 0 ? conditions.join(' && ') : '';
+  
+  // Runtime assertion: prevent !~ usage (PocketBase doesn't reliably support it)
+  if (filterString.includes('!~')) {
+    const error = new Error(
+      `❌ FORBIDDEN: PocketBase filter contains !~ operator which is not reliably supported.\n` +
+      `   Filter: ${filterString}\n` +
+      `   Use pbNotContains() helper from lib/pb.ts instead`
+    );
+    console.error(error);
+    throw error;
   }
   
-  return conditions.length > 0 ? conditions.join(' && ') : '';
+  console.log('🔧 Built filter:', {
+    filters,
+    conditions,
+    filterString,
+  });
+  return filterString;
 }
 
 /**

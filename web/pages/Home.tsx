@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
 import { Politician } from '../types/politician';
+import { buildOfficeFilter } from '../src/lib/pb';
 
 function Home() {
   const [counts, setCounts] = useState({
@@ -18,17 +19,45 @@ function Home() {
   useEffect(() => {
     async function loadCounts() {
       try {
+        // Use safe filter helpers that prefer chamber/status enum fields
+        const senatorFilter = buildOfficeFilter('senator');
+        const representativeFilter = buildOfficeFilter('representative');
+        const governorFilter = buildOfficeFilter('governor');
+        
+        console.log('🔍 Home page filters:', {
+          baseUrl: pb.baseUrl,
+          collection: 'politicians',
+          senators: senatorFilter,
+          representatives: representativeFilter,
+          governors: governorFilter,
+        });
+        
+        // Runtime assertion: prevent !~ usage
+        [senatorFilter, representativeFilter, governorFilter].forEach((f, i) => {
+          if (f.includes('!~')) {
+            throw new Error(
+              `❌ FORBIDDEN: Filter ${['senators', 'representatives', 'governors'][i]} contains !~ operator. Use pbNotContains() helper instead.`
+            );
+          }
+        });
+        
         const [senators, representatives, governors] = await Promise.all([
           pb.collection('politicians').getList(1, 1, {
-            filter: 'office_type="senator"',
+            filter: senatorFilter,
           }),
           pb.collection('politicians').getList(1, 1, {
-            filter: 'office_type="representative"',
+            filter: representativeFilter,
           }),
           pb.collection('politicians').getList(1, 1, {
-            filter: 'office_type="governor"',
+            filter: governorFilter,
           }),
         ]);
+
+        console.log('✅ Home page counts:', {
+          senators: senators.totalItems,
+          representatives: representatives.totalItems,
+          governors: governors.totalItems,
+        });
 
         setCounts({
           senators: senators.totalItems,
@@ -36,7 +65,7 @@ function Home() {
           governors: governors.totalItems,
         });
       } catch (error) {
-        console.error('Failed to load counts:', error);
+        console.error('❌ Failed to load counts:', error);
       } finally {
         setLoading(false);
       }

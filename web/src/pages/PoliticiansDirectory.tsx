@@ -8,7 +8,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
 import { Politician } from '../types/politician';
 import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
-import { isMediaEntry, isPresident, isPreviousRepresentative } from '../lib/pb';
+import { isMediaEntry, isPresident, isPreviousRepresentative, buildOfficeFilter } from '../lib/pb';
 import './PoliticiansDirectory.css';
 
 function AvatarPlaceholder() {
@@ -46,39 +46,49 @@ function PoliticiansDirectory() {
     async function loadPoliticians() {
       try {
         console.log(`🔍 Loading ${officeType}s...`);
-        // First, try without filter to see if ANY records are accessible
-        const allRecords = await pb.collection('politicians').getList<Politician>(1, 5);
-        console.log(`📊 Total accessible records (no filter): ${allRecords.totalItems}`);
+        console.log(`📡 PocketBase base URL: ${pb.baseUrl}`);
+        console.log(`📦 Collection: politicians`);
         
-        // Now try with filter
-        // For senators, exclude "Previous/Former Senator" to show only current 100 senators
-        // For representatives, also check current_position since office_type might not be set
-        let filter = `office_type="${officeType}"`;
-        if (officeType === 'senator') {
-          // Exclude previous/former senators - only show current 100
-          // Try multiple filter approaches - PocketBase filter syntax
-          // Option 1: Exclude Previous/Former
-          // Option 2: Only include those with "U.S. Senator" (current ones)
-          filter = `office_type="${officeType}" && current_position~"U.S. Senator" && current_position!~"Previous" && current_position!~"Former"`;
-        } else if (officeType === 'representative') {
-          // Exclude previous/former representatives - only show current ones
-          filter = `office_type="${officeType}" && current_position!~"Previous" && current_position!~"Former"`;
+        // Build safe filter using helper function
+        // Prefers chamber/status enum fields, falls back to office_type/current_position
+        if (!officeType) {
+          throw new Error('Invalid office type');
+        }
+        const filter = buildOfficeFilter(officeType);
+        
+        console.log(`🔍 PB filter: ${filter}`);
+        console.log(`🔗 Full query URL: ${pb.baseUrl}/api/collections/politicians/records?filter=${encodeURIComponent(filter)}`);
+        
+        // Runtime assertion: prevent !~ usage
+        if (filter.includes('!~')) {
+          throw new Error(
+            `❌ FORBIDDEN: Filter contains !~ operator. Use pbNotContains() helper instead.`
+          );
         }
         
         const records = await pb.collection('politicians').getFullList<Politician>({
-          filter,
+          filter: filter,
           sort: 'name',
         });
         
-        // Filter out media entries, presidents, and previous representatives
-        const filteredRecords = records.filter(p => 
-          !isMediaEntry(p) && 
-          !isPresident(p) && 
-          !isPreviousRepresentative(p)
-        );
+        console.log(`✅ PocketBase response: ${records.length} records`);
+        
+        // Additional client-side filtering for safety
+        // (The PocketBase filter should already handle most exclusions)
+        const filteredRecords = records.filter(p => {
+          // Double-check status field (should already be filtered by buildOfficeFilter)
+          const status = (p.status || '').toLowerCase();
+          if (status === 'former' || status === 'retired') {
+            return false;
+          }
+          // Filter out media entries, presidents, and previous representatives
+          return !isMediaEntry(p) && 
+                 !isPresident(p) && 
+                 !isPreviousRepresentative(p);
+        });
         
         const filteredCount = records.length - filteredRecords.length;
-        console.log(`✅ Loaded ${filteredRecords.length} ${officeType}s (filtered ${filteredCount} entries: media/presidents)`);
+        console.log(`✅ Loaded ${filteredRecords.length} ${officeType}s (client-side filtered ${filteredCount} entries: media/presidents/former)`);
         setPoliticians(filteredRecords);
       } catch (error: any) {
         console.error('❌ Failed to load politicians:', error);

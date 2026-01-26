@@ -15,6 +15,89 @@ export function getBaseUrl(): string {
 }
 
 /**
+ * Safe helper for negated contains in PocketBase filters
+ * NEVER use !~ directly - PocketBase doesn't reliably support it
+ * Use this helper instead: !(field~"value")
+ * 
+ * Runtime assertion: Throws error if filter string contains !~
+ */
+function assertNoNegatedContains(filter: string): void {
+  if (filter.includes('!~')) {
+    const error = new Error(
+      `❌ FORBIDDEN: PocketBase filter contains !~ operator which is not reliably supported.\n` +
+      `   Filter: ${filter}\n` +
+      `   Use pbNotContains() helper instead: pbNotContains("field", "value")`
+    );
+    console.error(error);
+    throw error;
+  }
+}
+
+/**
+ * Safe helper for negated contains in PocketBase filters
+ * NEVER use !~ directly - PocketBase doesn't reliably support it
+ * Use this helper instead: !(field~"value")
+ */
+export function pbNotContains(field: string, value: string): string {
+  const safe = value.replace(/"/g, '\\"');
+  return `!(${field}~"${safe}")`;
+}
+
+/**
+ * Build a safe PocketBase filter for a specific office type
+ * Prefers normalized enum fields (chamber, status) over text fields
+ * Falls back to office_type + current_position filters if enum fields unavailable
+ */
+export function buildOfficeFilter(
+  officeType: 'senator' | 'representative' | 'governor'
+): string {
+  // Map officeType to chamber enum values
+  const chamberMap: Record<string, string> = {
+    senator: 'Senator',
+    representative: 'Representative',
+    governor: 'Governor',
+  };
+  
+  const chamberValue = chamberMap[officeType];
+  
+  // PREFERRED: Use normalized enum fields (chamber + status)
+  // This is the most reliable approach as it uses normalized enum data
+  const preferredConditions: string[] = [];
+  preferredConditions.push(`chamber="${chamberValue}"`);
+  preferredConditions.push(`status="Incumbent"`);
+  const preferredFilter = preferredConditions.join(' && ');
+  
+  // FALLBACK: If chamber/status fields don't exist in schema, use office_type + current_position
+  // We include both approaches with OR to handle mixed data gracefully
+  const fallbackConditions: string[] = [];
+  fallbackConditions.push(`office_type="${officeType}"`);
+  
+  // For senators, also check current_position contains "U.S. Senator"
+  if (officeType === 'senator') {
+    fallbackConditions.push(`current_position~"U.S. Senator"`);
+  }
+  
+  // Exclude Previous/Former using safe negated contains
+  // The status="Incumbent" already handles this for the preferred path
+  const excludeConditions: string[] = [];
+  excludeConditions.push(pbNotContains('current_position', 'Previous'));
+  excludeConditions.push(pbNotContains('current_position', 'Former'));
+  
+  // Combine: preferred OR (fallback AND exclusions)
+  const fallbackFilter = [
+    `(${fallbackConditions.join(' || ')})`,
+    ...excludeConditions,
+  ].join(' && ');
+  
+  const finalFilter = `(${preferredFilter}) || (${fallbackFilter})`;
+  
+  // Runtime assertion: ensure we never accidentally use !~
+  assertNoNegatedContains(finalFilter);
+  
+  return finalFilter;
+}
+
+/**
  * List of all U.S. Presidents (for filtering)
  */
 const US_PRESIDENTS = [
@@ -36,7 +119,8 @@ const US_PRESIDENTS = [
  */
 export function isPresident(politician: Politician): boolean {
   const name = (politician.name || '').trim();
-  const currentPosition = (politician.current_position || '').toLowerCase();
+  // Use office_title (new) or current_position (legacy) for backward compatibility
+  const currentPosition = ((politician.office_title || politician.current_position) || '').toLowerCase();
   
   // Check if name matches any president (exact or partial match)
   const normalizedName = name.toLowerCase().trim();
@@ -92,13 +176,23 @@ export function isPresident(politician: Politician): boolean {
  */
 export function isPreviousRepresentative(politician: Politician): boolean {
   const name = (politician.name || '').toLowerCase();
-  const currentPosition = (politician.current_position || '').toLowerCase();
+  // Use status field from schema, or fall back to office_title/current_position
+  const status = (politician.status || '').toLowerCase();
+  const currentPosition = ((politician.office_title || politician.current_position) || '').toLowerCase();
   
-  // Check for "Previous" or "Former" in current_position
+  // Check status field first (schema field)
+  if (status === 'former' || status === 'retired') {
+    if (politician.chamber === 'Representative' || politician.office_type === 'representative') {
+      return true;
+    }
+  }
+  
+  // Check for "Previous" or "Former" in office_title/current_position (legacy)
   if (currentPosition.includes('previous') || currentPosition.includes('former')) {
     if (currentPosition.includes('representative') || 
         currentPosition.includes('congress') ||
-        politician.office_type === 'representative') {
+        politician.office_type === 'representative' ||
+        politician.chamber === 'Representative') {
       return true;
     }
   }
@@ -122,8 +216,10 @@ export function isPreviousRepresentative(politician: Politician): boolean {
 export function isMediaEntry(politician: Politician): boolean {
   const name = (politician.name || '').toLowerCase();
   const slug = (politician.slug || '').toLowerCase();
-  const currentPosition = (politician.current_position || '').toLowerCase();
-  const website = (politician.website_url || '').toLowerCase();
+  // Use office_title (new) or current_position (legacy) for backward compatibility
+  const currentPosition = ((politician.office_title || politician.current_position) || '').toLowerCase();
+  // Use official_website_domain (new) or website_url (legacy) for backward compatibility
+  const website = ((politician.official_website_domain || politician.website_url) || '').toLowerCase();
   
   // Media-related keywords
   const mediaKeywords = [
@@ -155,12 +251,15 @@ export function isMediaEntry(politician: Politician): boolean {
     'tumblr',
     'wechat',
     'we chat',
+    'weibo',
     'twitter',
     'instagram',
     'linkedin',
     'youtube',
     'snapchat',
     'pinterest',
+    'tribel',
+    'spill',
   ];
   
   // Check name for media keywords
@@ -197,15 +296,15 @@ export function isMediaEntry(politician: Politician): boolean {
   }
   
   // Check for media domain patterns in slug (but not if it's part of a state name like "massachusetts")
-  const mediaSlugPatterns = ['cnn', 'foxnews', 'msnbc', 'abcnews', 'cbsnews', 'nbcnews', 'telegraph', 'facebook', 'quora', 'reddit', 'tiktok', 'tumblr', 'wechat'];
+  const mediaSlugPatterns = ['cnn', 'foxnews', 'msnbc', 'abcnews', 'cbsnews', 'nbcnews', 'telegraph', 'facebook', 'quora', 'reddit', 'tiktok', 'tumblr', 'wechat', 'weibo', 'tribel', 'spill'];
   if (mediaSlugPatterns.some(pattern => slug.includes(pattern) && !slug.includes('massachusetts'))) {
     // Only flag if it's clearly a media domain, not a person's name
-    if (slug.match(/^[a-z]+(-com|-org|-co-uk)$/) || slug.match(/^[a-z-]+(facebook|quora|reddit|tiktok|tumblr|wechat)/)) {
+    if (slug.match(/^[a-z]+(-com|-org|-co-uk)$/) || slug.match(/^[a-z-]+(facebook|quora|reddit|tiktok|tumblr|wechat|weibo|tribel|spill)/)) {
       return true;
     }
   }
   
-  // Check current_position
+  // Check office_title/current_position
   if (currentPosition.includes('media') || currentPosition.includes('news organization') || currentPosition.includes('journalist')) {
     return true;
   }
@@ -232,6 +331,9 @@ export function isMediaEntry(politician: Politician): boolean {
     'truthsocial.com',
     'tumblr.com',
     'wechat.com',
+    'weibo.com',
+    'tribel.com',
+    'spill-app.com',
   ];
   
   if (mediaDomains.some(domain => website.includes(domain))) {
@@ -298,18 +400,38 @@ export async function listPoliticians(
     const options: any = { signal };
     
     if (filter && filter.trim()) {
+      // Runtime assertion: prevent !~ usage
+      assertNoNegatedContains(filter);
       options.filter = filter;
+      console.log('🔍 PocketBase filter:', filter);
     }
     
     if (sort && sort.trim()) {
       options.sort = sort;
     }
 
+    console.log('📡 Fetching from PocketBase:', {
+      page,
+      perPage,
+      filter: options.filter || '(none)',
+      sort: options.sort || '(default)',
+      baseUrl: pb.baseUrl,
+      collection: 'politicians',
+      fullUrl: `${pb.baseUrl}/api/collections/politicians/records`,
+    });
+
     const response = await pb.collection('politicians').getList<Politician>(
       page,
       perPage,
       options
     );
+
+    console.log('✅ PocketBase response:', {
+      totalItems: response.totalItems,
+      itemsCount: response.items.length,
+      page: response.page,
+      totalPages: response.totalPages,
+    });
 
     // Filter out media entries, presidents, and previous representatives
     const filteredItems = response.items.filter(p => 
@@ -335,7 +457,14 @@ export async function listPoliticians(
       throw error;
     }
     
-    console.error('Failed to list politicians:', error);
+    console.error('❌ Failed to list politicians:', error);
+    console.error('   Error details:', {
+      message: error?.message,
+      status: error?.status,
+      response: error?.response,
+      data: error?.data,
+      url: error?.url,
+    });
     throw new Error(`Failed to fetch politicians: ${error?.message || 'Unknown error'}`);
   }
 }
