@@ -103,19 +103,29 @@ export function buildPocketBaseFilter(filters: PoliticianFilters): string {
   }
   
   // State - handle both abbreviations (AL) and full names (Alabama), case-insensitive
+  // PocketBase text matching is case-sensitive, so we check multiple variations
   if (filters.selectedState !== 'all') {
     const stateAbbr = filters.selectedState.toUpperCase();
     const stateFullName = STATE_NAMES[stateAbbr];
     
-    // Build OR condition: check for abbreviation (case-insensitive) OR full name
-    // Use ~ for case-insensitive contains match
+    // Build OR condition: check for abbreviation in different cases OR full name
+    // Check: "AL", "al", "Al" and full name "Alabama", "alabama", "ALABAMA"
+    const stateConditions: string[] = [
+      `state="${stateAbbr}"`,  // Uppercase: "AL"
+      `state="${stateAbbr.toLowerCase()}"`,  // Lowercase: "al"
+      `state="${stateAbbr.charAt(0)}${stateAbbr.slice(1).toLowerCase()}"`,  // Title case: "Al"
+    ];
+    
     if (stateFullName) {
-      // Check for both abbreviation and full name (case-insensitive)
-      conditions.push(`(state~"${stateAbbr}" || state~"${escapeFilterValue(stateFullName)}")`);
-    } else {
-      // Fallback: just use case-insensitive match on abbreviation
-      conditions.push(`state~"${stateAbbr}"`);
+      stateConditions.push(
+        `state="${stateFullName}"`,  // "Alabama"
+        `state="${stateFullName.toLowerCase()}"`,  // "alabama"
+        `state="${stateFullName.toUpperCase()}"`  // "ALABAMA"
+      );
     }
+    
+    // Combine all variations with OR
+    conditions.push(`(${stateConditions.join(' || ')})`);
   }
   
   // Party - use exact match (schema field is 'party' with select values)
