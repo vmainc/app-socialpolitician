@@ -13,6 +13,8 @@ import PocketBase from 'pocketbase';
 import fs from 'fs';
 import path from 'path';
 
+// Default to local PocketBase instance on VPS
+// Override with environment variables if needed
 const POCKETBASE_URL = process.env.POCKETBASE_URL || 'http://127.0.0.1:8091';
 const POCKETBASE_ADMIN_EMAIL = process.env.POCKETBASE_ADMIN_EMAIL || 'admin@vma.agency';
 const POCKETBASE_ADMIN_PASSWORD = process.env.POCKETBASE_ADMIN_PASSWORD || 'VMAmadmia42O200!';
