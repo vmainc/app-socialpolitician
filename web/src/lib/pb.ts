@@ -45,51 +45,30 @@ export function pbNotContains(field: string, value: string): string {
 
 /**
  * Build a safe PocketBase filter for a specific office type
- * Prefers normalized enum fields (chamber, status) over text fields
- * Falls back to office_type + current_position filters if enum fields unavailable
+ * Uses office_type (which we know exists) and safe negated contains
+ * Avoids complex OR logic that can cause 400 errors
  */
 export function buildOfficeFilter(
   officeType: 'senator' | 'representative' | 'governor'
 ): string {
-  // Map officeType to chamber enum values
-  const chamberMap: Record<string, string> = {
-    senator: 'Senator',
-    representative: 'Representative',
-    governor: 'Governor',
-  };
+  const conditions: string[] = [];
   
-  const chamberValue = chamberMap[officeType];
+  // Primary filter: office_type (this field definitely exists)
+  conditions.push(`office_type="${officeType}"`);
   
-  // PREFERRED: Use normalized enum fields (chamber + status)
-  // This is the most reliable approach as it uses normalized enum data
-  const preferredConditions: string[] = [];
-  preferredConditions.push(`chamber="${chamberValue}"`);
-  preferredConditions.push(`status="Incumbent"`);
-  const preferredFilter = preferredConditions.join(' && ');
-  
-  // FALLBACK: If chamber/status fields don't exist in schema, use office_type + current_position
-  // We include both approaches with OR to handle mixed data gracefully
-  const fallbackConditions: string[] = [];
-  fallbackConditions.push(`office_type="${officeType}"`);
-  
-  // For senators, also check current_position contains "U.S. Senator"
+  // For senators, also check current_position contains "U.S. Senator" to be more specific
   if (officeType === 'senator') {
-    fallbackConditions.push(`current_position~"U.S. Senator"`);
+    // Use OR to match either office_type OR current_position pattern
+    // This handles cases where office_type might be missing but current_position is set
+    conditions[0] = `(office_type="senator" || current_position~"U.S. Senator")`;
   }
   
   // Exclude Previous/Former using safe negated contains
-  // The status="Incumbent" already handles this for the preferred path
-  const excludeConditions: string[] = [];
-  excludeConditions.push(pbNotContains('current_position', 'Previous'));
-  excludeConditions.push(pbNotContains('current_position', 'Former'));
+  // This is the safe way to do negated contains (never use !~)
+  conditions.push(pbNotContains('current_position', 'Previous'));
+  conditions.push(pbNotContains('current_position', 'Former'));
   
-  // Combine: preferred OR (fallback AND exclusions)
-  const fallbackFilter = [
-    `(${fallbackConditions.join(' || ')})`,
-    ...excludeConditions,
-  ].join(' && ');
-  
-  const finalFilter = `(${preferredFilter}) || (${fallbackFilter})`;
+  const finalFilter = conditions.join(' && ');
   
   // Runtime assertion: ensure we never accidentally use !~
   assertNoNegatedContains(finalFilter);
