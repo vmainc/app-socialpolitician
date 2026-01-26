@@ -1,6 +1,6 @@
 /**
  * TypeScript types for Politician – matches PocketBase collection "politicians"
- * (pbc_3830222512) at http://127.0.0.1:8091
+ * Collection ID: pbc_3830222512
  */
 
 export interface Politician {

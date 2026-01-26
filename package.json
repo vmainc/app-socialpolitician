@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "rm -rf web/dist && tsc && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "preflight": "npm run typecheck && npm run build && npm run verify-build",

@@ -73,14 +73,21 @@ function PoliticiansDirectory() {
         
         console.log(`✅ PocketBase response: ${records.length} records`);
         
-        // Additional client-side filtering for safety
-        // (The PocketBase filter should already handle most exclusions)
+        // Client-side filtering: Remove Previous/Former politicians
+        // (PocketBase doesn't support negated contains, so we filter here)
         const filteredRecords = records.filter(p => {
-          // Double-check status field (should already be filtered by buildOfficeFilter)
+          // Check status field
           const status = (p.status || '').toLowerCase();
           if (status === 'former' || status === 'retired') {
             return false;
           }
+          
+          // Check current_position/office_title for Previous/Former
+          const position = ((p.office_title || p.current_position) || '').toLowerCase();
+          if (position.includes('previous') || position.includes('former')) {
+            return false;
+          }
+          
           // Filter out media entries, presidents, and previous representatives
           return !isMediaEntry(p) && 
                  !isPresident(p) && 

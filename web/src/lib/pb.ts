@@ -45,35 +45,24 @@ export function pbNotContains(field: string, value: string): string {
 
 /**
  * Build a safe PocketBase filter for a specific office type
- * Uses office_type (which we know exists) and safe negated contains
- * Avoids complex OR logic that can cause 400 errors
+ * Uses ONLY office_type field - no negated contains (causes 400 errors)
+ * Previous/Former filtering is done client-side for reliability
  */
 export function buildOfficeFilter(
   officeType: 'senator' | 'representative' | 'governor'
 ): string {
-  const conditions: string[] = [];
+  // SIMPLEST APPROACH: Use only office_type field
+  // PocketBase doesn't reliably support negated contains (!~ or !(field~"value"))
+  // We filter out Previous/Former on the client side instead
   
-  // Primary filter: office_type (this field definitely exists)
-  conditions.push(`office_type="${officeType}"`);
-  
-  // For senators, also check current_position contains "U.S. Senator" to be more specific
   if (officeType === 'senator') {
-    // Use OR to match either office_type OR current_position pattern
+    // For senators, use OR to match either office_type OR current_position pattern
     // This handles cases where office_type might be missing but current_position is set
-    conditions[0] = `(office_type="senator" || current_position~"U.S. Senator")`;
+    return `(office_type="senator" || current_position~"U.S. Senator")`;
   }
   
-  // Exclude Previous/Former using safe negated contains
-  // This is the safe way to do negated contains (never use !~)
-  conditions.push(pbNotContains('current_position', 'Previous'));
-  conditions.push(pbNotContains('current_position', 'Former'));
-  
-  const finalFilter = conditions.join(' && ');
-  
-  // Runtime assertion: ensure we never accidentally use !~
-  assertNoNegatedContains(finalFilter);
-  
-  return finalFilter;
+  // For representatives and governors, just use office_type
+  return `office_type="${officeType}"`;
 }
 
 /**

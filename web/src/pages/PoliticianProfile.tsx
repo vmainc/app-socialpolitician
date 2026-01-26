@@ -82,8 +82,10 @@ function PoliticianProfile() {
     if (!politician) return [];
     const links: Array<{ label: string; url: string; icon: string; color: string }> = [];
 
-    if (politician.website_url) {
-      links.push({ label: 'Website', url: politician.website_url, icon: '🌐', color: 'text-blue-600' });
+    // Use official_website_domain (new) or website_url (legacy) for backward compatibility
+    const websiteUrl = politician.official_website_domain || politician.website_url;
+    if (websiteUrl) {
+      links.push({ label: 'Website', url: websiteUrl, icon: '🌐', color: 'text-blue-600' });
     }
     if (politician.wikipedia_url) {
       links.push({ label: 'Wikipedia', url: politician.wikipedia_url, icon: '📚', color: 'text-gray-700' });
@@ -190,7 +192,7 @@ function PoliticianProfile() {
             </h1>
             
             <p className="profile-office">
-              {getOfficeTypeLabel(politician.office_type)}
+              {politician.office_title || politician.current_position || getOfficeTypeLabel(politician.office_type)}
             </p>
 
             {/* Badges */}
@@ -198,9 +200,9 @@ function PoliticianProfile() {
               {politician.state && (
                 <span className="profile-badge">{politician.state}</span>
               )}
-              {politician.political_party && (
-                <span className={`profile-badge ${getPartyClass(politician.political_party)}`}>
-                  {politician.political_party}
+              {(politician.party || politician.political_party) && (
+                <span className={`profile-badge ${getPartyClass(politician.party || politician.political_party || '')}`}>
+                  {politician.party || politician.political_party}
                 </span>
               )}
               {politician.district && politician.office_type === 'representative' && (
@@ -208,9 +210,9 @@ function PoliticianProfile() {
               )}
             </div>
 
-            {politician.current_position && (
+            {(politician.office_title || politician.current_position) && (
               <p className="profile-position">
-                "{politician.current_position}"
+                "{politician.office_title || politician.current_position}"
               </p>
             )}
           </div>

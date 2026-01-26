@@ -59,12 +59,15 @@ function isMediaEntry(politician) {
     'tumblr',
     'wechat',
     'we chat',
+    'weibo',
     'twitter',
     'instagram',
     'linkedin',
     'youtube',
     'snapchat',
     'pinterest',
+    'tribel',
+    'spill',
   ];
   
   // Check name for media keywords
@@ -102,10 +105,10 @@ function isMediaEntry(politician) {
   }
   
   // Check for media domain patterns in slug (but not if it's part of a state name like "massachusetts")
-  const mediaSlugPatterns = ['cnn', 'foxnews', 'msnbc', 'abcnews', 'cbsnews', 'nbcnews', 'telegraph', 'facebook', 'quora', 'reddit', 'tiktok', 'tumblr', 'wechat'];
+  const mediaSlugPatterns = ['cnn', 'foxnews', 'msnbc', 'abcnews', 'cbsnews', 'nbcnews', 'telegraph', 'facebook', 'quora', 'reddit', 'tiktok', 'tumblr', 'wechat', 'weibo', 'tribel', 'spill'];
   if (mediaSlugPatterns.some(pattern => slug.includes(pattern) && !slug.includes('massachusetts'))) {
     // Only flag if it's clearly a media domain, not a person's name
-    if (slug.match(/^[a-z]+(-com|-org|-co-uk)$/) || slug.match(/^[a-z-]+(facebook|quora|reddit|tiktok|tumblr|wechat)/)) {
+    if (slug.match(/^[a-z]+(-com|-org|-co-uk)$/) || slug.match(/^[a-z-]+(facebook|quora|reddit|tiktok|tumblr|wechat|weibo|tribel|spill)/)) {
       return true;
     }
   }
@@ -137,6 +140,9 @@ function isMediaEntry(politician) {
     'truthsocial.com',
     'tumblr.com',
     'wechat.com',
+    'weibo.com',
+    'tribel.com',
+    'spill-app.com',
   ];
   
   if (mediaDomains.some(domain => website.includes(domain))) {
@@ -182,6 +188,9 @@ async function main() {
     console.log(`📰 Found ${mediaEntries.length} media entries:\n`);
     mediaEntries.forEach((entry, index) => {
       console.log(`${index + 1}. ${entry.name} (${entry.slug})`);
+      if (entry.state) {
+        console.log(`   State: ${entry.state}`);
+      }
       if (entry.current_position) {
         console.log(`   Position: ${entry.current_position}`);
       }
@@ -190,6 +199,22 @@ async function main() {
       }
       console.log('');
     });
+    
+    // Group by state to show the scope of the problem
+    const byState = {};
+    mediaEntries.forEach(entry => {
+      const state = entry.state || 'null';
+      if (!byState[state]) {
+        byState[state] = [];
+      }
+      byState[state].push(entry.name);
+    });
+    
+    console.log('📊 Media entries by state:');
+    Object.keys(byState).sort().forEach(state => {
+      console.log(`   ${state}: ${byState[state].length} entries (${byState[state].join(', ')})`);
+    });
+    console.log('');
     
     if (mediaEntries.length === 0) {
       console.log('✅ No media entries found. Nothing to remove.');

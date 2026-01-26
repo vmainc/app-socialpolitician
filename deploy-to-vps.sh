@@ -18,6 +18,11 @@ git pull origin main || { echo "⚠️  Git pull failed - continuing anyway"; }
 echo "📦 Installing dependencies..."
 npm install
 
+# Step 2.5: Clean old build (IMPORTANT - removes cached files)
+echo "🧹 Cleaning old build..."
+rm -rf web/dist
+echo "   ✅ Old build removed"
+
 # Step 3: Build frontend
 echo "🔨 Building frontend..."
 npm run build
