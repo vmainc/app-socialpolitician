@@ -15,8 +15,8 @@ import PocketBase from 'pocketbase';
 import * as readline from 'readline';
 
 const PB_URL = process.env.POCKETBASE_URL || 'http://127.0.0.1:8091';
-const PB_ADMIN_EMAIL = process.env.POCKETBASE_ADMIN_EMAIL || 'admin@example.com';
-const PB_ADMIN_PASSWORD = process.env.POCKETBASE_ADMIN_PASSWORD || 'admin';
+const PB_ADMIN_EMAIL = process.env.POCKETBASE_ADMIN_EMAIL || 'admin@vma.agency';
+const PB_ADMIN_PASSWORD = process.env.POCKETBASE_ADMIN_PASSWORD || 'VMAmadmia42O200!';
 
 const pb = new PocketBase(PB_URL);
 
