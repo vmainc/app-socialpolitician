@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import { chromium } from "playwright";
 import PocketBase from "pocketbase";
+import fetch from "node-fetch";
 
 // =====================
 // CONFIG
