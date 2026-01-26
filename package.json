@@ -9,9 +9,13 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "preflight": "npm run typecheck && npm run build && npm run verify-build",
-    "verify-build": "bash -c 'if grep -r \"localhost\\|127.0.0.1\" web/dist 2>/dev/null; then echo \"ERROR: Found localhost or 127.0.0.1 in build output!\" && exit 1; else echo \"✓ OK: No localhost found in build\"; fi'"
+    "verify-build": "bash -c 'if grep -r \"localhost\\|127.0.0.1\" web/dist 2>/dev/null; then echo \"ERROR: Found localhost or 127.0.0.1 in build output!\" && exit 1; else echo \"✓ OK: No localhost found in build\"; fi'",
+    "pb:patch-schema": "node scripts/pb_schema_patch_politicians.mjs",
+    "pb:backfill": "node scripts/pb_backfill_politicians.mjs",
+    "pb:backfill:live": "DRY_RUN=false node scripts/pb_backfill_politicians.mjs"
   },
   "dependencies": {
+    "cheerio": "^1.2.0",
     "form-data": "^4.0.5",
     "node-fetch": "^2.7.0",
     "pocketbase": "^0.22.0",
@@ -23,6 +27,7 @@
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^4.2.0",
+    "playwright": "^1.58.0",
     "sharp": "^0.34.5",
     "typescript": "^5.2.0",
     "vite": "^5.0.0"
