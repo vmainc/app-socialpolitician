@@ -157,9 +157,16 @@ async function pbLoginIfNeeded() {
 }
 
 async function pbList(token, page = 1, perPage = 200) {
-  // Get records that have at least one of website_url or wikipedia_url
-  const filter = encodeURIComponent(`website_url != "" || wikipedia_url != ""`);
-  const url = `${PB_BASE_URL}/api/collections/${COLLECTION}/records?page=${page}&perPage=${perPage}&filter=${filter}`;
+  // Build filter: must have website_url or wikipedia_url
+  let filter = `website_url != "" || wikipedia_url != ""`;
+  
+  // Add office_type filter if specified
+  if (OFFICE_TYPE_FILTER) {
+    filter = `(${filter}) && office_type="${OFFICE_TYPE_FILTER}"`;
+  }
+  
+  const encodedFilter = encodeURIComponent(filter);
+  const url = `${PB_BASE_URL}/api/collections/${COLLECTION}/records?page=${page}&perPage=${perPage}&filter=${encodedFilter}`;
 
   const headers = {};
   if (token) {
@@ -285,6 +292,10 @@ async function scrapeWikipedia(wikiUrl) {
 // =====================
 async function main() {
   const token = await pbLoginIfNeeded();
+
+  if (OFFICE_TYPE_FILTER) {
+    console.log(`🎯 Filtering for: ${OFFICE_TYPE_FILTER}\n`);
+  }
 
   const browser = await chromium.launch({ headless: true });
   const ctx = await browser.newContext({ userAgent: USER_AGENT });
