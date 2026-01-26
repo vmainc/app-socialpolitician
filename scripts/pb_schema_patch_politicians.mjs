@@ -20,9 +20,17 @@ const PB_ADMIN_PASSWORD = process.env.PB_ADMIN_PASSWORD || process.env.POCKETBAS
 const pb = new PocketBase(PB_BASE_URL);
 const COLLECTION_NAME = "politicians";
 
+// Generate a simple ID for fields (PocketBase will accept or regenerate)
+function generateFieldId(fieldName) {
+  // Create a simple numeric ID based on field name hash
+  const hash = fieldName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return `field${Math.abs(hash).toString().slice(0, 10)}`;
+}
+
 // Field definitions
 const NEW_FIELDS = [
   {
+    id: generateFieldId("party"),
     name: "party",
     type: "select",
     required: false,
@@ -35,6 +43,7 @@ const NEW_FIELDS = [
     },
   },
   {
+    id: generateFieldId("chamber"),
     name: "chamber",
     type: "select",
     required: false,
@@ -47,6 +56,7 @@ const NEW_FIELDS = [
     },
   },
   {
+    id: generateFieldId("status"),
     name: "status",
     type: "select",
     required: false,
@@ -59,6 +69,7 @@ const NEW_FIELDS = [
     },
   },
   {
+    id: generateFieldId("office_title"),
     name: "office_title",
     type: "text",
     required: false,
@@ -72,6 +83,7 @@ const NEW_FIELDS = [
     },
   },
   {
+    id: generateFieldId("term_start_date"),
     name: "term_start_date",
     type: "date",
     required: false,
@@ -81,6 +93,7 @@ const NEW_FIELDS = [
     options: {},
   },
   {
+    id: generateFieldId("term_end_date"),
     name: "term_end_date",
     type: "date",
     required: false,
@@ -90,6 +103,7 @@ const NEW_FIELDS = [
     options: {},
   },
   {
+    id: generateFieldId("birth_date"),
     name: "birth_date",
     type: "date",
     required: false,
@@ -99,6 +113,7 @@ const NEW_FIELDS = [
     options: {},
   },
   {
+    id: generateFieldId("official_website_domain"),
     name: "official_website_domain",
     type: "text",
     required: false,
