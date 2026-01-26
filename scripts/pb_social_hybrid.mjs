@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
 import { chromium } from "playwright";
+import PocketBase from "pocketbase";
 
 // =====================
 // CONFIG
@@ -168,37 +169,30 @@ async function pbList(token, page = 1, perPage = 200) {
     filter = `(${filter}) && office_type="${OFFICE_TYPE_FILTER}"`;
   }
   
-  const encodedFilter = encodeURIComponent(filter);
-  const url = `${PB_BASE_URL}/api/collections/${COLLECTION}/records?page=${page}&perPage=${perPage}&filter=${encodedFilter}`;
-
-  const headers = {};
-  if (token) {
-    headers["Authorization"] = token;
+  try {
+    const result = await pb.collection(COLLECTION).getList(page, perPage, {
+      filter: filter,
+      requestKey: null,
+    });
+    return {
+      items: result.items,
+      page: result.page,
+      perPage: result.perPage,
+      totalItems: result.totalItems,
+      totalPages: result.totalPages,
+    };
+  } catch (error) {
+    throw new Error(`PB list failed: ${error.message}`);
   }
-
-  const res = await fetch(url, { headers });
-  if (!res.ok) {
-    const errorText = await res.text().catch(() => "");
-    throw new Error(`PB list failed: HTTP ${res.status} ${errorText}`);
-  }
-  return await res.json();
 }
 
 async function pbPatch(token, id, patch) {
-  const res = await fetch(`${PB_BASE_URL}/api/collections/${COLLECTION}/records/${id}`, {
-    method: "PATCH",
-    headers: {
-      "content-type": "application/json",
-      ...(token ? { Authorization: token } : {}),
-    },
-    body: JSON.stringify(patch),
-  });
-
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`PB update failed: HTTP ${res.status} ${txt}`);
+  try {
+    const result = await pb.collection(COLLECTION).update(id, patch);
+    return result;
+  } catch (error) {
+    throw new Error(`PB update failed: ${error.message}`);
   }
-  return await res.json();
 }
 
 // =====================
