@@ -12,6 +12,13 @@ cd "$APP_DIR" || { echo "❌ Error: Could not cd to $APP_DIR"; exit 1; }
 
 # Step 1: Pull latest changes
 echo "📥 Pulling latest changes from git..."
+# Stash local changes to package-lock.json if they exist
+if git diff --quiet package-lock.json; then
+  echo "   No local changes to package-lock.json"
+else
+  echo "   Stashing local changes to package-lock.json..."
+  git stash push -m "Stash package-lock.json before pull" package-lock.json || true
+fi
 git pull origin main || { echo "⚠️  Git pull failed - continuing anyway"; }
 
 # Step 2: Install dependencies (if needed)
@@ -33,7 +40,11 @@ if grep -r "localhost\|127.0.0.1" web/dist 2>/dev/null; then
   echo "❌ ERROR: Found localhost in build!"
   exit 1
 fi
-echo "✅ Build OK"
+if grep -r "current_position!~" web/dist 2>/dev/null; then
+  echo "❌ ERROR: Found old filter syntax (!~) in build!"
+  exit 1
+fi
+echo "✅ Build OK - no localhost, no old filter syntax"
 
 # Step 5: Restart services
 echo "🔄 Restarting services..."
