@@ -35,7 +35,7 @@ const COLLECTION_NAME = "politicians";
 
 function normalizeParty(politicalParty) {
   if (!politicalParty || typeof politicalParty !== "string") {
-    return "Unknown";
+    return null; // Return null if no party info (don't set Unknown since it's not in select options)
   }
 
   const party = politicalParty.toLowerCase().trim();
@@ -49,14 +49,9 @@ function normalizeParty(politicalParty) {
   if (party.includes("independent") || party === "i") {
     return "Independent";
   }
-  if (party.includes("nonpartisan")) {
-    return "Nonpartisan";
-  }
-  if (party === "" || party === "null" || party === "undefined") {
-    return "Unknown";
-  }
-
-  return "Other";
+  
+  // If party doesn't match the 3 available options, return null (don't set)
+  return null;
 }
 
 function normalizeChamber(officeType, currentPosition) {
@@ -64,42 +59,19 @@ function normalizeChamber(officeType, currentPosition) {
   const position = (currentPosition || "").toLowerCase();
   const combined = `${office} ${position}`;
 
-  // Check for state-level first to avoid false matches
-  if (combined.includes("state senator") || (combined.includes("senate") && combined.includes("state"))) {
-    return "State Senate";
+  // Map to the 3 available select options
+  if (combined.includes("senator") || combined.includes("senate")) {
+    return "Senator";
   }
-  if (combined.includes("state representative") || (combined.includes("house") && combined.includes("state") && !combined.includes("representative"))) {
-    return "State House";
+  if (combined.includes("representative") || combined.includes("house") || combined.includes("congress")) {
+    return "Representative";
   }
-
-  // Federal level
-  if ((combined.includes("senator") || combined.includes("senate")) && !combined.includes("state")) {
-    return "Senate";
-  }
-  if ((combined.includes("representative") || (combined.includes("house") && !combined.includes("state"))) && !combined.includes("state")) {
-    return "House";
-  }
-
-  // Other offices
   if (combined.includes("governor")) {
     return "Governor";
   }
-  if (combined.includes("mayor")) {
-    return "Mayor";
-  }
-  if (combined.includes("judge") || combined.includes("justice")) {
-    return "Judicial";
-  }
-  if (combined.includes("cabinet") || combined.includes("secretary")) {
-    return "Cabinet";
-  }
 
-  // If we have any office info but didn't match, return Other
-  if (office || position) {
-    return "Other";
-  }
-
-  return "Unknown";
+  // If no match, return null (don't set)
+  return null;
 }
 
 function normalizeStatus(currentPosition) {
@@ -227,7 +199,7 @@ async function backfillPoliticians() {
         // Party
         if (!record.party && record.political_party) {
           const party = normalizeParty(record.political_party);
-          if (party !== "Unknown" || record.political_party) {
+          if (party) { // Only set if we got a valid party value
             updates.party = party;
             updateStats.party++;
             hasUpdates = true;
@@ -237,7 +209,7 @@ async function backfillPoliticians() {
         // Chamber
         if (!record.chamber) {
           const chamber = normalizeChamber(record.office_type, record.current_position);
-          if (chamber !== "Unknown") {
+          if (chamber) { // Only set if we got a valid chamber value
             updates.chamber = chamber;
             updateStats.chamber++;
             hasUpdates = true;
@@ -262,18 +234,21 @@ async function backfillPoliticians() {
           }
         }
 
-        // Term Start Date
-        if (!record.term_start_date && record.position_start_date) {
-          updates.term_start_date = record.position_start_date;
-          updateStats.term_start_date++;
-          hasUpdates = true;
-        }
+        // Term Start Date - skip if field doesn't exist in schema
+        // Note: term_start_date field is missing from your schema, so we skip it
+        // if (!record.term_start_date && record.position_start_date) {
+        //   updates.term_start_date = record.position_start_date;
+        //   updateStats.term_start_date++;
+        //   hasUpdates = true;
+        // }
 
         // Official Website Domain
+        // Note: field is URL type, but we'll try to set it as text (may need to be fixed in schema)
         if (!record.official_website_domain && record.website_url) {
           const domain = extractDomain(record.website_url);
           if (domain) {
-            updates.official_website_domain = domain;
+            // Convert domain to full URL format since field is URL type
+            updates.official_website_domain = `https://${domain}`;
             updateStats.official_website_domain++;
             hasUpdates = true;
           }
@@ -322,7 +297,7 @@ async function backfillPoliticians() {
   console.log(`   chamber: ${updateStats.chamber}`);
   console.log(`   status: ${updateStats.status}`);
   console.log(`   office_title: ${updateStats.office_title}`);
-  console.log(`   term_start_date: ${updateStats.term_start_date}`);
+  // console.log(`   term_start_date: ${updateStats.term_start_date}`); // Field not in schema
   console.log(`   official_website_domain: ${updateStats.official_website_domain}`);
 
   if (DRY_RUN) {
