@@ -15,6 +15,9 @@ const MAX_RECORDS = Number(process.env.MAX_RECORDS || 99999);
 const MAX_SITE_PAGES = Number(process.env.MAX_SITE_PAGES || 15);
 const NAV_TIMEOUT_MS = Number(process.env.NAV_TIMEOUT_MS || 15000);
 
+// Optional filter: "governor", "senator", "representative", or null for all
+const OFFICE_TYPE_FILTER = process.env.OFFICE_TYPE_FILTER || null;
+
 const BLOCK_TLD = new Set(["gov"]);
 const USER_AGENT = "Mozilla/5.0 (compatible; SocialPoliticianBot/1.0; +https://socialpolitician.com)";
 
