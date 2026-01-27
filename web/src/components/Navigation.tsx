@@ -48,6 +48,13 @@ export default function Navigation() {
         {/* Navigation links - hidden on mobile, shown in dropdown when menu is open */}
         <div className={`nav-links ${isMenuOpen ? 'open' : ''}`}>
           <Link 
+            to="/" 
+            className={`nav-link ${isActive('/') ? 'active' : ''}`}
+            onClick={closeMenu}
+          >
+            Home
+          </Link>
+          <Link 
             to="/senators" 
             className={`nav-link ${isActive('/senators') ? 'active' : ''}`}
             onClick={closeMenu}
