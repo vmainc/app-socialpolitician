@@ -82,11 +82,11 @@ const STATE_NAMES: Record<string, string> = {
 export function buildPocketBaseFilter(filters: PoliticianFilters): string {
   const conditions: string[] = [];
   
-  // Search text (name OR office_title)
+  // Search text (name OR current_position)
   if (filters.searchText.trim()) {
     const searchTerm = escapeFilterValue(filters.searchText.trim());
     // Use OR for search across multiple fields
-    conditions.push(`(name~"${searchTerm}" || office_title~"${searchTerm}")`);
+    conditions.push(`(name~"${searchTerm}" || current_position~"${searchTerm}")`);
   }
   
   // Office type - use office_type (text) as primary, chamber (select) as fallback
