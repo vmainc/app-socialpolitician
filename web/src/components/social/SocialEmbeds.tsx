@@ -360,17 +360,16 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
   }
 
   return (
-    <WidgetErrorBoundary>
-      <div className="profile-section">
-        <h2 className="profile-section-title">Social</h2>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '1.5rem',
-          marginTop: '1rem'
-        }}>
-          {/* X (Twitter) Card */}
-          {hasX && (
+    <div className="profile-section">
+      <h2 className="profile-section-title">Social</h2>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '1.5rem',
+        marginTop: '1rem'
+      }}>
+        {/* X (Twitter) Card */}
+        {hasX && (
           <div style={{
             border: '1px solid #e5e7eb',
             borderRadius: '0.5rem',
@@ -386,32 +385,35 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
             }}>
               <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>X (Twitter)</h3>
             </div>
-            <div 
-              key={`x-widget-${xKey}-${xProfileUrl}`}
-              style={{
-                height: '600px',
-                overflow: 'auto',
-                padding: '1rem',
-                position: 'relative'
-              }}
-            >
-              {!xLoaded && (
-                <div style={{ 
-                  position: 'absolute', 
-                  top: '50%', 
-                  left: '50%', 
-                  transform: 'translate(-50%, -50%)',
-                  color: '#6b7280' 
-                }}>
-                  Loading timeline...
-                </div>
-              )}
+            <WidgetErrorBoundary>
               <div 
-                ref={xWrapRef}
-                suppressHydrationWarning
-                style={{ width: '100%', height: '100%', minHeight: '500px' }}
-              />
-            </div>
+                key={`x-widget-${xKey}-${xProfileUrl}`}
+                style={{
+                  height: '600px',
+                  overflow: 'auto',
+                  padding: '1rem',
+                  position: 'relative'
+                }}
+              >
+                {!xLoaded && (
+                  <div style={{ 
+                    position: 'absolute', 
+                    top: '50%', 
+                    left: '50%', 
+                    transform: 'translate(-50%, -50%)',
+                    color: '#6b7280',
+                    zIndex: 1
+                  }}>
+                    Loading timeline...
+                  </div>
+                )}
+                <div 
+                  ref={xWrapRef}
+                  suppressHydrationWarning
+                  style={{ width: '100%', height: '100%', minHeight: '500px' }}
+                />
+              </div>
+            </WidgetErrorBoundary>
             <div style={{
               padding: '1rem',
               borderTop: '1px solid #e5e7eb',
@@ -455,32 +457,35 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
             }}>
               <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>Facebook</h3>
             </div>
-            <div 
-              key={`fb-widget-${fbKey}-${facebookUrl}`}
-              style={{
-                height: '600px',
-                overflow: 'auto',
-                padding: '1rem',
-                position: 'relative'
-              }}
-            >
-              {!fbLoaded && (
-                <div style={{ 
-                  position: 'absolute', 
-                  top: '50%', 
-                  left: '50%', 
-                  transform: 'translate(-50%, -50%)',
-                  color: '#6b7280' 
-                }}>
-                  Loading page...
-                </div>
-              )}
+            <WidgetErrorBoundary>
               <div 
-                ref={fbWrapRef}
-                suppressHydrationWarning
-                style={{ width: '100%', height: '100%', minHeight: '500px' }}
-              />
-            </div>
+                key={`fb-widget-${fbKey}-${facebookUrl}`}
+                style={{
+                  height: '600px',
+                  overflow: 'auto',
+                  padding: '1rem',
+                  position: 'relative'
+                }}
+              >
+                {!fbLoaded && (
+                  <div style={{ 
+                    position: 'absolute', 
+                    top: '50%', 
+                    left: '50%', 
+                    transform: 'translate(-50%, -50%)',
+                    color: '#6b7280',
+                    zIndex: 1
+                  }}>
+                    Loading page...
+                  </div>
+                )}
+                <div 
+                  ref={fbWrapRef}
+                  suppressHydrationWarning
+                  style={{ width: '100%', height: '100%', minHeight: '500px' }}
+                />
+              </div>
+            </WidgetErrorBoundary>
             <div style={{
               padding: '1rem',
               borderTop: '1px solid #e5e7eb',
@@ -581,8 +586,7 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
             </div>
           </div>
         )}
-        </div>
       </div>
-    </WidgetErrorBoundary>
+    </div>
   );
 }
