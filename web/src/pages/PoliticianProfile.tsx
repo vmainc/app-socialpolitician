@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
 import { Politician } from '../types/politician';
 import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
@@ -12,8 +12,38 @@ import './PoliticianProfile.css';
 
 function PoliticianProfile() {
   const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
   const [politician, setPolitician] = useState<Politician | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Determine back link based on route or politician type
+  const getBackLink = () => {
+    // Check if we came from a type-specific route
+    const pathParts = location.pathname.split('/');
+    if (pathParts[1] === 'governors') {
+      return '/governors';
+    } else if (pathParts[1] === 'senators') {
+      return '/senators';
+    } else if (pathParts[1] === 'representatives') {
+      return '/representatives';
+    }
+    
+    // Fallback: use politician's office type if available
+    if (politician) {
+      const officeType = politician.office_type?.toLowerCase();
+      const chamber = politician.chamber?.toLowerCase();
+      if (officeType === 'governor' || chamber === 'governor') {
+        return '/governors';
+      } else if (officeType === 'senator' || chamber === 'senator') {
+        return '/senators';
+      } else if (officeType === 'representative' || chamber === 'representative') {
+        return '/representatives';
+      }
+    }
+    
+    // Default to home
+    return '/';
+  };
 
   useEffect(() => {
     if (!slug) return;
@@ -136,7 +166,7 @@ function PoliticianProfile() {
     <div className="profile-page">
       {/* Header */}
       <header className="profile-header">
-        <Link to="/" className="back-link">
+        <Link to={getBackLink()} className="back-link">
           <span>←</span>
           <span>Back</span>
         </Link>

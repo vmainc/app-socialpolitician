@@ -17,6 +17,11 @@ function App() {
       <Route path="/senators" element={<PoliticiansDirectory />} />
       <Route path="/representatives" element={<PoliticiansDirectory />} />
       <Route path="/governors" element={<PoliticiansDirectory />} />
+      {/* Type-specific profile routes */}
+      <Route path="/governors/:slug" element={<PoliticianProfile />} />
+      <Route path="/senators/:slug" element={<PoliticianProfile />} />
+      <Route path="/representatives/:slug" element={<PoliticianProfile />} />
+      {/* Fallback for backward compatibility */}
       <Route path="/politicians/:slug" element={<PoliticianProfile />} />
       
       {/* Voices of the Presidency routes */}

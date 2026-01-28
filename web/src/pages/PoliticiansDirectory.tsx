@@ -8,7 +8,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
 import { Politician } from '../types/politician';
 import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
-import { isMediaEntry, isPresident, isPreviousRepresentative, buildOfficeFilter } from '../lib/pb';
+import { isMediaEntry, isPresident, isPreviousRepresentative, buildOfficeFilter, getPoliticianRoute } from '../lib/pb';
 import './PoliticiansDirectory.css';
 
 function AvatarPlaceholder() {
@@ -173,7 +173,7 @@ function PoliticiansDirectory() {
           {politicians.map((p) => (
             <Link
               key={p.id}
-              to={`/politicians/${p.slug}`}
+              to={getPoliticianRoute(p)}
               className="politician-card"
             >
               <div className="politician-card-avatar">

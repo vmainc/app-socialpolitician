@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { listPoliticians, ListPoliticiansResult } from '../lib/pb';
+import { listPoliticians, ListPoliticiansResult, getPoliticianRoute } from '../lib/pb';
 import { usePoliticianFilters, US_STATES, OFFICE_OPTIONS, PARTY_OPTIONS, SORT_OPTIONS } from '../hooks/usePoliticianFilters';
 import { Politician } from '../types/politician';
 import { pb } from '../lib/pocketbase';
@@ -295,7 +295,7 @@ function Home() {
             {result.items.map((politician) => (
               <Link
                 key={politician.id}
-                to={`/politicians/${politician.slug}`}
+                to={getPoliticianRoute(politician)}
                 className="home-politician-card"
               >
                 <div className="home-politician-card-avatar">
