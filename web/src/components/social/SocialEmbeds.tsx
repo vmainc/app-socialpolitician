@@ -149,6 +149,8 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
   const fbWrapRef = useRef<HTMLDivElement>(null);
   const [xLoaded, setXLoaded] = useState(false);
   const [fbLoaded, setFbLoaded] = useState(false);
+  const [xKey, setXKey] = useState(0);
+  const [fbKey, setFbKey] = useState(0);
 
   // Parse URLs
   const xProfileUrl = parseXProfileUrl(politician?.x_url);
@@ -160,6 +162,15 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
   const hasFacebook = facebookUrl !== '';
   const hasYouTube = youtube.channelUrl !== '';
   const hasAny = hasX || hasFacebook || hasYouTube;
+
+  // Reset keys when URLs change to force remount
+  useEffect(() => {
+    if (hasX) setXKey(prev => prev + 1);
+  }, [xProfileUrl, hasX]);
+
+  useEffect(() => {
+    if (hasFacebook) setFbKey(prev => prev + 1);
+  }, [facebookUrl, hasFacebook]);
 
   // Initialize X timeline embed
   useEffect(() => {
@@ -228,20 +239,10 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
 
     return () => {
       mounted = false;
-      // Cleanup: safely remove content
-      // Use innerHTML directly to avoid removeChild issues with third-party widgets
-      if (xWrapRef.current) {
-        try {
-          // Check if element still exists and is in the DOM
-          if (xWrapRef.current.parentNode) {
-            xWrapRef.current.innerHTML = '';
-          }
-        } catch (e) {
-          // Silently ignore cleanup errors
-        }
-      }
+      // Don't try to clean up - let React handle it via key changes
+      // Third-party widgets manipulate DOM in ways that conflict with React cleanup
     };
-  }, [hasX, xProfileUrl]);
+  }, [hasX, xProfileUrl, xKey]);
 
   // Initialize Facebook Page plugin
   useEffect(() => {
@@ -321,20 +322,10 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
 
     return () => {
       mounted = false;
-      // Cleanup: safely remove content
-      // Use innerHTML directly to avoid removeChild issues with third-party widgets
-      if (fbWrapRef.current) {
-        try {
-          // Check if element still exists and is in the DOM
-          if (fbWrapRef.current.parentNode) {
-            fbWrapRef.current.innerHTML = '';
-          }
-        } catch (e) {
-          // Silently ignore cleanup errors
-        }
-      }
+      // Don't try to clean up - let React handle it via key changes
+      // Third-party widgets manipulate DOM in ways that conflict with React cleanup
     };
-  }, [hasFacebook, facebookUrl]);
+  }, [hasFacebook, facebookUrl, fbKey]);
 
 
   if (!hasAny) {
@@ -380,14 +371,18 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
             }}>
               <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>X (Twitter)</h3>
             </div>
-            <div style={{
-              height: '600px',
-              overflow: 'auto',
-              padding: '1rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }} ref={xWrapRef}>
+            <div 
+              key={`x-widget-${xKey}-${xProfileUrl}`}
+              style={{
+                height: '600px',
+                overflow: 'auto',
+                padding: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }} 
+              ref={xWrapRef}
+            >
               {!xLoaded && (
                 <p style={{ color: '#6b7280', margin: 0 }}>Loading timeline...</p>
               )}
@@ -435,14 +430,18 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
             }}>
               <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>Facebook</h3>
             </div>
-            <div style={{
-              height: '600px',
-              overflow: 'auto',
-              padding: '1rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }} ref={fbWrapRef}>
+            <div 
+              key={`fb-widget-${fbKey}-${facebookUrl}`}
+              style={{
+                height: '600px',
+                overflow: 'auto',
+                padding: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }} 
+              ref={fbWrapRef}
+            >
               {!fbLoaded && (
                 <p style={{ color: '#6b7280', margin: 0 }}>Loading page...</p>
               )}
