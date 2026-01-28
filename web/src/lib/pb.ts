@@ -90,6 +90,13 @@ export function isPresident(politician: Politician): boolean {
   // Use office_title (new) or current_position (legacy) for backward compatibility
   const currentPosition = ((politician.office_title || politician.current_position) || '').toLowerCase();
   
+  // 🚫 Guard: do NOT treat current U.S. Senators as presidents,
+  // even if their name matches a president (e.g. Sen. John Kennedy of Louisiana).
+  // We only care about actual U.S. Presidents here.
+  if (politician.office_type === 'senator' || politician.chamber === 'Senator') {
+    return false;
+  }
+  
   // Check if name matches any president (exact or partial match)
   const normalizedName = name.toLowerCase().trim();
   for (const president of US_PRESIDENTS) {

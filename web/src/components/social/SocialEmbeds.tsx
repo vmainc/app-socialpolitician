@@ -166,6 +166,7 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
     if (!hasX || !xWrapRef.current) return;
 
     let mounted = true;
+    let anchorElement: HTMLAnchorElement | null = null;
 
     async function initX() {
       try {
@@ -173,23 +174,36 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
         
         if (!mounted || !xWrapRef.current) return;
         
-        // Clear existing content
-        xWrapRef.current.innerHTML = '';
+        // Safely clear existing content
+        const container = xWrapRef.current;
+        while (container.firstChild) {
+          try {
+            container.removeChild(container.firstChild);
+          } catch (e) {
+            // If removeChild fails, fall back to innerHTML
+            container.innerHTML = '';
+            break;
+          }
+        }
         
         // Create timeline anchor
-        const anchor = document.createElement('a');
-        anchor.className = 'twitter-timeline';
-        anchor.href = xProfileUrl;
-        anchor.setAttribute('data-height', '600');
-        anchor.textContent = 'View posts';
-        xWrapRef.current.appendChild(anchor);
+        anchorElement = document.createElement('a');
+        anchorElement.className = 'twitter-timeline';
+        anchorElement.href = xProfileUrl;
+        anchorElement.setAttribute('data-height', '600');
+        anchorElement.textContent = 'View posts';
+        container.appendChild(anchorElement);
         
         // Wait for twttr to be available and load
         let attempts = 0;
         const checkTwttr = () => {
-          if (window.twttr?.widgets) {
-            window.twttr.widgets.load(xWrapRef.current);
-            setXLoaded(true);
+          if (window.twttr?.widgets && container) {
+            try {
+              window.twttr.widgets.load(container);
+              setXLoaded(true);
+            } catch (e) {
+              console.warn('Failed to load X widget:', e);
+            }
           } else if (attempts < 20 && mounted) {
             attempts++;
             setTimeout(checkTwttr, 100);
@@ -205,6 +219,21 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
 
     return () => {
       mounted = false;
+      // Cleanup: safely remove content
+      if (xWrapRef.current) {
+        try {
+          while (xWrapRef.current.firstChild) {
+            xWrapRef.current.removeChild(xWrapRef.current.firstChild);
+          }
+        } catch (e) {
+          // If removeChild fails, use innerHTML as fallback
+          try {
+            xWrapRef.current.innerHTML = '';
+          } catch (e2) {
+            // Ignore errors during cleanup
+          }
+        }
+      }
     };
   }, [hasX, xProfileUrl]);
 
@@ -213,6 +242,7 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
     if (!hasFacebook || !fbWrapRef.current) return;
 
     let mounted = true;
+    let fbPageDiv: HTMLDivElement | null = null;
 
     async function initFacebook() {
       try {
@@ -227,11 +257,20 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
         
         if (!mounted || !fbWrapRef.current) return;
         
-        // Clear existing content
-        fbWrapRef.current.innerHTML = '';
+        // Safely clear existing content
+        const container = fbWrapRef.current;
+        while (container.firstChild) {
+          try {
+            container.removeChild(container.firstChild);
+          } catch (e) {
+            // If removeChild fails, fall back to innerHTML
+            container.innerHTML = '';
+            break;
+          }
+        }
         
         // Create Facebook page div
-        const fbPageDiv = document.createElement('div');
+        fbPageDiv = document.createElement('div');
         fbPageDiv.className = 'fb-page';
         fbPageDiv.setAttribute('data-href', facebookUrl);
         fbPageDiv.setAttribute('data-tabs', 'timeline');
@@ -240,14 +279,18 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
         fbPageDiv.setAttribute('data-width', '500');
         fbPageDiv.style.width = '100%';
         fbPageDiv.style.minHeight = '500px';
-        fbWrapRef.current.appendChild(fbPageDiv);
+        container.appendChild(fbPageDiv);
         
         // Wait for FB to be available
         let attempts = 0;
         const checkFB = () => {
-          if (window.FB?.XFBML) {
-            window.FB.XFBML.parse(fbWrapRef.current);
-            setFbLoaded(true);
+          if (window.FB?.XFBML && container) {
+            try {
+              window.FB.XFBML.parse(container);
+              setFbLoaded(true);
+            } catch (e) {
+              console.warn('Failed to parse Facebook widget:', e);
+            }
           } else if (attempts < 20 && mounted) {
             attempts++;
             setTimeout(checkFB, 100);
@@ -263,6 +306,21 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
 
     return () => {
       mounted = false;
+      // Cleanup: safely remove content
+      if (fbWrapRef.current) {
+        try {
+          while (fbWrapRef.current.firstChild) {
+            fbWrapRef.current.removeChild(fbWrapRef.current.firstChild);
+          }
+        } catch (e) {
+          // If removeChild fails, use innerHTML as fallback
+          try {
+            fbWrapRef.current.innerHTML = '';
+          } catch (e2) {
+            // Ignore errors during cleanup
+          }
+        }
+      }
     };
   }, [hasFacebook, facebookUrl]);
 
