@@ -47,6 +47,7 @@ interface SocialEmbedsProps {
 declare global {
   interface Window {
     twttr?: {
+      ready?: (callback: () => void) => void;
       widgets?: {
         load: (element?: HTMLElement | null) => void;
       };
@@ -262,38 +263,52 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
             anchorElement.textContent = 'View posts';
             container.appendChild(anchorElement);
             
-            // Wait for twttr to be available and load
-            let attempts = 0;
-            const checkTwttr = () => {
-              if (!mounted || !container || !container.parentNode) return;
-              
-              if (window.twttr?.widgets) {
+            // Wait for twttr to be ready, then load widget
+            if (window.twttr?.ready) {
+              // Use ready callback for proper initialization
+              window.twttr.ready(() => {
+                if (!mounted || !container || !container.parentNode) return;
+                
                 try {
-                  // Load all timeline widgets on the page (will parse the anchor we just created)
-                  window.twttr.widgets.load();
-                  setXLoaded(true);
+                  // Load widgets in this container (will parse the anchor we just created)
+                  if (window.twttr?.widgets) {
+                    window.twttr.widgets.load(container);
+                    setXLoaded(true);
+                  }
                 } catch (e) {
                   console.warn('Failed to load X widget:', e);
-                  // Try alternative method - load specifically this container
-                  try {
-                    if (anchorElement && container.contains(anchorElement)) {
-                      window.twttr.widgets.load(container);
+                  setXLoaded(true); // Set loaded anyway to hide loading message
+                }
+              });
+            } else {
+              // Fallback: poll for twttr to be available
+              let attempts = 0;
+              const checkTwttr = () => {
+                if (!mounted || !container || !container.parentNode) return;
+                
+                if (window.twttr?.ready) {
+                  window.twttr.ready(() => {
+                    if (!mounted || !container || !container.parentNode) return;
+                    try {
+                      if (window.twttr?.widgets) {
+                        window.twttr.widgets.load(container);
+                        setXLoaded(true);
+                      }
+                    } catch (e) {
+                      console.warn('Failed to load X widget:', e);
                       setXLoaded(true);
                     }
-                  } catch (e2) {
-                    console.warn('Alternative load method also failed:', e2);
-                  }
+                  });
+                } else if (attempts < 50 && mounted) {
+                  attempts++;
+                  timeoutId = setTimeout(checkTwttr, 100);
+                } else if (attempts >= 50) {
+                  console.warn('Twitter widgets.js failed to load after 5 seconds');
+                  setXLoaded(true); // Set loaded anyway to hide loading message
                 }
-              } else if (attempts < 50 && mounted) {
-                attempts++;
-                timeoutId = setTimeout(checkTwttr, 100);
-              } else if (attempts >= 50) {
-                console.warn('Twitter widgets.js failed to load after 5 seconds');
-                setXLoaded(true); // Set loaded anyway to hide loading message
-              }
-            };
-            // Start checking after a short delay to ensure script is ready
-            timeoutId = setTimeout(checkTwttr, 100);
+              };
+              timeoutId = setTimeout(checkTwttr, 100);
+            }
           } catch (error) {
             console.warn('Failed to initialize X widget:', error);
           }
