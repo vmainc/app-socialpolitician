@@ -204,6 +204,32 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
     if (hasFacebook) setFbKey(prev => prev + 1);
   }, [facebookUrl, hasFacebook]);
 
+  // Suppress removeChild errors from third-party widgets
+  useEffect(() => {
+    const originalError = window.onerror;
+    const originalUnhandledRejection = window.onunhandledrejection;
+    
+    window.onerror = (message, source, lineno, colno, error) => {
+      // Suppress removeChild errors from third-party widgets
+      if (
+        typeof message === 'string' && 
+        (message.includes('removeChild') || message.includes('NotFoundError'))
+      ) {
+        return true; // Suppress the error
+      }
+      // Call original handler for other errors
+      if (originalError) {
+        return originalError(message, source, lineno, colno, error);
+      }
+      return false;
+    };
+
+    return () => {
+      window.onerror = originalError;
+      window.onunhandledrejection = originalUnhandledRejection;
+    };
+  }, []);
+
   // Initialize X timeline embed
   useEffect(() => {
     if (!hasX || !xWrapRef.current) return;
