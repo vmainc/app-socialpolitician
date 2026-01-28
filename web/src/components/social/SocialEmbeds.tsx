@@ -356,12 +356,16 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
-              }} 
-              ref={xWrapRef}
+              }}
             >
               {!xLoaded && (
                 <p style={{ color: '#6b7280', margin: 0 }}>Loading timeline...</p>
               )}
+              <div 
+                ref={xWrapRef}
+                suppressHydrationWarning
+                style={{ width: '100%', height: '100%' }}
+              />
             </div>
             <div style={{
               padding: '1rem',
@@ -415,12 +419,16 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
-              }} 
-              ref={fbWrapRef}
+              }}
             >
               {!fbLoaded && (
                 <p style={{ color: '#6b7280', margin: 0 }}>Loading page...</p>
               )}
+              <div 
+                ref={fbWrapRef}
+                suppressHydrationWarning
+                style={{ width: '100%', height: '100%' }}
+              />
             </div>
             <div style={{
               padding: '1rem',
