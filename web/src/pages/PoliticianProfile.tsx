@@ -5,14 +5,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
-import { Politician, Feed } from '../types/politician';
+import { Politician } from '../types/politician';
 import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
+import SocialEmbeds from '../components/social/SocialEmbeds';
 import './PoliticianProfile.css';
 
 function PoliticianProfile() {
   const { slug } = useParams<{ slug: string }>();
   const [politician, setPolitician] = useState<Politician | null>(null);
-  const [feeds, setFeeds] = useState<Feed[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,32 +25,6 @@ function PoliticianProfile() {
           .getFirstListItem<Politician>(`slug="${slug}"`, {});
 
         setPolitician(politicianRecord);
-
-        // Silently fetch feeds - 400/404 errors are expected when no feeds exist
-        try {
-          const feedRecords = await pb.collection('feeds').getList<Feed>(1, 50, {
-            filter: `politician="${politicianRecord.id}"`,
-            sort: '-fetched_at',
-          });
-          
-          const filteredFeeds = feedRecords.items.filter(feed => {
-            if (!feed.source) return true;
-            const source = feed.source.toLowerCase();
-            const excludedSources = ['reddit', 'quora', 'medium.com', 'nextdoor'];
-            return !excludedSources.some(excluded => source.includes(excluded));
-          });
-          
-          setFeeds(filteredFeeds);
-        } catch (feedError: any) {
-          // Silently ignore 400/404 errors - these are expected when politician has no feeds
-          // Status 400 = Bad Request (often means filter is invalid or collection doesn't exist)
-          // Status 404 = Not Found (politician has no feeds)
-          if (feedError?.status !== 400 && feedError?.status !== 404) {
-            // Only log unexpected errors
-            console.warn('Unexpected error loading feeds:', feedError);
-          }
-          setFeeds([]);
-        }
       } catch (error: any) {
         if (error?.status === 404) {
           console.error('Politician not found');
@@ -252,62 +226,8 @@ function PoliticianProfile() {
           </div>
         )}
 
-        {/* Feeds Section */}
-        {feeds.length > 0 && (
-          <div className="profile-section">
-            <h2 className="profile-section-title">Recent Activity</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {feeds.map((feed) => (
-                <div 
-                  key={feed.id} 
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.75rem',
-                    borderRadius: '0.5rem',
-                    border: '1px solid #e5e7eb',
-                    transition: 'background-color 0.2s',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f9fafb'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                >
-                  <div>
-                    <p style={{ fontWeight: 600, color: '#111827', margin: 0, textTransform: 'capitalize' }}>
-                      {feed.platform}
-                    </p>
-                    <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0.25rem 0 0' }}>
-                      Updated {new Date(feed.fetched_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  {Array.isArray(feed.normalized_items) && (
-                    <span style={{
-                      padding: '0.25rem 0.75rem',
-                      backgroundColor: '#dbeafe',
-                      color: '#1e40af',
-                      borderRadius: '9999px',
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                    }}>
-                      {feed.normalized_items.length} items
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* No feeds message */}
-        {feeds.length === 0 && (
-          <div className="profile-section">
-            <div className="profile-feeds-empty">
-              <div className="profile-feeds-empty-icon">📱</div>
-              <p className="profile-feeds-empty-text">Social media feeds will appear soon</p>
-              <p className="profile-feeds-empty-subtext">We're working on aggregating their latest updates</p>
-            </div>
-          </div>
-        )}
+        {/* Social Embeds Section */}
+        {politician && <SocialEmbeds politician={politician} />}
       </main>
     </div>
   );
