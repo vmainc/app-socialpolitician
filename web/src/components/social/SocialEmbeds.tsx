@@ -212,7 +212,6 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
     
     // Helper to check if a message is a Facebook SDK error
     const isFacebookError = (args: any[]): boolean => {
-      const message = String(args[0] || '');
       const fullMessage = args.map(String).join(' ');
       
       // Check for Facebook error patterns
