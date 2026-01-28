@@ -178,40 +178,52 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
 
     let mounted = true;
     const container = xWrapRef.current;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     async function initX() {
       try {
         await loadScriptOnce('x-widgets', 'https://platform.twitter.com/widgets.js');
         
-        if (!mounted || !container) return;
+        if (!mounted || !container || !container.parentNode) return;
         
         // Clear container completely - React won't manage this content
-        container.innerHTML = '';
-        
-        // Create timeline anchor
-        const anchorElement = document.createElement('a');
-        anchorElement.className = 'twitter-timeline';
-        anchorElement.href = xProfileUrl;
-        anchorElement.setAttribute('data-height', '600');
-        anchorElement.textContent = 'View posts';
-        container.appendChild(anchorElement);
-        
-        // Wait for twttr to be available and load
-        let attempts = 0;
-        const checkTwttr = () => {
-          if (window.twttr?.widgets && container && mounted) {
-            try {
-              window.twttr.widgets.load(container);
-              setXLoaded(true);
-            } catch (e) {
-              console.warn('Failed to load X widget:', e);
-            }
-          } else if (attempts < 20 && mounted) {
-            attempts++;
-            setTimeout(checkTwttr, 100);
+        // Use requestAnimationFrame to ensure DOM is ready
+        requestAnimationFrame(() => {
+          if (!mounted || !container || !container.parentNode) return;
+          
+          try {
+            container.innerHTML = '';
+            
+            // Create timeline anchor
+            const anchorElement = document.createElement('a');
+            anchorElement.className = 'twitter-timeline';
+            anchorElement.href = xProfileUrl;
+            anchorElement.setAttribute('data-height', '600');
+            anchorElement.textContent = 'View posts';
+            container.appendChild(anchorElement);
+            
+            // Wait for twttr to be available and load
+            let attempts = 0;
+            const checkTwttr = () => {
+              if (!mounted || !container || !container.parentNode) return;
+              
+              if (window.twttr?.widgets && container) {
+                try {
+                  window.twttr.widgets.load(container);
+                  setXLoaded(true);
+                } catch (e) {
+                  console.warn('Failed to load X widget:', e);
+                }
+              } else if (attempts < 20 && mounted) {
+                attempts++;
+                timeoutId = setTimeout(checkTwttr, 100);
+              }
+            };
+            checkTwttr();
+          } catch (error) {
+            console.warn('Failed to initialize X widget:', error);
           }
-        };
-        checkTwttr();
+        });
       } catch (error) {
         console.warn('Failed to load X widgets:', error);
       }
@@ -221,14 +233,9 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
 
     return () => {
       mounted = false;
-      // Clear container when unmounting - but only if it still exists
-      if (container && container.parentNode) {
-        try {
-          container.innerHTML = '';
-        } catch (e) {
-          // Ignore cleanup errors - React will handle DOM removal
-        }
-      }
+      if (timeoutId) clearTimeout(timeoutId);
+      // Don't try to clean up - let React handle it via key changes
+      // Third-party widgets manipulate DOM in ways that conflict with manual cleanup
     };
   }, [hasX, xProfileUrl, xKey]);
 
@@ -238,6 +245,7 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
 
     let mounted = true;
     const container = fbWrapRef.current;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     async function initFacebook() {
       try {
@@ -250,39 +258,50 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
 
         await loadScriptOnce('fb-sdk', 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v18.0');
         
-        if (!mounted || !container) return;
+        if (!mounted || !container || !container.parentNode) return;
         
-        // Clear container completely - React won't manage this content
-        container.innerHTML = '';
-        
-        // Create Facebook page div
-        const fbPageDiv = document.createElement('div');
-        fbPageDiv.className = 'fb-page';
-        fbPageDiv.setAttribute('data-href', facebookUrl);
-        fbPageDiv.setAttribute('data-tabs', 'timeline');
-        fbPageDiv.setAttribute('data-hide-cover', 'false');
-        fbPageDiv.setAttribute('data-show-facepile', 'false');
-        fbPageDiv.setAttribute('data-width', '500');
-        fbPageDiv.style.width = '100%';
-        fbPageDiv.style.minHeight = '500px';
-        container.appendChild(fbPageDiv);
-        
-        // Wait for FB to be available
-        let attempts = 0;
-        const checkFB = () => {
-          if (window.FB?.XFBML && container && mounted) {
-            try {
-              window.FB.XFBML.parse(container);
-              setFbLoaded(true);
-            } catch (e) {
-              console.warn('Failed to parse Facebook widget:', e);
-            }
-          } else if (attempts < 20 && mounted) {
-            attempts++;
-            setTimeout(checkFB, 100);
+        // Use requestAnimationFrame to ensure DOM is ready
+        requestAnimationFrame(() => {
+          if (!mounted || !container || !container.parentNode) return;
+          
+          try {
+            // Clear container completely - React won't manage this content
+            container.innerHTML = '';
+            
+            // Create Facebook page div
+            const fbPageDiv = document.createElement('div');
+            fbPageDiv.className = 'fb-page';
+            fbPageDiv.setAttribute('data-href', facebookUrl);
+            fbPageDiv.setAttribute('data-tabs', 'timeline');
+            fbPageDiv.setAttribute('data-hide-cover', 'false');
+            fbPageDiv.setAttribute('data-show-facepile', 'false');
+            fbPageDiv.setAttribute('data-width', '500');
+            fbPageDiv.style.width = '100%';
+            fbPageDiv.style.minHeight = '500px';
+            container.appendChild(fbPageDiv);
+            
+            // Wait for FB to be available
+            let attempts = 0;
+            const checkFB = () => {
+              if (!mounted || !container || !container.parentNode) return;
+              
+              if (window.FB?.XFBML && container) {
+                try {
+                  window.FB.XFBML.parse(container);
+                  setFbLoaded(true);
+                } catch (e) {
+                  console.warn('Failed to parse Facebook widget:', e);
+                }
+              } else if (attempts < 20 && mounted) {
+                attempts++;
+                timeoutId = setTimeout(checkFB, 100);
+              }
+            };
+            checkFB();
+          } catch (error) {
+            console.warn('Failed to initialize Facebook widget:', error);
           }
-        };
-        checkFB();
+        });
       } catch (error) {
         console.warn('Failed to load Facebook SDK:', error);
       }
@@ -292,14 +311,9 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
 
     return () => {
       mounted = false;
-      // Clear container when unmounting - but only if it still exists
-      if (container && container.parentNode) {
-        try {
-          container.innerHTML = '';
-        } catch (e) {
-          // Ignore cleanup errors - React will handle DOM removal
-        }
-      }
+      if (timeoutId) clearTimeout(timeoutId);
+      // Don't try to clean up - let React handle it via key changes
+      // Third-party widgets manipulate DOM in ways that conflict with manual cleanup
     };
   }, [hasFacebook, facebookUrl, fbKey]);
 
