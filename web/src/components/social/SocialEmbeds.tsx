@@ -205,10 +205,29 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
     if (hasFacebook) setFbKey(prev => prev + 1);
   }, [facebookUrl, hasFacebook]);
 
-  // Suppress removeChild errors from third-party widgets
+  // Suppress errors from third-party widgets
   useEffect(() => {
     const originalError = window.onerror;
     const originalUnhandledRejection = window.onunhandledrejection;
+    
+    // Suppress console errors from Facebook SDK
+    const originalConsoleError = console.error;
+    console.error = (...args: any[]) => {
+      const message = args.join(' ');
+      // Suppress Facebook SDK errors (non-fatal, just noise)
+      if (
+        typeof message === 'string' && 
+        (message.includes('Could not find element') ||
+         message.includes('DataStore.get: namespace is required') ||
+         message.includes('[Caught in: Module') ||
+         message.includes('Permissions policy violation: unload') ||
+         message.includes('fburl.com/debugjs'))
+      ) {
+        return; // Suppress the error
+      }
+      // Call original console.error for other errors
+      originalConsoleError.apply(console, args);
+    };
     
     window.onerror = (message, source, lineno, colno, error) => {
       // Suppress removeChild errors from third-party widgets
@@ -228,6 +247,7 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
     return () => {
       window.onerror = originalError;
       window.onunhandledrejection = originalUnhandledRejection;
+      console.error = originalConsoleError;
     };
   }, []);
 
