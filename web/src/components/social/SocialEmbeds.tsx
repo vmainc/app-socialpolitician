@@ -210,24 +210,57 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
     const originalError = window.onerror;
     const originalUnhandledRejection = window.onunhandledrejection;
     
-    // Suppress console errors from Facebook SDK
-    const originalConsoleError = console.error;
-    console.error = (...args: any[]) => {
+    // Helper to check if a message is a Facebook SDK error
+    const isFacebookError = (args: any[]): boolean => {
       const message = String(args[0] || '');
       const fullMessage = args.map(String).join(' ');
       
-      // Suppress Facebook SDK errors (non-fatal, just noise)
-      if (
-        message.includes('ErrorUtils caught an error') ||
-        fullMessage.includes('Could not find element') ||
-        fullMessage.includes('DataStore.get: namespace is required') ||
-        fullMessage.includes('[Caught in: Module') ||
-        fullMessage.includes('Permissions policy violation: unload') ||
-        fullMessage.includes('fburl.com/debugjs') ||
-        fullMessage.includes('Subsequent non-fatal errors') ||
-        (typeof args[0] === 'object' && args[0]?.hash) // Facebook error objects have hash property
-      ) {
-        return; // Suppress the error
+      // Check for Facebook error patterns
+      const facebookPatterns = [
+        'ErrorUtils caught an error',
+        'Could not find element',
+        'DataStore.get: namespace is required',
+        '[Caught in: Module',
+        'Permissions policy violation: unload',
+        'fburl.com/debugjs',
+        'Subsequent non-fatal errors',
+        'Requiring module',
+        '__elem_',
+        '__inst_',
+        'u_1_', // Facebook element IDs pattern
+      ];
+      
+      // Check if any pattern matches
+      if (facebookPatterns.some(pattern => fullMessage.includes(pattern))) {
+        return true;
+      }
+      
+      // Check for Facebook error objects (have hash property)
+      if (typeof args[0] === 'object' && args[0]?.hash) {
+        return true;
+      }
+      
+      // Check if source file is from Facebook
+      if (args.length > 1 && typeof args[1] === 'string') {
+        const source = args[1];
+        if (
+          source.includes('facebook.com') ||
+          source.includes('fbcdn.net') ||
+          source.includes('fburl.com') ||
+          source.includes('connect.facebook.net')
+        ) {
+          return true;
+        }
+      }
+      
+      return false;
+    };
+    
+    // Suppress console.errors from Facebook SDK
+    const originalConsoleError = console.error;
+    console.error = (...args: any[]) => {
+      if (isFacebookError(args)) {
+        return; // Suppress Facebook SDK errors
       }
       // Call original console.error for other errors
       originalConsoleError.apply(console, args);
@@ -236,24 +269,36 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
     // Also suppress console.warn for Facebook violations
     const originalConsoleWarn = console.warn;
     console.warn = (...args: any[]) => {
-      const fullMessage = args.map(String).join(' ');
-      if (
-        fullMessage.includes('Permissions policy violation: unload') ||
-        fullMessage.includes('Facebook')
-      ) {
+      if (isFacebookError(args)) {
         return; // Suppress Facebook warnings
       }
       originalConsoleWarn.apply(console, args);
     };
     
     window.onerror = (message, source, lineno, colno, error) => {
+      const messageStr = String(message || '');
+      const sourceStr = String(source || '');
+      
       // Suppress removeChild errors from third-party widgets
       if (
-        typeof message === 'string' && 
-        (message.includes('removeChild') || message.includes('NotFoundError'))
+        messageStr.includes('removeChild') || 
+        messageStr.includes('NotFoundError')
       ) {
         return true; // Suppress the error
       }
+      
+      // Suppress Facebook SDK errors
+      if (
+        sourceStr.includes('facebook.com') ||
+        sourceStr.includes('fbcdn.net') ||
+        sourceStr.includes('fburl.com') ||
+        sourceStr.includes('connect.facebook.net') ||
+        messageStr.includes('ErrorUtils') ||
+        messageStr.includes('Permissions policy violation')
+      ) {
+        return true; // Suppress Facebook errors
+      }
+      
       // Call original handler for other errors
       if (originalError) {
         return originalError(message, source, lineno, colno, error);
