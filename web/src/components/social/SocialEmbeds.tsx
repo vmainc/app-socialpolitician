@@ -320,6 +320,7 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
     let mounted = true;
     const container = xWrapRef.current;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let widgetLoadAttempted = false;
 
     async function initX() {
       try {
@@ -335,32 +336,74 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
           try {
             container.innerHTML = '';
             
-            // Create timeline anchor
+            // Extract username from URL for better compatibility
+            const urlMatch = xProfileUrl.match(/(?:x\.com|twitter\.com)\/([^\/\?]+)/);
+            const username = urlMatch ? urlMatch[1] : '';
+            
+            // Create timeline anchor with proper attributes
             const anchorElement = document.createElement('a');
             anchorElement.className = 'twitter-timeline';
             anchorElement.href = xProfileUrl;
             anchorElement.setAttribute('data-height', '600');
             anchorElement.setAttribute('data-theme', 'light');
             anchorElement.setAttribute('data-chrome', 'noheader nofooter noborders');
-            anchorElement.textContent = 'View posts';
+            anchorElement.setAttribute('data-tweet-limit', '5');
+            if (username) {
+              anchorElement.textContent = `Tweets by @${username}`;
+            } else {
+              anchorElement.textContent = 'View posts';
+            }
             container.appendChild(anchorElement);
+            
+            // Function to actually load the widget
+            const loadWidget = () => {
+              if (widgetLoadAttempted || !mounted || !container || !container.parentNode) return;
+              widgetLoadAttempted = true;
+              
+              try {
+                if (window.twttr?.widgets?.load) {
+                  // Try loading with the container first
+                  window.twttr.widgets.load(container);
+                  
+                  // Set a timeout to check if widget actually rendered
+                  setTimeout(() => {
+                    if (!mounted) return;
+                    // Check if widget actually rendered (look for iframe or twitter widget elements)
+                    const hasWidget = container.querySelector('iframe') || 
+                                     container.querySelector('[data-twitter-widget-id]') ||
+                                     container.textContent?.includes('Tweets by');
+                    
+                    if (!hasWidget && container.textContent?.trim() === anchorElement.textContent) {
+                      // Widget didn't load - show fallback
+                      console.warn('X timeline widget did not load, showing fallback');
+                      container.innerHTML = `
+                        <div style="padding: 2rem; text-align: center; color: #6b7280;">
+                          <p style="margin-bottom: 1rem;">Unable to load X timeline.</p>
+                          <a href="${xProfileUrl}" target="_blank" rel="noopener noreferrer" 
+                             style="display: inline-block; padding: 0.5rem 1rem; background: #000; color: #fff; 
+                                    text-decoration: none; border-radius: 0.375rem; font-weight: 500;">
+                            View on X →
+                          </a>
+                        </div>
+                      `;
+                    }
+                    setXLoaded(true);
+                  }, 3000);
+                } else {
+                  setXLoaded(true);
+                }
+              } catch (e) {
+                console.warn('Failed to load X widget:', e);
+                setXLoaded(true);
+              }
+            };
             
             // Wait for twttr to be ready, then load widget
             if (window.twttr?.ready) {
               // Use ready callback for proper initialization
               window.twttr.ready(() => {
                 if (!mounted || !container || !container.parentNode) return;
-                
-                try {
-                  // Load widgets in this container (will parse the anchor we just created)
-                  if (window.twttr?.widgets) {
-                    window.twttr.widgets.load(container);
-                    setXLoaded(true);
-                  }
-                } catch (e) {
-                  console.warn('Failed to load X widget:', e);
-                  setXLoaded(true); // Set loaded anyway to hide loading message
-                }
+                loadWidget();
               });
             } else {
               // Fallback: poll for twttr to be available
@@ -371,32 +414,63 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
                 if (window.twttr?.ready) {
                   window.twttr.ready(() => {
                     if (!mounted || !container || !container.parentNode) return;
-                    try {
-                      if (window.twttr?.widgets) {
-                        window.twttr.widgets.load(container);
-                        setXLoaded(true);
-                      }
-                    } catch (e) {
-                      console.warn('Failed to load X widget:', e);
-                      setXLoaded(true);
-                    }
+                    loadWidget();
                   });
                 } else if (attempts < 50 && mounted) {
                   attempts++;
                   timeoutId = setTimeout(checkTwttr, 100);
                 } else if (attempts >= 50) {
                   console.warn('Twitter widgets.js failed to load after 5 seconds');
-                  setXLoaded(true); // Set loaded anyway to hide loading message
+                  // Show fallback
+                  if (mounted && container) {
+                    container.innerHTML = `
+                      <div style="padding: 2rem; text-align: center; color: #6b7280;">
+                        <p style="margin-bottom: 1rem;">Unable to load X timeline.</p>
+                        <a href="${xProfileUrl}" target="_blank" rel="noopener noreferrer" 
+                           style="display: inline-block; padding: 0.5rem 1rem; background: #000; color: #fff; 
+                                  text-decoration: none; border-radius: 0.375rem; font-weight: 500;">
+                          View on X →
+                        </a>
+                      </div>
+                    `;
+                  }
+                  setXLoaded(true);
                 }
               };
               timeoutId = setTimeout(checkTwttr, 100);
             }
           } catch (error) {
             console.warn('Failed to initialize X widget:', error);
+            if (mounted && container) {
+              container.innerHTML = `
+                <div style="padding: 2rem; text-align: center; color: #6b7280;">
+                  <p style="margin-bottom: 1rem;">Unable to load X timeline.</p>
+                  <a href="${xProfileUrl}" target="_blank" rel="noopener noreferrer" 
+                     style="display: inline-block; padding: 0.5rem 1rem; background: #000; color: #fff; 
+                            text-decoration: none; border-radius: 0.375rem; font-weight: 500;">
+                    View on X →
+                  </a>
+                </div>
+              `;
+            }
+            setXLoaded(true);
           }
         });
       } catch (error) {
         console.warn('Failed to load X widgets:', error);
+        if (mounted && container) {
+          container.innerHTML = `
+            <div style="padding: 2rem; text-align: center; color: #6b7280;">
+              <p style="margin-bottom: 1rem;">Unable to load X timeline.</p>
+              <a href="${xProfileUrl}" target="_blank" rel="noopener noreferrer" 
+                 style="display: inline-block; padding: 0.5rem 1rem; background: #000; color: #fff; 
+                        text-decoration: none; border-radius: 0.375rem; font-weight: 500;">
+                View on X →
+              </a>
+            </div>
+          `;
+        }
+        setXLoaded(true);
       }
     }
 
@@ -404,6 +478,7 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
 
     return () => {
       mounted = false;
+      widgetLoadAttempted = false;
       if (timeoutId) clearTimeout(timeoutId);
       // Don't try to clean up - let React handle it via key changes
       // Third-party widgets manipulate DOM in ways that conflict with manual cleanup
