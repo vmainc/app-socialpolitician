@@ -177,37 +177,19 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
     if (!hasX || !xWrapRef.current) return;
 
     let mounted = true;
-    let anchorElement: HTMLAnchorElement | null = null;
+    const container = xWrapRef.current;
 
     async function initX() {
       try {
         await loadScriptOnce('x-widgets', 'https://platform.twitter.com/widgets.js');
         
-        if (!mounted || !xWrapRef.current) return;
+        if (!mounted || !container) return;
         
-        // Safely clear existing content
-        // Use innerHTML directly to avoid removeChild issues with third-party widgets
-        const container = xWrapRef.current;
-        try {
-          container.innerHTML = '';
-        } catch (e) {
-          // If innerHTML fails, try removeChild as fallback
-          try {
-            while (container.firstChild) {
-              const child = container.firstChild;
-              if (child.parentNode === container) {
-                container.removeChild(child);
-              } else {
-                break; // Child was moved, stop trying
-              }
-            }
-          } catch (e2) {
-            // Ignore cleanup errors
-          }
-        }
+        // Clear container completely - React won't manage this content
+        container.innerHTML = '';
         
         // Create timeline anchor
-        anchorElement = document.createElement('a');
+        const anchorElement = document.createElement('a');
         anchorElement.className = 'twitter-timeline';
         anchorElement.href = xProfileUrl;
         anchorElement.setAttribute('data-height', '600');
@@ -217,7 +199,7 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
         // Wait for twttr to be available and load
         let attempts = 0;
         const checkTwttr = () => {
-          if (window.twttr?.widgets && container) {
+          if (window.twttr?.widgets && container && mounted) {
             try {
               window.twttr.widgets.load(container);
               setXLoaded(true);
@@ -239,8 +221,14 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
 
     return () => {
       mounted = false;
-      // Don't try to clean up - let React handle it via key changes
-      // Third-party widgets manipulate DOM in ways that conflict with React cleanup
+      // Clear container when unmounting - but only if it still exists
+      if (container && container.parentNode) {
+        try {
+          container.innerHTML = '';
+        } catch (e) {
+          // Ignore cleanup errors - React will handle DOM removal
+        }
+      }
     };
   }, [hasX, xProfileUrl, xKey]);
 
@@ -249,7 +237,7 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
     if (!hasFacebook || !fbWrapRef.current) return;
 
     let mounted = true;
-    let fbPageDiv: HTMLDivElement | null = null;
+    const container = fbWrapRef.current;
 
     async function initFacebook() {
       try {
@@ -262,31 +250,13 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
 
         await loadScriptOnce('fb-sdk', 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v18.0');
         
-        if (!mounted || !fbWrapRef.current) return;
+        if (!mounted || !container) return;
         
-        // Safely clear existing content
-        // Use innerHTML directly to avoid removeChild issues with third-party widgets
-        const container = fbWrapRef.current;
-        try {
-          container.innerHTML = '';
-        } catch (e) {
-          // If innerHTML fails, try removeChild as fallback
-          try {
-            while (container.firstChild) {
-              const child = container.firstChild;
-              if (child.parentNode === container) {
-                container.removeChild(child);
-              } else {
-                break; // Child was moved, stop trying
-              }
-            }
-          } catch (e2) {
-            // Ignore cleanup errors
-          }
-        }
+        // Clear container completely - React won't manage this content
+        container.innerHTML = '';
         
         // Create Facebook page div
-        fbPageDiv = document.createElement('div');
+        const fbPageDiv = document.createElement('div');
         fbPageDiv.className = 'fb-page';
         fbPageDiv.setAttribute('data-href', facebookUrl);
         fbPageDiv.setAttribute('data-tabs', 'timeline');
@@ -300,7 +270,7 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
         // Wait for FB to be available
         let attempts = 0;
         const checkFB = () => {
-          if (window.FB?.XFBML && container) {
+          if (window.FB?.XFBML && container && mounted) {
             try {
               window.FB.XFBML.parse(container);
               setFbLoaded(true);
@@ -322,8 +292,14 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
 
     return () => {
       mounted = false;
-      // Don't try to clean up - let React handle it via key changes
-      // Third-party widgets manipulate DOM in ways that conflict with React cleanup
+      // Clear container when unmounting - but only if it still exists
+      if (container && container.parentNode) {
+        try {
+          container.innerHTML = '';
+        } catch (e) {
+          // Ignore cleanup errors - React will handle DOM removal
+        }
+      }
     };
   }, [hasFacebook, facebookUrl, fbKey]);
 
