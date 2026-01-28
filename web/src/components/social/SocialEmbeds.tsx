@@ -175,14 +175,23 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
         if (!mounted || !xWrapRef.current) return;
         
         // Safely clear existing content
+        // Use innerHTML directly to avoid removeChild issues with third-party widgets
         const container = xWrapRef.current;
-        while (container.firstChild) {
+        try {
+          container.innerHTML = '';
+        } catch (e) {
+          // If innerHTML fails, try removeChild as fallback
           try {
-            container.removeChild(container.firstChild);
-          } catch (e) {
-            // If removeChild fails, fall back to innerHTML
-            container.innerHTML = '';
-            break;
+            while (container.firstChild) {
+              const child = container.firstChild;
+              if (child.parentNode === container) {
+                container.removeChild(child);
+              } else {
+                break; // Child was moved, stop trying
+              }
+            }
+          } catch (e2) {
+            // Ignore cleanup errors
           }
         }
         
@@ -220,18 +229,15 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
     return () => {
       mounted = false;
       // Cleanup: safely remove content
+      // Use innerHTML directly to avoid removeChild issues with third-party widgets
       if (xWrapRef.current) {
         try {
-          while (xWrapRef.current.firstChild) {
-            xWrapRef.current.removeChild(xWrapRef.current.firstChild);
+          // Check if element still exists and is in the DOM
+          if (xWrapRef.current.parentNode) {
+            xWrapRef.current.innerHTML = '';
           }
         } catch (e) {
-          // If removeChild fails, use innerHTML as fallback
-          try {
-            xWrapRef.current.innerHTML = '';
-          } catch (e2) {
-            // Ignore errors during cleanup
-          }
+          // Silently ignore cleanup errors
         }
       }
     };
@@ -258,14 +264,23 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
         if (!mounted || !fbWrapRef.current) return;
         
         // Safely clear existing content
+        // Use innerHTML directly to avoid removeChild issues with third-party widgets
         const container = fbWrapRef.current;
-        while (container.firstChild) {
+        try {
+          container.innerHTML = '';
+        } catch (e) {
+          // If innerHTML fails, try removeChild as fallback
           try {
-            container.removeChild(container.firstChild);
-          } catch (e) {
-            // If removeChild fails, fall back to innerHTML
-            container.innerHTML = '';
-            break;
+            while (container.firstChild) {
+              const child = container.firstChild;
+              if (child.parentNode === container) {
+                container.removeChild(child);
+              } else {
+                break; // Child was moved, stop trying
+              }
+            }
+          } catch (e2) {
+            // Ignore cleanup errors
           }
         }
         
@@ -307,18 +322,15 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
     return () => {
       mounted = false;
       // Cleanup: safely remove content
+      // Use innerHTML directly to avoid removeChild issues with third-party widgets
       if (fbWrapRef.current) {
         try {
-          while (fbWrapRef.current.firstChild) {
-            fbWrapRef.current.removeChild(fbWrapRef.current.firstChild);
+          // Check if element still exists and is in the DOM
+          if (fbWrapRef.current.parentNode) {
+            fbWrapRef.current.innerHTML = '';
           }
         } catch (e) {
-          // If removeChild fails, use innerHTML as fallback
-          try {
-            fbWrapRef.current.innerHTML = '';
-          } catch (e2) {
-            // Ignore errors during cleanup
-          }
+          // Silently ignore cleanup errors
         }
       }
     };
