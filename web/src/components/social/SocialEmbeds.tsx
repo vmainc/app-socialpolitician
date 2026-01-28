@@ -213,20 +213,37 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
     // Suppress console errors from Facebook SDK
     const originalConsoleError = console.error;
     console.error = (...args: any[]) => {
-      const message = args.join(' ');
+      const message = String(args[0] || '');
+      const fullMessage = args.map(String).join(' ');
+      
       // Suppress Facebook SDK errors (non-fatal, just noise)
       if (
-        typeof message === 'string' && 
-        (message.includes('Could not find element') ||
-         message.includes('DataStore.get: namespace is required') ||
-         message.includes('[Caught in: Module') ||
-         message.includes('Permissions policy violation: unload') ||
-         message.includes('fburl.com/debugjs'))
+        message.includes('ErrorUtils caught an error') ||
+        fullMessage.includes('Could not find element') ||
+        fullMessage.includes('DataStore.get: namespace is required') ||
+        fullMessage.includes('[Caught in: Module') ||
+        fullMessage.includes('Permissions policy violation: unload') ||
+        fullMessage.includes('fburl.com/debugjs') ||
+        fullMessage.includes('Subsequent non-fatal errors') ||
+        (typeof args[0] === 'object' && args[0]?.hash) // Facebook error objects have hash property
       ) {
         return; // Suppress the error
       }
       // Call original console.error for other errors
       originalConsoleError.apply(console, args);
+    };
+    
+    // Also suppress console.warn for Facebook violations
+    const originalConsoleWarn = console.warn;
+    console.warn = (...args: any[]) => {
+      const fullMessage = args.map(String).join(' ');
+      if (
+        fullMessage.includes('Permissions policy violation: unload') ||
+        fullMessage.includes('Facebook')
+      ) {
+        return; // Suppress Facebook warnings
+      }
+      originalConsoleWarn.apply(console, args);
     };
     
     window.onerror = (message, source, lineno, colno, error) => {
@@ -248,6 +265,7 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
       window.onerror = originalError;
       window.onunhandledrejection = originalUnhandledRejection;
       console.error = originalConsoleError;
+      console.warn = originalConsoleWarn;
     };
   }, []);
 
