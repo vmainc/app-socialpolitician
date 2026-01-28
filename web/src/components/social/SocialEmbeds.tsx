@@ -353,18 +353,24 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
                 height: '600px',
                 overflow: 'auto',
                 padding: '1rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
+                position: 'relative'
               }}
             >
               {!xLoaded && (
-                <p style={{ color: '#6b7280', margin: 0 }}>Loading timeline...</p>
+                <div style={{ 
+                  position: 'absolute', 
+                  top: '50%', 
+                  left: '50%', 
+                  transform: 'translate(-50%, -50%)',
+                  color: '#6b7280' 
+                }}>
+                  Loading timeline...
+                </div>
               )}
               <div 
                 ref={xWrapRef}
                 suppressHydrationWarning
-                style={{ width: '100%', height: '100%' }}
+                style={{ width: '100%', height: '100%', minHeight: '500px' }}
               />
             </div>
             <div style={{
@@ -416,18 +422,24 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
                 height: '600px',
                 overflow: 'auto',
                 padding: '1rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
+                position: 'relative'
               }}
             >
               {!fbLoaded && (
-                <p style={{ color: '#6b7280', margin: 0 }}>Loading page...</p>
+                <div style={{ 
+                  position: 'absolute', 
+                  top: '50%', 
+                  left: '50%', 
+                  transform: 'translate(-50%, -50%)',
+                  color: '#6b7280' 
+                }}>
+                  Loading page...
+                </div>
               )}
               <div 
                 ref={fbWrapRef}
                 suppressHydrationWarning
-                style={{ width: '100%', height: '100%' }}
+                style={{ width: '100%', height: '100%', minHeight: '500px' }}
               />
             </div>
             <div style={{
