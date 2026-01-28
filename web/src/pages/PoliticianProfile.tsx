@@ -16,19 +16,8 @@ function PoliticianProfile() {
   const [politician, setPolitician] = useState<Politician | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Determine back link based on route or politician type
+  // Determine back link based on politician type
   const getBackLink = () => {
-    // Check if we came from a type-specific route
-    const pathParts = location.pathname.split('/');
-    if (pathParts[1] === 'governors') {
-      return '/governors';
-    } else if (pathParts[1] === 'senators') {
-      return '/senators';
-    } else if (pathParts[1] === 'representatives') {
-      return '/representatives';
-    }
-    
-    // Fallback: use politician's office type if available
     if (politician) {
       const officeType = politician.office_type?.toLowerCase();
       const chamber = politician.chamber?.toLowerCase();

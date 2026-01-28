@@ -86,25 +86,10 @@ const US_PRESIDENTS = [
  * Check if a politician record is a U.S. President (should be excluded)
  */
 /**
- * Get the profile route for a politician based on their office type
- * Always returns a type-specific route (governors/senators/representatives)
+ * Get the profile route for a politician - just the slug at root level
  */
 export function getPoliticianRoute(politician: Politician): string {
-  const officeType = politician.office_type?.toLowerCase();
-  const chamber = politician.chamber?.toLowerCase();
-  
-  // Determine route based on office_type or chamber
-  if (officeType === 'governor' || chamber === 'governor') {
-    return `/governors/${politician.slug}`;
-  } else if (officeType === 'senator' || chamber === 'senator') {
-    return `/senators/${politician.slug}`;
-  } else if (officeType === 'representative' || chamber === 'representative') {
-    return `/representatives/${politician.slug}`;
-  }
-  
-  // Default to governors if type is unclear (shouldn't happen in production)
-  console.warn(`Politician ${politician.name} has unclear office type, defaulting to governors route`);
-  return `/governors/${politician.slug}`;
+  return `/${politician.slug}`;
 }
 
 export function isPresident(politician: Politician): boolean {

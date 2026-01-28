@@ -21,11 +21,17 @@ function App() {
         <Route path="/senators" element={<PoliticiansDirectory />} />
         <Route path="/representatives" element={<PoliticiansDirectory />} />
         <Route path="/governors" element={<PoliticiansDirectory />} />
-        {/* Type-specific profile routes */}
-        <Route path="/governors/:slug" element={<PoliticianProfile />} />
-        <Route path="/senators/:slug" element={<PoliticianProfile />} />
-        <Route path="/representatives/:slug" element={<PoliticianProfile />} />
         <Route path="/account" element={<Account />} />
+        
+        {/* Voices of the Presidency routes - must come before /:slug */}
+        <Route path="/presidents" element={<Presidents />} />
+        <Route path="/presidents/:slug" element={<PresidentProfilePage />} />
+        <Route path="/chat/:presidentId" element={<Chat />} />
+        <Route path="/compare" element={<Compare />} />
+        <Route path="/quote/:shareId" element={<Quote />} />
+        
+        {/* Politician profile route - slug only (must be last) */}
+        <Route path="/:slug" element={<PoliticianProfile />} />
         
         {/* Voices of the Presidency routes */}
         <Route path="/presidents" element={<Presidents />} />
