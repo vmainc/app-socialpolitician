@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useParams, useLocation, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
 import { Politician } from '../types/politician';
 import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
@@ -12,7 +12,6 @@ import './PoliticianProfile.css';
 
 function PoliticianProfile() {
   const { slug } = useParams<{ slug: string }>();
-  const location = useLocation();
   const [politician, setPolitician] = useState<Politician | null>(null);
   const [loading, setLoading] = useState(true);
 

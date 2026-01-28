@@ -32,13 +32,6 @@ function App() {
         
         {/* Politician profile route - slug only (must be last) */}
         <Route path="/:slug" element={<PoliticianProfile />} />
-        
-        {/* Voices of the Presidency routes */}
-        <Route path="/presidents" element={<Presidents />} />
-        <Route path="/presidents/:slug" element={<PresidentProfilePage />} />
-        <Route path="/chat/:presidentId" element={<Chat />} />
-        <Route path="/compare" element={<Compare />} />
-        <Route path="/quote/:shareId" element={<Quote />} />
       </Routes>
     </>
   );
