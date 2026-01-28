@@ -4,8 +4,32 @@
  * SSR-safe and defensive against missing/invalid URLs
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, Component, ErrorInfo, ReactNode } from 'react';
 import { loadScriptOnce } from '../../utils/useThirdPartyScripts';
+
+// Error Boundary to catch React reconciliation errors from third-party widgets
+class WidgetErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    // Suppress errors - widgets will reinitialize on next render
+    return { hasError: false };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Only log if it's not a removeChild error (which is expected with third-party widgets)
+    if (!error.message?.includes('removeChild')) {
+      console.warn('Widget error:', error, errorInfo);
+    }
+  }
+
+  render() {
+    return this.props.children;
+  }
+}
 
 interface SocialEmbedsProps {
   politician: Record<string, any>;
@@ -336,16 +360,17 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
   }
 
   return (
-    <div className="profile-section">
-      <h2 className="profile-section-title">Social</h2>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        gap: '1.5rem',
-        marginTop: '1rem'
-      }}>
-        {/* X (Twitter) Card */}
-        {hasX && (
+    <WidgetErrorBoundary>
+      <div className="profile-section">
+        <h2 className="profile-section-title">Social</h2>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '1.5rem',
+          marginTop: '1rem'
+        }}>
+          {/* X (Twitter) Card */}
+          {hasX && (
           <div style={{
             border: '1px solid #e5e7eb',
             borderRadius: '0.5rem',
@@ -556,7 +581,8 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </WidgetErrorBoundary>
   );
 }
