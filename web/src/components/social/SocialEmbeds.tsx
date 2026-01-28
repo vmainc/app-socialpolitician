@@ -257,6 +257,8 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
             anchorElement.className = 'twitter-timeline';
             anchorElement.href = xProfileUrl;
             anchorElement.setAttribute('data-height', '600');
+            anchorElement.setAttribute('data-theme', 'light');
+            anchorElement.setAttribute('data-chrome', 'noheader nofooter noborders');
             anchorElement.textContent = 'View posts';
             container.appendChild(anchorElement);
             
@@ -265,19 +267,33 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
             const checkTwttr = () => {
               if (!mounted || !container || !container.parentNode) return;
               
-              if (window.twttr?.widgets && container) {
+              if (window.twttr?.widgets) {
                 try {
-                  window.twttr.widgets.load(container);
+                  // Load all timeline widgets on the page (will parse the anchor we just created)
+                  window.twttr.widgets.load();
                   setXLoaded(true);
                 } catch (e) {
                   console.warn('Failed to load X widget:', e);
+                  // Try alternative method - load specifically this container
+                  try {
+                    if (anchorElement && container.contains(anchorElement)) {
+                      window.twttr.widgets.load(container);
+                      setXLoaded(true);
+                    }
+                  } catch (e2) {
+                    console.warn('Alternative load method also failed:', e2);
+                  }
                 }
-              } else if (attempts < 20 && mounted) {
+              } else if (attempts < 50 && mounted) {
                 attempts++;
                 timeoutId = setTimeout(checkTwttr, 100);
+              } else if (attempts >= 50) {
+                console.warn('Twitter widgets.js failed to load after 5 seconds');
+                setXLoaded(true); // Set loaded anyway to hide loading message
               }
             };
-            checkTwttr();
+            // Start checking after a short delay to ensure script is ready
+            timeoutId = setTimeout(checkTwttr, 100);
           } catch (error) {
             console.warn('Failed to initialize X widget:', error);
           }
