@@ -21,8 +21,6 @@ function App() {
       <Route path="/governors/:slug" element={<PoliticianProfile />} />
       <Route path="/senators/:slug" element={<PoliticianProfile />} />
       <Route path="/representatives/:slug" element={<PoliticianProfile />} />
-      {/* Fallback for backward compatibility */}
-      <Route path="/politicians/:slug" element={<PoliticianProfile />} />
       
       {/* Voices of the Presidency routes */}
       <Route path="/presidents" element={<Presidents />} />

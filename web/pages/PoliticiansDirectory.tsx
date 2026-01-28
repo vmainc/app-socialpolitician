@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
 import { Politician } from '../types/politician';
+import { getPoliticianRoute } from '../lib/pb';
 
 function PoliticiansDirectory() {
   const location = useLocation();
@@ -104,7 +105,7 @@ function PoliticiansDirectory() {
           {politicians.map((politician) => (
             <Link
               key={politician.id}
-              to={`/politicians/${politician.slug}`}
+              to={getPoliticianRoute(politician)}
               className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 block"
             >
               {politician.profile_picture && (

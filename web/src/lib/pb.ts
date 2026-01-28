@@ -87,6 +87,7 @@ const US_PRESIDENTS = [
  */
 /**
  * Get the profile route for a politician based on their office type
+ * Always returns a type-specific route (governors/senators/representatives)
  */
 export function getPoliticianRoute(politician: Politician): string {
   const officeType = politician.office_type?.toLowerCase();
@@ -101,8 +102,9 @@ export function getPoliticianRoute(politician: Politician): string {
     return `/representatives/${politician.slug}`;
   }
   
-  // Fallback to generic route
-  return `/politicians/${politician.slug}`;
+  // Default to governors if type is unclear (shouldn't happen in production)
+  console.warn(`Politician ${politician.name} has unclear office type, defaulting to governors route`);
+  return `/governors/${politician.slug}`;
 }
 
 export function isPresident(politician: Politician): boolean {
