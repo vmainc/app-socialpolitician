@@ -14,19 +14,27 @@ class WidgetErrorBoundary extends Component<{ children: ReactNode }, { hasError:
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError() {
-    // Suppress errors - widgets will reinitialize on next render
-    return { hasError: false };
+  static getDerivedStateFromError(error: Error) {
+    // Suppress removeChild errors - these are expected with third-party widgets
+    if (error.message?.includes('removeChild') || error.name === 'NotFoundError') {
+      return { hasError: false };
+    }
+    // For other errors, show error state
+    return { hasError: true };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Only log if it's not a removeChild error (which is expected with third-party widgets)
-    if (!error.message?.includes('removeChild')) {
+    if (!error.message?.includes('removeChild') && error.name !== 'NotFoundError') {
       console.warn('Widget error:', error, errorInfo);
     }
   }
 
   render() {
+    if (this.state.hasError) {
+      // For non-removeChild errors, show fallback
+      return <div style={{ padding: '1rem', color: '#6b7280' }}>Widget failed to load</div>;
+    }
     return this.props.children;
   }
 }
