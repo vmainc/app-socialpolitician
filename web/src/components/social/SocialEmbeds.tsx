@@ -650,10 +650,10 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              minHeight: youtube.embedUrl ? '420px' : '500px'
+              minHeight: youtube.embedUrl ? '420px' : '420px'
             }}>
               {youtube.embedUrl ? (
-                // Video or playlist embed
+                // Single video embed
                 <iframe
                   src={youtube.embedUrl}
                   title="YouTube"
@@ -668,7 +668,7 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
                   }}
                 />
               ) : youtube.channelId ? (
-                // Embed channel's uploads playlist: UC... -> UU... (YouTube convention)
+                // Channel feed: wider embed so playlist list (video thumbnails) is prominent
                 (() => {
                   const id = youtube.channelId;
                   const uploadsPlaylistId = id.startsWith('UC') ? 'UU' + id.slice(2) : id;
@@ -682,10 +682,11 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
                       allowFullScreen
                       style={{
                         width: '100%',
-                        maxWidth: '560px',
-                        height: '600px',
+                        maxWidth: '900px',
+                        height: '420px',
                         borderRadius: '0.375rem',
-                        border: 'none'
+                        border: 'none',
+                        minHeight: '320px'
                       }}
                     />
                   );
