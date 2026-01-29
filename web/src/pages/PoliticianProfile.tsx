@@ -74,14 +74,7 @@ function PoliticianProfile() {
     if (!politician) return [];
     const links: Array<{ label: string; url: string; icon: string; color: string }> = [];
 
-    // Use official_website_domain (new) or website_url (legacy) for backward compatibility
-    const websiteUrl = politician.official_website_domain || politician.website_url;
-    if (websiteUrl) {
-      links.push({ label: 'Website', url: websiteUrl, icon: '🌐', color: 'text-blue-600' });
-    }
-    if (politician.wikipedia_url) {
-      links.push({ label: 'Wikipedia', url: politician.wikipedia_url, icon: '📚', color: 'text-gray-700' });
-    }
+    // Order: social first, then Wikipedia, then website
     if (politician.x_url) {
       links.push({ label: 'X', url: politician.x_url, icon: '𝕏', color: 'text-black' });
     }
@@ -102,6 +95,13 @@ function PoliticianProfile() {
     }
     if (politician.linkedin_url) {
       links.push({ label: 'LinkedIn', url: politician.linkedin_url, icon: 'in', color: 'text-blue-700' });
+    }
+    if (politician.wikipedia_url) {
+      links.push({ label: 'Wikipedia', url: politician.wikipedia_url, icon: '📚', color: 'text-gray-700' });
+    }
+    const websiteUrl = politician.official_website_domain || politician.website_url;
+    if (websiteUrl) {
+      links.push({ label: 'Website', url: websiteUrl, icon: '🌐', color: 'text-blue-600' });
     }
 
     return links;
