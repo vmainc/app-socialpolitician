@@ -180,7 +180,7 @@
 
 .profile-social-links {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
 }
 
@@ -282,9 +282,15 @@
   color: #1d4ed8;
 }
 
-@media (min-width: 640px) {
+@media (max-width: 768px) {
   .profile-social-links {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-social-links {
+    grid-template-columns: 1fr;
   }
 }
 
