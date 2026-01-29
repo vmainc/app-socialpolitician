@@ -129,9 +129,14 @@ function parseFacebookPageUrl(url: string): string {
 
 /**
  * Parse YouTube URL
- * Returns object with channelUrl and optional embedUrl
+ * Returns object with channelUrl, optional embedUrl (for videos), and channelId/username for feed
  */
-function parseYouTube(url: string): { channelUrl: string; embedUrl?: string } {
+function parseYouTube(url: string): { 
+  channelUrl: string; 
+  embedUrl?: string;
+  channelId?: string;
+  username?: string;
+} {
   const safeUrl = safeHttpUrl(url);
   if (!safeUrl) {
     return { channelUrl: '' };
@@ -167,6 +172,36 @@ function parseYouTube(url: string): { channelUrl: string; embedUrl?: string } {
       return {
         channelUrl: safeUrl,
         embedUrl: `https://www.youtube.com/embed/videoseries?list=${playlistId}`
+      };
+    }
+    
+    // Extract channel ID or username from channel URL
+    const path = urlObj.pathname.trim().replace(/^\/+|\/+$/g, '');
+    
+    // Handle different YouTube URL formats
+    if (path.startsWith('channel/')) {
+      const channelId = path.split('/')[1];
+      return { 
+        channelUrl: safeUrl,
+        channelId: channelId
+      };
+    } else if (path.startsWith('c/')) {
+      const username = path.split('/')[1];
+      return { 
+        channelUrl: safeUrl,
+        username: username
+      };
+    } else if (path.startsWith('user/')) {
+      const username = path.split('/')[1];
+      return { 
+        channelUrl: safeUrl,
+        username: username
+      };
+    } else if (path.startsWith('@')) {
+      const username = path.split('/')[0].replace('@', '');
+      return { 
+        channelUrl: safeUrl,
+        username: username
       };
     }
     
@@ -313,222 +348,46 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
     };
   }, []);
 
-  // Initialize X timeline embed
+  // Initialize X timeline embed - Use iframe embed instead of widget API
   useEffect(() => {
     if (!hasX || !xWrapRef.current) return;
 
     let mounted = true;
     const container = xWrapRef.current;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    let widgetLoadAttempted = false;
 
-    async function initX() {
-      console.log('🔵 Initializing X timeline for:', xProfileUrl);
-      
-      try {
-        await loadScriptOnce('x-widgets', 'https://platform.twitter.com/widgets.js');
-        console.log('🔵 Twitter widgets.js loaded');
-        
-        if (!mounted || !container || !container.parentNode) {
-          console.warn('🔵 Container not available after script load');
-          return;
-        }
-        
-        // Clear container completely - React won't manage this content
-        // Use requestAnimationFrame to ensure DOM is ready
-        requestAnimationFrame(() => {
-          if (!mounted || !container || !container.parentNode) {
-            console.warn('🔵 Container not available in requestAnimationFrame');
-            return;
-          }
-          
-          try {
-            container.innerHTML = '';
-            
-            // Extract username from URL for better compatibility
-            const urlMatch = xProfileUrl.match(/(?:x\.com|twitter\.com)\/([^\/\?]+)/);
-            const username = urlMatch ? urlMatch[1] : '';
-            console.log('🔵 Extracted username:', username);
-            
-            // Create timeline anchor with proper attributes
-            const anchorElement = document.createElement('a');
-            anchorElement.className = 'twitter-timeline';
-            anchorElement.href = xProfileUrl;
-            anchorElement.setAttribute('data-height', '600');
-            anchorElement.setAttribute('data-theme', 'light');
-            anchorElement.setAttribute('data-chrome', 'noheader nofooter noborders');
-            anchorElement.setAttribute('data-tweet-limit', '5');
-            if (username) {
-              anchorElement.textContent = `Tweets by @${username}`;
-            } else {
-              anchorElement.textContent = 'View posts';
-            }
-            container.appendChild(anchorElement);
-            console.log('🔵 Created timeline anchor element');
-            
-            // Function to actually load the widget
-            const loadWidget = () => {
-              if (widgetLoadAttempted) {
-                console.log('🔵 Widget load already attempted, skipping');
-                return;
-              }
-              if (!mounted || !container || !container.parentNode) {
-                console.warn('🔵 Container not available for widget load');
-                return;
-              }
-              
-              widgetLoadAttempted = true;
-              console.log('🔵 Attempting to load X widget...');
-              
-              try {
-                if (window.twttr?.widgets?.load) {
-                  console.log('🔵 Calling twttr.widgets.load()');
-                  // Try loading with the container first
-                  window.twttr.widgets.load(container);
-                  
-                  // Set a timeout to check if widget actually rendered
-                  setTimeout(() => {
-                    if (!mounted) return;
-                    console.log('🔵 Checking if widget rendered...');
-                    // Check if widget actually rendered (look for iframe or twitter widget elements)
-                    const hasWidget = container.querySelector('iframe') || 
-                                     container.querySelector('[data-twitter-widget-id]') ||
-                                     container.querySelector('.twitter-timeline-rendered');
-                    
-                    console.log('🔵 Widget check:', {
-                      hasIframe: !!container.querySelector('iframe'),
-                      hasWidgetId: !!container.querySelector('[data-twitter-widget-id]'),
-                      containerText: container.textContent?.substring(0, 50)
-                    });
-                    
-                    if (!hasWidget) {
-                      // Widget didn't load - show fallback
-                      console.warn('🔵 X timeline widget did not load, showing fallback');
-                      container.innerHTML = `
-                        <div style="padding: 2rem; text-align: center; color: #6b7280;">
-                          <p style="margin-bottom: 1rem;">Unable to load X timeline.</p>
-                          <a href="${xProfileUrl}" target="_blank" rel="noopener noreferrer" 
-                             style="display: inline-block; padding: 0.5rem 1rem; background: #000; color: #fff; 
-                                    text-decoration: none; border-radius: 0.375rem; font-weight: 500;">
-                            View on X →
-                          </a>
-                        </div>
-                      `;
-                    } else {
-                      console.log('🔵 X widget loaded successfully!');
-                    }
-                    setXLoaded(true);
-                  }, 5000); // Increased timeout to 5 seconds
-                } else {
-                  console.warn('🔵 window.twttr.widgets.load not available');
-                  setXLoaded(true);
-                }
-              } catch (e) {
-                console.warn('🔵 Failed to load X widget:', e);
-                if (mounted && container) {
-                  container.innerHTML = `
-                    <div style="padding: 2rem; text-align: center; color: #6b7280;">
-                      <p style="margin-bottom: 1rem;">Unable to load X timeline.</p>
-                      <a href="${xProfileUrl}" target="_blank" rel="noopener noreferrer" 
-                         style="display: inline-block; padding: 0.5rem 1rem; background: #000; color: #fff; 
-                                text-decoration: none; border-radius: 0.375rem; font-weight: 500;">
-                        View on X →
-                      </a>
-                    </div>
-                  `;
-                }
-                setXLoaded(true);
-              }
-            };
-            
-            // Wait for twttr to be ready, then load widget
-            if (window.twttr?.ready) {
-              console.log('🔵 Using twttr.ready() callback');
-              // Use ready callback for proper initialization
-              window.twttr.ready(() => {
-                console.log('🔵 twttr.ready() callback fired');
-                if (!mounted || !container || !container.parentNode) return;
-                loadWidget();
-              });
-            } else {
-              console.log('🔵 twttr.ready() not available, polling...');
-              // Fallback: poll for twttr to be available
-              let attempts = 0;
-              const checkTwttr = () => {
-                if (!mounted || !container || !container.parentNode) return;
-                
-                if (window.twttr?.ready) {
-                  console.log('🔵 twttr.ready() now available after polling');
-                  window.twttr.ready(() => {
-                    if (!mounted || !container || !container.parentNode) return;
-                    loadWidget();
-                  });
-                } else if (attempts < 50 && mounted) {
-                  attempts++;
-                  timeoutId = setTimeout(checkTwttr, 100);
-                } else if (attempts >= 50) {
-                  console.warn('🔵 Twitter widgets.js failed to load after 5 seconds');
-                  // Show fallback
-                  if (mounted && container) {
-                    container.innerHTML = `
-                      <div style="padding: 2rem; text-align: center; color: #6b7280;">
-                        <p style="margin-bottom: 1rem;">Unable to load X timeline.</p>
-                        <a href="${xProfileUrl}" target="_blank" rel="noopener noreferrer" 
-                           style="display: inline-block; padding: 0.5rem 1rem; background: #000; color: #fff; 
-                                  text-decoration: none; border-radius: 0.375rem; font-weight: 500;">
-                          View on X →
-                        </a>
-                      </div>
-                    `;
-                  }
-                  setXLoaded(true);
-                }
-              };
-              timeoutId = setTimeout(checkTwttr, 100);
-            }
-          } catch (error) {
-            console.warn('🔵 Failed to initialize X widget:', error);
-            if (mounted && container) {
-              container.innerHTML = `
-                <div style="padding: 2rem; text-align: center; color: #6b7280;">
-                  <p style="margin-bottom: 1rem;">Unable to load X timeline.</p>
-                  <a href="${xProfileUrl}" target="_blank" rel="noopener noreferrer" 
-                     style="display: inline-block; padding: 0.5rem 1rem; background: #000; color: #fff; 
-                            text-decoration: none; border-radius: 0.375rem; font-weight: 500;">
-                    View on X →
-                  </a>
-                </div>
-              `;
-            }
-            setXLoaded(true);
-          }
-        });
-      } catch (error) {
-        console.warn('🔵 Failed to load X widgets script:', error);
-        if (mounted && container) {
-          container.innerHTML = `
-            <div style="padding: 2rem; text-align: center; color: #6b7280;">
-              <p style="margin-bottom: 1rem;">Unable to load X timeline.</p>
-              <a href="${xProfileUrl}" target="_blank" rel="noopener noreferrer" 
-                 style="display: inline-block; padding: 0.5rem 1rem; background: #000; color: #fff; 
-                        text-decoration: none; border-radius: 0.375rem; font-weight: 500;">
-                View on X →
-              </a>
-            </div>
-          `;
-        }
-        setXLoaded(true);
-      }
+    // Extract username from URL
+    const urlMatch = xProfileUrl.match(/(?:x\.com|twitter\.com)\/([^\/\?]+)/);
+    const username = urlMatch ? urlMatch[1] : '';
+
+    // Use iframe embed for X timeline (more reliable than widget API)
+    // Note: X/Twitter timeline embeds are limited, so we'll show a nice link instead
+    if (mounted && container) {
+      container.innerHTML = `
+        <div style="padding: 2rem; text-align: center; color: #6b7280; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 400px;">
+          <div style="margin-bottom: 1.5rem;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" style="color: #000; margin-bottom: 1rem;">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+          </div>
+          <p style="margin-bottom: 1rem; font-size: 1.125rem; color: #374151;">
+            View ${username ? `@${username}` : 'profile'} on X
+          </p>
+          <p style="margin-bottom: 1.5rem; color: #6b7280; max-width: 400px;">
+            X timeline embeds are no longer reliably supported. Click below to view the latest posts.
+          </p>
+          <a href="${xProfileUrl}" target="_blank" rel="noopener noreferrer" 
+             style="display: inline-block; padding: 0.75rem 1.5rem; background: #000; color: #fff; 
+                    text-decoration: none; border-radius: 0.5rem; font-weight: 600; font-size: 1rem;
+                    transition: background-color 0.2s;">
+            View on X →
+          </a>
+        </div>
+      `;
+      setXLoaded(true);
     }
-
-    initX();
 
     return () => {
       mounted = false;
-      widgetLoadAttempted = false;
-      if (timeoutId) clearTimeout(timeoutId);
-      // Don't try to clean up - let React handle it via key changes
-      // Third-party widgets manipulate DOM in ways that conflict with manual cleanup
     };
   }, [hasX, xProfileUrl, xKey]);
 
@@ -803,9 +662,10 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              minHeight: youtube.embedUrl ? '420px' : '200px'
+              minHeight: youtube.embedUrl ? '420px' : '500px'
             }}>
               {youtube.embedUrl ? (
+                // Video or playlist embed
                 <iframe
                   src={youtube.embedUrl}
                   title="YouTube"
@@ -820,14 +680,50 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
                   }}
                 />
               ) : (
-                <p style={{
-                  color: '#6b7280',
+                // Channel preview - YouTube doesn't support simple channel feed embeds
+                <div style={{
+                  padding: '2rem',
                   textAlign: 'center',
-                  margin: 0,
-                  padding: '2rem'
+                  color: '#6b7280',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                  minHeight: '400px'
                 }}>
-                  Open channel on YouTube to view posts/videos.
-                </p>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="#FF0000" style="margin-bottom: 1rem;">
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                  </div>
+                  <p style={{ marginBottom: '0.5rem', fontSize: '1.125rem', color: '#374151', fontWeight: 600 }}>
+                    YouTube Channel
+                  </p>
+                  <p style={{ marginBottom: '1.5rem', color: '#6b7280', maxWidth: '400px' }}>
+                    View the channel on YouTube to see all videos and posts.
+                  </p>
+                  <a
+                    href={youtube.channelUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-block',
+                      padding: '0.75rem 1.5rem',
+                      backgroundColor: '#FF0000',
+                      color: '#fff',
+                      textDecoration: 'none',
+                      borderRadius: '0.5rem',
+                      fontWeight: 600,
+                      fontSize: '1rem',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#CC0000'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#FF0000'}
+                  >
+                    View on YouTube →
+                  </a>
+                </div>
               )}
             </div>
             <div style={{
