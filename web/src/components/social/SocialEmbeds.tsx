@@ -718,8 +718,6 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
                       fontSize: '1rem',
                       transition: 'background-color 0.2s'
                     }}
-                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#CC0000'}
-                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#FF0000'}
                   >
                     View on YouTube →
                   </a>
