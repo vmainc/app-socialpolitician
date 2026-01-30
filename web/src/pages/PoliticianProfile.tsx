@@ -56,21 +56,6 @@ function PoliticianProfile() {
     loadProfile();
   }, [slug]);
 
-  const getOfficeTypeLabel = (type: string | null | undefined) => {
-    switch (type) {
-      case 'senator':
-        return 'U.S. Senator';
-      case 'representative':
-        return 'U.S. Representative';
-      case 'governor':
-        return 'Governor';
-      default:
-        return 'Politician';
-    }
-  };
-
-
-
   const getSocialLinks = () => {
     if (!politician) return [];
     const links: Array<{ label: string; url: string; icon: string; color: string }> = [];
@@ -152,7 +137,7 @@ function PoliticianProfile() {
   };
 
   // Normalize bio/headline/biography (PocketBase may use "bio" only, or "headline"/"biography" after schema update)
-  const raw = politician as Record<string, unknown>;
+  const raw = politician as unknown as Record<string, unknown>;
   const hasDedicatedHeadline = Boolean((raw.headline ?? politician.headline) as string | undefined);
   const hasDedicatedBiography = Boolean((raw.biography ?? politician.biography) as string | undefined);
   const bioOrHeadline = (
