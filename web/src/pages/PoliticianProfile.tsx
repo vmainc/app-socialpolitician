@@ -8,6 +8,7 @@ import { pb } from '../lib/pocketbase';
 import { Politician } from '../types/politician';
 import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
 import SocialEmbeds from '../components/social/SocialEmbeds';
+import BiographyAccordion from '../components/BiographyAccordion';
 import './PoliticianProfile.css';
 
 function PoliticianProfile() {
@@ -150,6 +151,34 @@ function PoliticianProfile() {
     return '';
   };
 
+  // Normalize bio/headline/biography (PocketBase may use "bio" only, or "headline"/"biography" after schema update)
+  const raw = politician as Record<string, unknown>;
+  const hasDedicatedHeadline = Boolean((raw.headline ?? politician.headline) as string | undefined);
+  const hasDedicatedBiography = Boolean((raw.biography ?? politician.biography) as string | undefined);
+  const bioOrHeadline = (
+    (raw.headline ?? raw.bio ?? politician.headline ?? politician.bio) as string | undefined
+  )?.trim() ?? '';
+  const biographyLong = (
+    (raw.biography ?? raw.bio ?? politician.biography ?? politician.bio) as string | undefined
+  )?.trim() ?? '';
+  const isLongText = (s: string) => s.length > 200 || /\n\s*\n/.test(s);
+
+  // Headline: prefer short line; if only one long "bio" exists, use first paragraph or first 150 chars
+  let headlineText: string = hasDedicatedHeadline
+    ? String(raw.headline ?? politician.headline ?? '').trim()
+    : bioOrHeadline;
+  if (!hasDedicatedHeadline && headlineText && isLongText(headlineText)) {
+    const firstPara = headlineText.split(/\n\s*\n/)[0]?.trim() ?? headlineText;
+    headlineText = firstPara.length > 150 ? firstPara.slice(0, 150).trim() + '…' : firstPara;
+  }
+
+  // Show accordion when we have long-form content and avoid duplicating a one-liner
+  const showAccordion =
+    biographyLong.length > 0 &&
+    (hasDedicatedBiography ||
+      (hasDedicatedHeadline && biographyLong !== headlineText) ||
+      (!hasDedicatedHeadline && isLongText(biographyLong)));
+
   return (
     <div className="profile-page">
       {/* Header */}
@@ -163,29 +192,32 @@ function PoliticianProfile() {
       <main className="profile-content">
         {/* Hero Section with Photo and Basic Info */}
         <div className="profile-hero">
-          {/* Photo */}
-          <div className="profile-avatar">
-            <AvatarPlaceholder />
-            {politician.photo && (
-              <img
-                src={`${pb.files.getURL(politician, politician.photo)}?t=${Date.now()}`}
-                alt={politician.name}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
+          {/* Photo + Headline (headline by the image) */}
+          <figure className="profile-hero-figure">
+            <div className="profile-avatar">
+              <AvatarPlaceholder />
+              {politician.photo && (
+                <img
+                  src={`${pb.files.getURL(politician, politician.photo)}?t=${Date.now()}`}
+                  alt={politician.name}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              )}
+            </div>
+            {headlineText && (
+              <figcaption className="profile-headline">
+                {decodeHtmlEntities(headlineText)}
+              </figcaption>
             )}
-          </div>
+          </figure>
 
-          {/* Name & Info */}
+          {/* Name & Badges */}
           <div className="profile-info">
             <h1 className="profile-name">
               {decodeHtmlEntities(politician.name)}
             </h1>
-            
-            <p className="profile-office">
-              {politician.office_title || politician.current_position || getOfficeTypeLabel(politician.office_type)}
-            </p>
 
             {/* Badges */}
             <div className="profile-badges">
@@ -200,24 +232,18 @@ function PoliticianProfile() {
               {politician.district && politician.office_type === 'representative' && (
                 <span className="profile-badge">District {politician.district}</span>
               )}
+              {(politician.office_title || politician.current_position) && (
+                <span className="profile-badge">
+                  {politician.office_title || politician.current_position}
+                </span>
+              )}
             </div>
-
-            {(politician.office_title || politician.current_position) && (
-              <p className="profile-position">
-                "{politician.office_title || politician.current_position}"
-              </p>
-            )}
           </div>
         </div>
 
-        {/* Bio Section */}
-        {politician.bio && politician.bio.trim().length > 0 && (
-          <div className="profile-section">
-            <h2 className="profile-section-title">Biography</h2>
-            <p className="profile-bio">
-              {politician.bio}
-            </p>
-          </div>
+        {/* Biography accordion – closed by default, 2–3 paragraph synopsis */}
+        {showAccordion && biographyLong && (
+          <BiographyAccordion content={biographyLong} />
         )}
 
         {/* Social Links Section */}

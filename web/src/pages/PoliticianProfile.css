@@ -56,6 +56,22 @@
   }
 }
 
+/* Figure: image + headline caption by the image */
+.profile-hero-figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .profile-hero-figure {
+    align-items: flex-start;
+  }
+}
+
 .profile-avatar {
   width: 120px;
   height: 120px;
@@ -98,6 +114,23 @@
   color: #111827;
   margin: 0 0 0.75rem;
   line-height: 1.2;
+}
+
+.profile-headline {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #4b5563;
+  margin: 0;
+  line-height: 1.4;
+  text-align: center;
+  max-width: 280px;
+}
+
+@media (min-width: 768px) {
+  .profile-headline {
+    text-align: left;
+    max-width: 320px;
+  }
 }
 
 .profile-office {
