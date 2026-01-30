@@ -14,6 +14,11 @@ export interface Politician {
   office_type?: string | null; // Schema: text field (fallback)
   chamber?: 'Senator' | 'Representative' | 'Governor' | 'Other' | 'Unknown' | null; // Schema: select field
   status?: 'Incumbent' | 'Challenger' | 'Former' | 'Retired' | 'Deceased' | 'Candidate' | 'Unknown' | null; // Schema: select field
+  /** Short line under name (displayed as headline). Renamed from bio in PocketBase. */
+  headline?: string | null;
+  /** Long 2–3 paragraph synopsis for Biography accordion (no footnotes). */
+  biography?: string | null;
+  /** @deprecated Use headline. Kept for backward compatibility. */
   bio?: string | null;
   /** PocketBase file field – use pb.files.getUrl(record, record.photo) */
   photo?: string | null;

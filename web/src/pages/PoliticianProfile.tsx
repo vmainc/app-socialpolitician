@@ -138,19 +138,19 @@ function PoliticianProfile() {
 
   // Normalize bio/headline/biography (PocketBase may use "bio" only, or "headline"/"biography" after schema update)
   const raw = politician as unknown as Record<string, unknown>;
-  const hasDedicatedHeadline = Boolean((raw.headline ?? politician.headline) as string | undefined);
-  const hasDedicatedBiography = Boolean((raw.biography ?? politician.biography) as string | undefined);
+  const hasDedicatedHeadline = Boolean((raw.headline as string | undefined) ?? '');
+  const hasDedicatedBiography = Boolean((raw.biography as string | undefined) ?? '');
   const bioOrHeadline = (
-    (raw.headline ?? raw.bio ?? politician.headline ?? politician.bio) as string | undefined
+    (raw.headline ?? raw.bio) as string | undefined
   )?.trim() ?? '';
   const biographyLong = (
-    (raw.biography ?? raw.bio ?? politician.biography ?? politician.bio) as string | undefined
+    (raw.biography ?? raw.bio) as string | undefined
   )?.trim() ?? '';
   const isLongText = (s: string) => s.length > 200 || /\n\s*\n/.test(s);
 
   // Headline: prefer short line; if only one long "bio" exists, use first paragraph or first 150 chars
   let headlineText: string = hasDedicatedHeadline
-    ? String(raw.headline ?? politician.headline ?? '').trim()
+    ? String(raw.headline ?? '').trim()
     : bioOrHeadline;
   if (!hasDedicatedHeadline && headlineText && isLongText(headlineText)) {
     const firstPara = headlineText.split(/\n\s*\n/)[0]?.trim() ?? headlineText;
