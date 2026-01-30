@@ -112,8 +112,50 @@
   font-size: 2rem;
   font-weight: 700;
   color: #111827;
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.5rem;
   line-height: 1.2;
+}
+
+.profile-title-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.profile-title-line {
+  font-size: 1rem;
+  color: #4b5563;
+  line-height: 1.4;
+}
+
+.profile-title-line.profile-title-party.party-democrat {
+  color: #1e40af;
+  font-weight: 500;
+}
+
+.profile-title-line.profile-title-party.party-republican {
+  color: #991b1b;
+  font-weight: 500;
+}
+
+.profile-title-line.profile-title-party.party-independent {
+  color: #065f46;
+  font-weight: 500;
+}
+
+.profile-title-line.profile-title-office {
+  font-weight: 600;
+  color: #374151;
+}
+
+.profile-figure-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
 }
 
 .profile-headline {

@@ -56,6 +56,14 @@ function PoliticianProfile() {
     loadProfile();
   }, [slug]);
 
+  const getOfficeLabel = () => {
+    const type = (politician?.office_type ?? politician?.chamber)?.toString().toLowerCase();
+    if (type === 'governor') return 'Governor';
+    if (type === 'senator') return 'U.S. Senator';
+    if (type === 'representative') return 'U.S. Representative';
+    return politician?.office_title || politician?.current_position || null;
+  };
+
   const getSocialLinks = () => {
     if (!politician) return [];
     const links: Array<{ label: string; url: string; icon: string; color: string }> = [];
@@ -177,8 +185,9 @@ function PoliticianProfile() {
       <main className="profile-content">
         {/* Hero Section with Photo and Basic Info */}
         <div className="profile-hero">
-          {/* Photo + Headline (headline by the image) */}
-          <figure className="profile-hero-figure">
+          {/* Photo + Bio (headline by the image) */}
+          <figure className="profile-hero-figure" aria-label="Photo and bio">
+            <span className="profile-figure-label">Photo · Bio</span>
             <div className="profile-avatar">
               <AvatarPlaceholder />
               {politician.photo && (
@@ -198,29 +207,27 @@ function PoliticianProfile() {
             )}
           </figure>
 
-          {/* Name & Badges */}
+          {/* Name, State, Party, Office (title block) */}
           <div className="profile-info">
             <h1 className="profile-name">
               {decodeHtmlEntities(politician.name)}
             </h1>
-
-            {/* Badges */}
-            <div className="profile-badges">
+            <div className="profile-title-lines">
               {politician.state && (
-                <span className="profile-badge">{politician.state}</span>
+                <div className="profile-title-line">{politician.state}</div>
               )}
               {(politician.party || politician.political_party) && (
-                <span className={`profile-badge ${getPartyClass(politician.party || politician.political_party || '')}`}>
+                <div className={`profile-title-line profile-title-party ${getPartyClass(politician.party || politician.political_party || '')}`}>
                   {politician.party || politician.political_party}
-                </span>
+                </div>
               )}
-              {politician.district && politician.office_type === 'representative' && (
-                <span className="profile-badge">District {politician.district}</span>
+              {politician.district && (politician.office_type === 'representative' || (politician.chamber?.toString().toLowerCase() === 'representative')) && (
+                <div className="profile-title-line">District {politician.district}</div>
               )}
-              {(politician.office_title || politician.current_position) && (
-                <span className="profile-badge">
-                  {politician.office_title || politician.current_position}
-                </span>
+              {getOfficeLabel() && (
+                <div className="profile-title-line profile-title-office">
+                  {getOfficeLabel()}
+                </div>
               )}
             </div>
           </div>
