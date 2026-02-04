@@ -90,6 +90,7 @@ If profile pages show no image after a re-import (record IDs changed) or a gover
 
 ## Documentation
 
+- **`docs/TERMINAL_COMMANDS.md`** – **Which machine runs which commands** (local vs VPS; deploy, push, portraits, bios)
 - `DATA_ENRICHMENT_IMPLEMENTATION.md` - Data enrichment pipeline details
 - `PHOTO_STORAGE_GUIDE.md` - Photo storage and routing guide
 - `PORTRAIT_STATUS.md` - Portrait pipeline status

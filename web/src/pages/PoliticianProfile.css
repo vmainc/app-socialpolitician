@@ -429,6 +429,24 @@
   color: #b91c1c;
 }
 
+.profile-news-retry {
+  margin: 0.75rem 0 0;
+}
+
+.profile-news-retry-btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  background: #1e40af;
+  color: #fff;
+  border: none;
+  border-radius: 0.375rem;
+}
+
+.profile-news-retry-btn:hover {
+  background: #1d4ed8;
+}
+
 @media (max-width: 768px) {
   .profile-social-links {
     grid-template-columns: repeat(2, 1fr);
