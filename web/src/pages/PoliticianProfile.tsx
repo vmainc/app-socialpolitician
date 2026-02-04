@@ -8,7 +8,7 @@ import { pb } from '../lib/pocketbase';
 import { Politician } from '../types/politician';
 import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
 import SocialEmbeds from '../components/social/SocialEmbeds';
-import BiographyAccordion from '../components/BiographyAccordion';
+import ProfileAccordion from '../components/ProfileAccordion';
 import ProfileNewsFeed from '../components/ProfileNewsFeed';
 import './PoliticianProfile.css';
 
@@ -145,33 +145,17 @@ function PoliticianProfile() {
     return '';
   };
 
-  // Normalize bio/headline/biography (PocketBase may use "bio" only, or "headline"/"biography" after schema update)
+  // Headline = short summary shown in full in the hero (first box with photo).
+  // Bio = ~500-word summary for the Biography accordion (scraped/summarized from Wikipedia).
   const raw = politician as unknown as Record<string, unknown>;
-  const hasDedicatedHeadline = Boolean((raw.headline as string | undefined) ?? '');
-  const hasDedicatedBiography = Boolean((raw.biography as string | undefined) ?? '');
-  const bioOrHeadline = (
+  const headlineText = (
     (raw.headline ?? raw.bio) as string | undefined
   )?.trim() ?? '';
-  const biographyLong = (
-    (raw.biography ?? raw.bio) as string | undefined
-  )?.trim() ?? '';
-  const isLongText = (s: string) => s.length > 200 || /\n\s*\n/.test(s);
-
-  // Headline: prefer short line; if only one long "bio" exists, use first paragraph or first 150 chars
-  let headlineText: string = hasDedicatedHeadline
-    ? String(raw.headline ?? '').trim()
-    : bioOrHeadline;
-  if (!hasDedicatedHeadline && headlineText && isLongText(headlineText)) {
-    const firstPara = headlineText.split(/\n\s*\n/)[0]?.trim() ?? headlineText;
-    headlineText = firstPara.length > 150 ? firstPara.slice(0, 150).trim() + '…' : firstPara;
-  }
-
-  // Show accordion when we have long-form content and avoid duplicating a one-liner
-  const showAccordion =
-    biographyLong.length > 0 &&
-    (hasDedicatedBiography ||
-      (hasDedicatedHeadline && biographyLong !== headlineText) ||
-      (!hasDedicatedHeadline && isLongText(biographyLong)));
+  const bioForAccordion = (raw.bio as string | undefined)?.trim() ?? '';
+  const showBiographyAccordion = bioForAccordion.length > 0;
+  const bioParagraphs = bioForAccordion
+    ? bioForAccordion.split(/\n\s*\n/).map((p) => decodeHtmlEntities(p.trim())).filter(Boolean)
+    : [];
 
   return (
     <div className="profile-page">
@@ -226,15 +210,22 @@ function PoliticianProfile() {
           )}
         </div>
 
-        {/* Biography accordion – closed by default, 2–3 paragraph synopsis */}
-        {showAccordion && biographyLong && (
-          <BiographyAccordion content={biographyLong} />
+        {/* Biography – accordion, closed by default */}
+        {showBiographyAccordion && (
+          <ProfileAccordion title="Biography">
+            <div className="profile-accordion-bio">
+              {bioParagraphs.length > 0
+                ? bioParagraphs.map((p, i) => (
+                    <p key={i} className="profile-accordion-para">{p}</p>
+                  ))
+                : <p className="profile-accordion-para">{decodeHtmlEntities(bioForAccordion)}</p>}
+            </div>
+          </ProfileAccordion>
         )}
 
-        {/* Social Links Section */}
+        {/* Connect & Learn More – accordion, closed by default */}
         {socialLinks.length > 0 && (
-          <div className="profile-section">
-            <h2 className="profile-section-title">Connect & Learn More</h2>
+          <ProfileAccordion title="Connect & Learn More">
             <div className="profile-social-links">
               {socialLinks.map((link) => (
                 <a
@@ -252,14 +243,22 @@ function PoliticianProfile() {
                 </a>
               ))}
             </div>
-          </div>
+          </ProfileAccordion>
         )}
 
-        {/* Latest News (Google News RSS) */}
-        {politician?.name && <ProfileNewsFeed name={politician.name} limit={5} />}
+        {/* Latest News – accordion, closed by default */}
+        {politician?.name && (
+          <ProfileAccordion title="Latest News">
+            <ProfileNewsFeed name={politician.name} limit={5} hideTitle />
+          </ProfileAccordion>
+        )}
 
-        {/* Social Embeds Section */}
-        {politician && <SocialEmbeds politician={politician} />}
+        {/* Social (X, Facebook, YouTube) – accordion, closed by default */}
+        {politician && (
+          <ProfileAccordion title="Social">
+            <SocialEmbeds politician={politician} hideTitle />
+          </ProfileAccordion>
+        )}
       </main>
     </div>
   );

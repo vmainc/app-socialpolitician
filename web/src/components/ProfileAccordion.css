@@ -1,0 +1,79 @@
+/* Profile accordion – same look as Biography, closed by default */
+
+.profile-accordion {
+  padding: 0;
+  overflow: hidden;
+}
+
+.profile-accordion-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: background 0.2s;
+}
+
+.profile-accordion-trigger:hover {
+  background: #f9fafb;
+}
+
+.profile-accordion-trigger .profile-section-title {
+  margin: 0;
+}
+
+.profile-accordion-icon {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem;
+}
+
+.profile-accordion-panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease-out;
+}
+
+.profile-accordion-panel.is-open {
+  max-height: 5000px;
+  transition: max-height 0.35s ease-in;
+}
+
+.profile-accordion-content {
+  padding: 0 1.5rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Bio / text content inside accordion (e.g. Biography) */
+.profile-accordion-bio .profile-accordion-para {
+  margin: 0 0 1rem;
+}
+
+.profile-accordion-bio .profile-accordion-para:last-child {
+  margin-bottom: 0;
+}
+
+@media (min-width: 1024px) {
+  .profile-accordion-trigger {
+    padding: 2rem;
+  }
+
+  .profile-accordion-content {
+    padding: 0 2rem 2rem;
+  }
+}
