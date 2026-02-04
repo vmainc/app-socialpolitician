@@ -1,0 +1,14 @@
+[Unit]
+Description=News proxy for Social Politician (Google News RSS)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/socialpolitician-app
+ExecStart=/usr/bin/node server/news-proxy.mjs
+Restart=on-failure
+RestartSec=5
+Environment=NEWS_PROXY_PORT=3002
+
+[Install]
+WantedBy=multi-user.target

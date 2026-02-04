@@ -55,7 +55,8 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         bypass(req) {
-          if (req.url?.startsWith('/api/news')) return false;
+          // Let /api/news go to our news-proxy middleware instead of 3001
+          if (req.url?.startsWith('/api/news')) return req.url;
         },
       },
       '/pb': {
