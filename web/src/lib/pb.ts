@@ -103,6 +103,9 @@ export function isPresident(politician: Politician): boolean {
   if (politician.office_type === 'senator' || politician.chamber === 'Senator') {
     return false;
   }
+  if (currentPosition.includes('u.s. senator') || currentPosition.includes('senator')) {
+    return false;
+  }
   
   // Check if name matches any president (exact or partial match)
   const normalizedName = name.toLowerCase().trim();
