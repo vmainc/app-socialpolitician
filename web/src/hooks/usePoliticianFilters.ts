@@ -128,7 +128,7 @@ export function buildPocketBaseFilter(filters: PoliticianFilters): string {
     conditions.push(`(${stateConditions.join(' || ')})`);
   }
   
-  // Party - use exact match (schema field is 'party' with select values)
+  // Party - match both 'party' and 'political_party' (schema may use either)
   if (filters.selectedParty !== 'all') {
     const normalizedParty = normalizePartyForFilter(filters.selectedParty);
     if (normalizedParty) {
@@ -141,7 +141,8 @@ export function buildPocketBaseFilter(filters: PoliticianFilters): string {
       } else if (normalizedParty.toLowerCase().includes('independent')) {
         partyValue = 'Independent';
       }
-      conditions.push(`party="${partyValue}"`);
+      // Include political_party so Independents (e.g. Angus King) show when filtering by Independent
+      conditions.push(`(party="${partyValue}" || political_party="${partyValue}")`);
     }
   }
   
