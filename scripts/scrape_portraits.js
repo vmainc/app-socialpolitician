@@ -83,55 +83,60 @@ async function rateLimitedFetch(url, options = {}) {
 }
 
 /**
- * Get Wikipedia page image via MediaWiki API
+ * Fetch image URL from Wikipedia API for a given title (with redirects and optional fallback title).
+ */
+async function fetchImageForTitle(title) {
+  const params = new URLSearchParams({
+    action: 'query',
+    format: 'json',
+    titles: title,
+    prop: 'pageimages',
+    piprop: 'original',
+    redirects: '1',
+    origin: '*',
+  });
+  const url = `${WIKIPEDIA_API}?${params.toString()}`;
+  const response = await rateLimitedFetch(url);
+  const data = await response.json();
+  if (data.query?.pages) {
+    const page = Object.values(data.query.pages)[0];
+    if (page?.original?.source) return page.original.source;
+  }
+  // Thumbnail fallback
+  const thumbParams = new URLSearchParams({
+    action: 'query',
+    format: 'json',
+    titles: title,
+    prop: 'pageimages',
+    piprop: 'thumbnail',
+    pithumbsize: '1000',
+    redirects: '1',
+    origin: '*',
+  });
+  const thumbResponse = await rateLimitedFetch(`${WIKIPEDIA_API}?${thumbParams.toString()}`);
+  const thumbData = await thumbResponse.json();
+  if (thumbData.query?.pages) {
+    const page = Object.values(thumbData.query.pages)[0];
+    if (page?.thumbnail?.source) return page.thumbnail.source.replace(/\/\d+px-/, '/');
+  }
+  return null;
+}
+
+/**
+ * Get Wikipedia page image via MediaWiki API (follows redirects; tries base name if disambiguation fails).
  */
 async function getWikipediaPageImage(title) {
   try {
-    // First, get page info with images
-    const params = new URLSearchParams({
-      action: 'query',
-      format: 'json',
-      titles: title,
-      prop: 'pageimages',
-      piprop: 'original',
-      origin: '*',
-    });
-    
-    const url = `${WIKIPEDIA_API}?${params.toString()}`;
-    const response = await rateLimitedFetch(url);
-    const data = await response.json();
-    
-    if (data.query?.pages) {
-      const page = Object.values(data.query.pages)[0];
-      if (page.original?.source) {
-        return page.original.source;
+    // First try: exact title with redirects=1 (e.g. "Spencer Cox (politician)" -> "Spencer Cox")
+    let imageUrl = await fetchImageForTitle(title);
+    // Fallback: if title has " (something)" disambiguation, try base name only (e.g. "Spencer Cox")
+    if (!imageUrl && /^\s*.+\s+\([^)]+\)\s*$/.test(title)) {
+      const baseTitle = title.replace(/\s*\([^)]+\)\s*$/, '').trim();
+      if (baseTitle && baseTitle !== title) {
+        imageUrl = await fetchImageForTitle(baseTitle);
       }
     }
-    
-    // Fallback: try to get thumbnail
-    const thumbParams = new URLSearchParams({
-      action: 'query',
-      format: 'json',
-      titles: title,
-      prop: 'pageimages',
-      piprop: 'thumbnail',
-      pithumbsize: '1000',
-      origin: '*',
-    });
-    
-    const thumbUrl = `${WIKIPEDIA_API}?${thumbParams.toString()}`;
-    const thumbResponse = await rateLimitedFetch(thumbUrl);
-    const thumbData = await thumbResponse.json();
-    
-    if (thumbData.query?.pages) {
-      const page = Object.values(thumbData.query.pages)[0];
-      if (page.thumbnail?.source) {
-        // Replace thumbnail size with original
-        return page.thumbnail.source.replace(/\/\d+px-/, '/');
-      }
-    }
-    
-    return null;
+    return imageUrl;
   } catch (error) {
     console.error(`   ❌ Error fetching image: ${error.message}`);
     return null;
