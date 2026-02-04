@@ -1,0 +1,153 @@
+<!--
+  Social Politician Landing Page
+  Drop into Breakdance Builder: paste this entire file into an HTML element.
+  For full width: set the parent Section to "Full Width" in Layout settings.
+  All links point to https://app.socialpolitician.com
+-->
+<div class="sp-landing">
+  <header class="sp-hero">
+    <div class="sp-hero-content">
+      <div class="sp-hero-badge">
+        <a href="https://app.socialpolitician.com" class="sp-hero-logo">
+          <img src="https://app.socialpolitician.com/favicon.svg" alt="Social Politician" width="64" height="64" />
+        </a>
+        <h1 class="sp-hero-title">Search U.S. Politicians on Social Media</h1>
+        <p class="sp-hero-tagline">A real-time database of official online social media content from U.S. Senators, Representatives, Governors & Presidents.</p>
+        <a href="https://app.socialpolitician.com" class="sp-btn sp-btn-primary">Open App</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="sp-intro">
+    <p class="sp-intro-text">Explore every U.S. Senator, Representative, Governor & President. Find bios, photos, social links, and official websites in one place.</p>
+  </section>
+
+  <section class="sp-directories">
+    <h2 class="sp-section-title">Search U.S. Congress</h2>
+    <div class="sp-grid">
+      <a href="https://app.socialpolitician.com/representatives" class="sp-card sp-card-reps">
+        <span class="sp-card-icon" aria-hidden="true">🏛️</span>
+        <h3>Representatives</h3>
+        <p>U.S. House Members</p>
+      </a>
+      <a href="https://app.socialpolitician.com/senators" class="sp-card sp-card-senators">
+        <span class="sp-card-icon" aria-hidden="true">⚖️</span>
+        <h3>Senators</h3>
+        <p>100 U.S. Senators</p>
+      </a>
+      <a href="https://app.socialpolitician.com/governors" class="sp-card sp-card-governors">
+        <span class="sp-card-icon" aria-hidden="true">🏠</span>
+        <h3>Governors</h3>
+        <p>50 State Governors</p>
+      </a>
+      <a href="https://app.socialpolitician.com/presidents" class="sp-card sp-card-presidents">
+        <span class="sp-card-icon" aria-hidden="true">🇺🇸</span>
+        <h3>Presidents</h3>
+        <p>U.S. Presidents</p>
+      </a>
+    </div>
+  </section>
+
+  <section class="sp-parties">
+    <h2 class="sp-section-title">Browse by Party</h2>
+    <div class="sp-party-links">
+      <a href="https://app.socialpolitician.com" class="sp-party-btn sp-party-repub">Republicans</a>
+      <a href="https://app.socialpolitician.com" class="sp-party-btn sp-party-dem">Democrats</a>
+    </div>
+    <p class="sp-party-note">Filter by party in the app.</p>
+  </section>
+
+  <section class="sp-features">
+    <h2 class="sp-section-title">What You Can Do</h2>
+    <div class="sp-feature-grid">
+      <div class="sp-feature">
+        <span class="sp-feature-icon">🔍</span>
+        <h4>Search & Filter</h4>
+        <p>Find politicians by name, state, party, and office.</p>
+      </div>
+      <div class="sp-feature">
+        <span class="sp-feature-icon">📱</span>
+        <h4>Social Media</h4>
+        <p>Official online social media content from U.S. politicians.</p>
+      </div>
+      <div class="sp-feature">
+        <span class="sp-feature-icon">👤</span>
+        <h4>Detailed Profiles</h4>
+        <p>Bios, photos, social links, and official websites.</p>
+      </div>
+      <div class="sp-feature">
+        <span class="sp-feature-icon">💬</span>
+        <h4>Chat with Presidents</h4>
+        <p>Interactive AI conversations with historical presidents.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="sp-footer">
+    <div class="sp-footer-inner">
+      <a href="https://app.socialpolitician.com" class="sp-btn sp-btn-secondary">Get Started →</a>
+      <p class="sp-disclaimer">We are not affiliated with or endorsed by any government entity. Our services are independently provided for informational and entertainment purposes only.</p>
+      <nav class="sp-footer-links">
+        <a href="https://socialpolitician.com/terms-and-conditions/">Terms</a>
+        <a href="https://socialpolitician.com/privacy-policy/">Privacy</a>
+        <a href="https://socialpolitician.com/contact/">Contact</a>
+      </nav>
+    </div>
+  </footer>
+</div>
+
+<style>
+/* Social Politician Landing – paste into Breakdance Custom CSS or keep here */
+.sp-landing { --sp-navy: #0f172a; --sp-cream: #fefce8; --sp-red: #b91c1c; --sp-blue: #1e40af; --sp-content: 1120px; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: var(--sp-navy); width: 100%; box-sizing: border-box; }
+.sp-hero-content { width: 100%; max-width: var(--sp-content); margin-left: auto; margin-right: auto; box-sizing: border-box; padding: 0 1.5rem; }
+.sp-hero { background: linear-gradient(135deg, var(--sp-blue) 0%, #2563eb 100%); color: white; padding: clamp(3rem, 8vw, 6rem) 1.5rem; text-align: center; width: 100vw; max-width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); box-sizing: border-box; }
+.sp-hero-badge { background: var(--sp-cream); color: var(--sp-navy); padding: clamp(2rem, 5vw, 3rem); border-radius: 1rem; box-shadow: 0 8px 32px rgba(0,0,0,0.2); display: inline-block; text-align: center; max-width: 100%; }
+.sp-hero-badge .sp-hero-title { color: var(--sp-navy); }
+.sp-hero-badge .sp-hero-tagline { color: var(--sp-navy); opacity: 0.85; }
+.sp-hero-logo { display: inline-block; margin-bottom: 1rem; opacity: 0.95; }
+.sp-hero-logo:hover { opacity: 1; }
+.sp-hero-logo img { display: block; }
+.sp-hero-title { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 0.5rem; }
+.sp-hero-tagline { font-size: 1.15rem; margin: 0 auto 1.5rem; line-height: 1.5; }
+.sp-btn { display: inline-block; padding: 0.75rem 1.75rem; font-weight: 600; text-decoration: none; border-radius: 0.5rem; transition: transform 0.2s, box-shadow 0.2s; }
+.sp-btn-primary { background: var(--sp-blue) !important; color: white !important; }
+.sp-hero .sp-btn-primary { background: var(--sp-navy) !important; }
+.sp-hero .sp-btn-primary:hover { box-shadow: 0 8px 24px rgba(15,23,42,0.4); }
+.sp-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(30,64,175,0.35); }
+.sp-btn-secondary { background: transparent; color: var(--sp-navy); border: 2px solid var(--sp-navy); }
+.sp-btn-secondary:hover { background: var(--sp-navy); color: white; transform: translateY(-2px); }
+.sp-directories { padding: clamp(3rem, 6vw, 5rem) 1.5rem; background: var(--sp-cream); width: 100vw; max-width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); box-sizing: border-box; }
+.sp-section-title { text-align: center; font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 700; margin: 0 0 2rem; }
+.sp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; width: 100%; }
+.sp-card { display: block; padding: 1.75rem; background: white; border-radius: 0.75rem; text-decoration: none; color: inherit; box-shadow: 0 2px 12px rgba(15,23,42,0.08); border: 1px solid rgba(15,23,42,0.06); transition: transform 0.2s, box-shadow 0.2s; }
+.sp-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(15,23,42,0.12); }
+.sp-card-icon { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+.sp-card h3 { margin: 0 0 0.25rem; font-size: 1.25rem; }
+.sp-card p { margin: 0; font-size: 0.9rem; opacity: 0.7; }
+.sp-features { padding: clamp(2.5rem, 5vw, 4rem) 1.5rem; width: 100vw; max-width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); box-sizing: border-box; }
+.sp-features .sp-section-title, .sp-features .sp-feature-grid { max-width: var(--sp-content); margin-left: auto; margin-right: auto; }
+.sp-feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; width: 100%; }
+.sp-feature { text-align: center; padding: 1rem; }
+.sp-feature-icon { font-size: 2rem; display: block; margin-bottom: 0.75rem; }
+.sp-feature h4 { margin: 0 0 0.35rem; font-size: 1.1rem; }
+.sp-feature p { margin: 0; font-size: 0.9rem; opacity: 0.8; line-height: 1.5; }
+.sp-footer { text-align: center; padding: 2.5rem 1.5rem; background: var(--sp-navy); width: 100vw; max-width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); box-sizing: border-box; }
+.sp-footer-inner { max-width: var(--sp-content); margin-left: auto; margin-right: auto; }
+.sp-intro { padding: clamp(2rem, 4vw, 3rem) 1.5rem; text-align: center; background: white; width: 100vw; max-width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); box-sizing: border-box; }
+.sp-intro-text { margin: 0 auto; max-width: var(--sp-content); font-size: 1.1rem; line-height: 1.6; opacity: 0.9; }
+.sp-directories .sp-section-title, .sp-directories .sp-grid { max-width: var(--sp-content); margin-left: auto; margin-right: auto; }
+.sp-parties { padding: clamp(2.5rem, 5vw, 4rem) 1.5rem; background: white; width: 100vw; max-width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); box-sizing: border-box; }
+.sp-parties .sp-section-title, .sp-parties .sp-party-links, .sp-parties .sp-party-note { max-width: var(--sp-content); margin-left: auto; margin-right: auto; }
+.sp-party-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-bottom: 0.5rem; }
+.sp-party-btn { display: inline-block; padding: 0.6rem 1.5rem; font-weight: 600; text-decoration: none; border-radius: 0.5rem; transition: opacity 0.2s; color: white !important; }
+.sp-party-repub { background: #dc2626; color: white !important; }
+.sp-party-dem { background: #2563eb; color: white !important; }
+.sp-party-btn:hover { opacity: 0.9; color: white !important; }
+.sp-party-note { margin: 0; font-size: 0.85rem; opacity: 0.7; text-align: center; }
+.sp-footer .sp-btn-secondary { color: white; border-color: white; margin-bottom: 1.5rem; }
+.sp-footer .sp-btn-secondary:hover { background: white; color: var(--sp-navy); }
+.sp-disclaimer { margin: 0 0 1rem; font-size: 0.8rem; opacity: 0.8; line-height: 1.5; }
+.sp-footer-links { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+.sp-footer-links a { color: rgba(255,255,255,0.8); font-size: 0.85rem; text-decoration: none; }
+.sp-footer-links a:hover { color: white; }
+</style>
