@@ -29,6 +29,7 @@ bash scripts/complete_deployment.sh
 ## Active Scripts
 
 ### Data Enrichment
+- `server/src/scripts/backfillBiosFromWikipedia.ts` - Backfill bio (and headline) from Wikipedia for politicians missing them; use `--office-type=governor` (or senator/representative) to limit
 - `scripts/enrich_governors.sh` - Enrich governors with links and photos
 - `scripts/scrape_governor_portraits.sh` - Download and upload governor portraits
 - `scripts/run_data_enrichment.sh` - Complete data enrichment pipeline
