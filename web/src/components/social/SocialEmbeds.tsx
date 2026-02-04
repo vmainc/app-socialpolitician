@@ -6,6 +6,9 @@
 
 import { useEffect, useRef, useState, Component, ErrorInfo, ReactNode } from 'react';
 import { loadScriptOnce } from '../../utils/useThirdPartyScripts';
+import { installThirdPartyConsoleSuppression } from '../../utils/suppressThirdPartyConsole';
+
+installThirdPartyConsoleSuppression();
 
 // Error Boundary to catch React reconciliation errors from third-party widgets
 class WidgetErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
@@ -239,114 +242,6 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
   useEffect(() => {
     if (hasFacebook) setFbKey(prev => prev + 1);
   }, [facebookUrl, hasFacebook]);
-
-  // Suppress errors from third-party widgets
-  useEffect(() => {
-    const originalError = window.onerror;
-    const originalUnhandledRejection = window.onunhandledrejection;
-    
-    // Helper to check if a message is a Facebook SDK error
-    const isFacebookError = (args: any[]): boolean => {
-      const fullMessage = args.map(String).join(' ');
-      
-      // Check for Facebook error patterns
-      const facebookPatterns = [
-        'ErrorUtils caught an error',
-        'Could not find element',
-        'DataStore.get: namespace is required',
-        '[Caught in: Module',
-        'Permissions policy violation: unload',
-        'fburl.com/debugjs',
-        'Subsequent non-fatal errors',
-        'Requiring module',
-        '__elem_',
-        '__inst_',
-        'u_1_', // Facebook element IDs pattern
-      ];
-      
-      // Check if any pattern matches
-      if (facebookPatterns.some(pattern => fullMessage.includes(pattern))) {
-        return true;
-      }
-      
-      // Check for Facebook error objects (have hash property)
-      if (typeof args[0] === 'object' && args[0]?.hash) {
-        return true;
-      }
-      
-      // Check if source file is from Facebook
-      if (args.length > 1 && typeof args[1] === 'string') {
-        const source = args[1];
-        if (
-          source.includes('facebook.com') ||
-          source.includes('fbcdn.net') ||
-          source.includes('fburl.com') ||
-          source.includes('connect.facebook.net')
-        ) {
-          return true;
-        }
-      }
-      
-      return false;
-    };
-    
-    // Suppress console.errors from Facebook SDK
-    const originalConsoleError = console.error;
-    console.error = (...args: any[]) => {
-      if (isFacebookError(args)) {
-        return; // Suppress Facebook SDK errors
-      }
-      // Call original console.error for other errors
-      originalConsoleError.apply(console, args);
-    };
-    
-    // Also suppress console.warn for Facebook violations
-    const originalConsoleWarn = console.warn;
-    console.warn = (...args: any[]) => {
-      if (isFacebookError(args)) {
-        return; // Suppress Facebook warnings
-      }
-      originalConsoleWarn.apply(console, args);
-    };
-    
-    window.onerror = (message, source, lineno, colno, error) => {
-      const messageStr = String(message || '');
-      const sourceStr = String(source || '');
-      
-      // Suppress removeChild errors from third-party widgets
-      if (
-        messageStr.includes('removeChild') || 
-        messageStr.includes('NotFoundError')
-      ) {
-        return true; // Suppress the error
-      }
-      
-      // Suppress Facebook SDK errors
-      if (
-        sourceStr.includes('facebook.com') ||
-        sourceStr.includes('fbcdn.net') ||
-        sourceStr.includes('fburl.com') ||
-        sourceStr.includes('connect.facebook.net') ||
-        messageStr.includes('ErrorUtils') ||
-        messageStr.includes('Permissions policy violation')
-      ) {
-        return true; // Suppress Facebook errors
-      }
-      
-      // Call original handler for other errors
-      if (originalError) {
-        return originalError(message, source, lineno, colno, error);
-      }
-      return false;
-    };
-
-    return () => {
-      window.onerror = originalError;
-      window.onunhandledrejection = originalUnhandledRejection;
-      console.error = originalConsoleError;
-      console.warn = originalConsoleWarn;
-    };
-  }, []);
 
   // X (Twitter) - Show link card immediately; timeline embeds are no longer supported by X
   useEffect(() => {
@@ -628,7 +523,7 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
           </div>
         )}
 
-        {/* YouTube Card */}
+        {/* YouTube Card – same scrollable layout as Facebook */}
         {hasYouTube && (
           <div style={{
             border: '1px solid #e5e7eb',
@@ -645,97 +540,103 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
             }}>
               <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>YouTube</h3>
             </div>
-            <div style={{
-              padding: '1rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: youtube.embedUrl ? '420px' : '420px'
-            }}>
-              {youtube.embedUrl ? (
-                // Single video embed
-                <iframe
-                  src={youtube.embedUrl}
-                  title="YouTube"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  style={{
-                    width: '100%',
-                    maxWidth: '560px',
-                    height: '315px',
-                    borderRadius: '0.375rem'
-                  }}
-                />
-              ) : youtube.channelId ? (
-                // Channel feed: wider embed so playlist list (video thumbnails) is prominent
-                (() => {
-                  const id = youtube.channelId;
-                  const uploadsPlaylistId = id.startsWith('UC') ? 'UU' + id.slice(2) : id;
-                  const playlistEmbedUrl = `https://www.youtube.com/embed/videoseries?list=${uploadsPlaylistId}`;
-                  return (
+            <WidgetErrorBoundary>
+              <div
+                style={{
+                  height: '600px',
+                  overflow: 'auto',
+                  padding: '1rem',
+                  position: 'relative'
+                }}
+              >
+                {youtube.embedUrl ? (
+                  // Single video embed – allow scroll so card matches Facebook height
+                  <div style={{ display: 'flex', justifyContent: 'center', minHeight: '100%' }}>
                     <iframe
-                      src={playlistEmbedUrl}
-                      title="YouTube Channel"
+                      src={youtube.embedUrl}
+                      title="YouTube"
                       frameBorder="0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                       allowFullScreen
                       style={{
                         width: '100%',
-                        maxWidth: '900px',
-                        height: '420px',
+                        maxWidth: '560px',
+                        height: '315px',
                         borderRadius: '0.375rem',
-                        border: 'none',
-                        minHeight: '320px'
+                        flexShrink: 0
                       }}
                     />
-                  );
-                })()
-              ) : (
-                // Fallback: Show channel link with preview
-                <div style={{
-                  padding: '2rem',
-                  textAlign: 'center',
-                  color: '#6b7280',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%',
-                  minHeight: '400px'
-                }}>
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="#FF0000" style={{ marginBottom: '1rem' }}>
-                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                    </svg>
                   </div>
-                  <p style={{ marginBottom: '0.5rem', fontSize: '1.125rem', color: '#374151', fontWeight: 600 }}>
-                    YouTube Channel
-                  </p>
-                  <p style={{ marginBottom: '1.5rem', color: '#6b7280', maxWidth: '400px' }}>
-                    View the channel on YouTube to see all videos and posts.
-                  </p>
-                  <a
-                    href={youtube.channelUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'inline-block',
-                      padding: '0.75rem 1.5rem',
-                      backgroundColor: '#FF0000',
-                      color: '#fff',
-                      textDecoration: 'none',
-                      borderRadius: '0.5rem',
-                      fontWeight: 600,
-                      fontSize: '1rem',
-                      transition: 'background-color 0.2s'
-                    }}
-                  >
-                    View on YouTube →
-                  </a>
-                </div>
-              )}
-            </div>
+                ) : youtube.channelId ? (
+                  // Channel feed: tall playlist embed so list scrolls inside the card (like Facebook)
+                  (() => {
+                    const id = youtube.channelId;
+                    const uploadsPlaylistId = id.startsWith('UC') ? 'UU' + id.slice(2) : id;
+                    const playlistEmbedUrl = `https://www.youtube.com/embed/videoseries?list=${uploadsPlaylistId}`;
+                    return (
+                      <iframe
+                        src={playlistEmbedUrl}
+                        title="YouTube Channel"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        style={{
+                          width: '100%',
+                          maxWidth: '900px',
+                          height: '900px',
+                          borderRadius: '0.375rem',
+                          border: 'none',
+                          minHeight: '500px',
+                          display: 'block'
+                        }}
+                      />
+                    );
+                  })()
+                ) : (
+                  // Fallback: Show channel link with preview
+                  <div style={{
+                    padding: '2rem',
+                    textAlign: 'center',
+                    color: '#6b7280',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: '400px'
+                  }}>
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <svg width="64" height="64" viewBox="0 0 24 24" fill="#FF0000" style={{ marginBottom: '1rem' }}>
+                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                      </svg>
+                    </div>
+                    <p style={{ marginBottom: '0.5rem', fontSize: '1.125rem', color: '#374151', fontWeight: 600 }}>
+                      YouTube Channel
+                    </p>
+                    <p style={{ marginBottom: '1.5rem', color: '#6b7280', maxWidth: '400px' }}>
+                      View the channel on YouTube to see all videos and posts.
+                    </p>
+                    <a
+                      href={youtube.channelUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-block',
+                        padding: '0.75rem 1.5rem',
+                        backgroundColor: '#FF0000',
+                        color: '#fff',
+                        textDecoration: 'none',
+                        borderRadius: '0.5rem',
+                        fontWeight: 600,
+                        fontSize: '1rem',
+                        transition: 'background-color 0.2s'
+                      }}
+                    >
+                      View on YouTube →
+                    </a>
+                  </div>
+                )}
+              </div>
+            </WidgetErrorBoundary>
             <div style={{
               padding: '1rem',
               borderTop: '1px solid #e5e7eb',

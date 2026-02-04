@@ -13,7 +13,8 @@ export interface NewsItem {
 }
 
 const LIMIT = 5;
-const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+// CORS proxy: corsproxy.io works when allorigins.win is blocked or fails
+const CORS_PROXY = 'https://corsproxy.io/?url=';
 const RSS_BASE =
   'https://news.google.com/rss/search?q=';
 
@@ -104,7 +105,7 @@ export default function ProfileNewsFeed({ name, limit = LIMIT }: ProfileNewsFeed
     const rssUrl = `${RSS_BASE}${encodedQuery}&hl=en-US&gl=US&ceid=US:en`;
     const url = `${CORS_PROXY}${encodeURIComponent(rssUrl)}`;
 
-    fetch(url)
+    fetch(url, { mode: 'cors' })
       .then((res) => {
         if (!res.ok) throw new Error(`News feed failed: ${res.status}`);
         return res.text();
