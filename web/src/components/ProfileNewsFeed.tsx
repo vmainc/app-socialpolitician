@@ -77,7 +77,7 @@ function parseRssXml(xmlText: string, options?: { allowDuplicateSources?: boolea
   for (let i = 0; i < itemEls.length && result.length < LIMIT; i++) {
     const item = itemEls[i];
     const titleEl = item.querySelector('title');
-    let linkEl = item.querySelector('link');
+    let linkEl: Element | null = item.querySelector('link');
     if (!linkEl || !getTextContent(linkEl)) {
       const atomLink = item.querySelector('link[href]');
       if (atomLink?.getAttribute('href')) linkEl = atomLink;

@@ -246,9 +246,11 @@ function PoliticianProfile() {
           </ProfileAccordion>
         )}
 
-        {/* Latest News – outside accordion so it always shows and fetches reliably */}
+        {/* Latest News – accordion, closed by default */}
         {politician?.name && (
-          <ProfileNewsFeed name={politician.name} limit={5} />
+          <ProfileAccordion title="Latest News">
+            <ProfileNewsFeed name={politician.name} limit={5} hideTitle />
+          </ProfileAccordion>
         )}
 
         {/* Social (X, Facebook, YouTube) – accordion, closed by default */}
