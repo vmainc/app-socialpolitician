@@ -37,10 +37,11 @@
   padding: 0 1.5rem;
 }
 
+/* Hero: one card — avatar + name/meta row, then full-width headline */
 .profile-hero {
   background: #fff;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   padding: 2rem;
   margin-bottom: 1.5rem;
   display: flex;
@@ -48,27 +49,18 @@
   gap: 1.5rem;
 }
 
-@media (min-width: 768px) {
-  .profile-hero {
-    flex-direction: row;
-    align-items: center;
-    gap: 2rem;
-  }
-}
-
-/* Figure: image + headline caption by the image */
-.profile-hero-figure {
-  margin: 0;
+.profile-hero-top {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  flex-shrink: 0;
+  gap: 1.25rem;
 }
 
-@media (min-width: 768px) {
-  .profile-hero-figure {
-    align-items: flex-start;
+@media (min-width: 640px) {
+  .profile-hero-top {
+    flex-direction: row;
+    align-items: center;
+    gap: 1.75rem;
   }
 }
 
@@ -76,13 +68,20 @@
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: #e5e7eb;
+  background: #f3f4f6;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
   position: relative;
+}
+
+@media (min-width: 640px) {
+  .profile-avatar {
+    width: 140px;
+    height: 140px;
+  }
 }
 
 .profile-avatar-placeholder {
@@ -106,73 +105,88 @@
 
 .profile-info {
   flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .profile-info {
+    text-align: left;
+  }
 }
 
 .profile-name {
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: #111827;
   margin: 0 0 0.5rem;
-  line-height: 1.2;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
 }
 
-.profile-title-lines {
+@media (min-width: 640px) {
+  .profile-name {
+    font-size: 2rem;
+  }
+}
+
+/* Meta: State · Party · Role in one flush line */
+.profile-meta {
   display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem 0.5rem;
 }
 
-.profile-title-line {
-  font-size: 1rem;
-  color: #4b5563;
+@media (min-width: 640px) {
+  .profile-meta {
+    justify-content: flex-start;
+  }
+}
+
+.profile-meta-item {
+  font-size: 0.9375rem;
+  color: #6b7280;
   line-height: 1.4;
 }
 
-.profile-title-line.profile-title-party.party-democrat {
+.profile-meta-item:not(:last-child)::after {
+  content: " · ";
+  margin-left: 0.25rem;
+  color: #d1d5db;
+  font-weight: 400;
+}
+
+.profile-meta-party.party-democrat {
   color: #1e40af;
   font-weight: 500;
 }
 
-.profile-title-line.profile-title-party.party-republican {
+.profile-meta-party.party-republican {
   color: #991b1b;
   font-weight: 500;
 }
 
-.profile-title-line.profile-title-party.party-independent {
+.profile-meta-party.party-independent {
   color: #065f46;
   font-weight: 500;
 }
 
-.profile-title-line.profile-title-office {
+.profile-meta-office {
   font-weight: 600;
   color: #374151;
 }
 
-.profile-figure-label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #9ca3af;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.25rem;
-}
-
+/* Headline / short bio: full-width below, readable */
 .profile-headline {
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 400;
   color: #4b5563;
   margin: 0;
-  line-height: 1.4;
-  text-align: center;
-  max-width: 280px;
-}
-
-@media (min-width: 768px) {
-  .profile-headline {
-    text-align: left;
-    max-width: 320px;
-  }
+  line-height: 1.6;
+  padding-top: 1rem;
+  border-top: 1px solid #f3f4f6;
 }
 
 .profile-office {
@@ -355,6 +369,64 @@
 
 .profile-not-found .back-link:hover {
   color: #1d4ed8;
+}
+
+/* News feed (Latest News) */
+.profile-news-feed .profile-section-title {
+  margin-bottom: 1rem;
+}
+
+.profile-news-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.profile-news-item {
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: #fff;
+  transition: border-color 0.2s;
+}
+
+.profile-news-item:hover {
+  border-color: #d1d5db;
+}
+
+.profile-news-link {
+  display: block;
+  font-weight: 500;
+  color: #111827;
+  text-decoration: none;
+  line-height: 1.4;
+  margin-bottom: 0.25rem;
+}
+
+.profile-news-link:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.profile-news-meta {
+  display: block;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.profile-news-loading,
+.profile-news-error,
+.profile-news-empty {
+  color: #6b7280;
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.profile-news-error {
+  color: #b91c1c;
 }
 
 @media (max-width: 768px) {

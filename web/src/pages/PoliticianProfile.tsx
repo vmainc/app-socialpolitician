@@ -9,6 +9,7 @@ import { Politician } from '../types/politician';
 import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
 import SocialEmbeds from '../components/social/SocialEmbeds';
 import BiographyAccordion from '../components/BiographyAccordion';
+import ProfileNewsFeed from '../components/ProfileNewsFeed';
 import './PoliticianProfile.css';
 
 function PoliticianProfile() {
@@ -183,54 +184,46 @@ function PoliticianProfile() {
       </header>
 
       <main className="profile-content">
-        {/* Hero Section with Photo and Basic Info */}
+        {/* Hero: one card — avatar, name + meta, then headline */}
         <div className="profile-hero">
-          {/* Photo + Bio (headline by the image) */}
-          <figure className="profile-hero-figure" aria-label="Photo and bio">
-            <span className="profile-figure-label">Photo · Bio</span>
-            <div className="profile-avatar">
+          <div className="profile-hero-top">
+            <div className="profile-avatar" aria-hidden>
               <AvatarPlaceholder />
               {politician.photo && (
                 <img
                   src={`${pb.files.getURL(politician, politician.photo)}?t=${Date.now()}`}
-                  alt={politician.name}
+                  alt=""
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
                 />
               )}
             </div>
-            {headlineText && (
-              <figcaption className="profile-headline">
-                {decodeHtmlEntities(headlineText)}
-              </figcaption>
-            )}
-          </figure>
-
-          {/* Name, State, Party, Office (title block) */}
-          <div className="profile-info">
-            <h1 className="profile-name">
-              {decodeHtmlEntities(politician.name)}
-            </h1>
-            <div className="profile-title-lines">
-              {politician.state && (
-                <div className="profile-title-line">{politician.state}</div>
-              )}
-              {(politician.party || politician.political_party) && (
-                <div className={`profile-title-line profile-title-party ${getPartyClass(politician.party || politician.political_party || '')}`}>
-                  {politician.party || politician.political_party}
-                </div>
-              )}
-              {politician.district && (politician.office_type === 'representative' || (politician.chamber?.toString().toLowerCase() === 'representative')) && (
-                <div className="profile-title-line">District {politician.district}</div>
-              )}
-              {getOfficeLabel() && (
-                <div className="profile-title-line profile-title-office">
-                  {getOfficeLabel()}
-                </div>
-              )}
+            <div className="profile-info">
+              <h1 className="profile-name">
+                {decodeHtmlEntities(politician.name)}
+              </h1>
+              <div className="profile-meta">
+                {politician.state && <span className="profile-meta-item">{politician.state}</span>}
+                {(politician.party || politician.political_party) && (
+                  <span className={`profile-meta-item profile-meta-party ${getPartyClass(politician.party || politician.political_party || '')}`}>
+                    {politician.party || politician.political_party}
+                  </span>
+                )}
+                {politician.district && (politician.office_type === 'representative' || (politician.chamber?.toString().toLowerCase() === 'representative')) && (
+                  <span className="profile-meta-item">District {politician.district}</span>
+                )}
+                {getOfficeLabel() && (
+                  <span className="profile-meta-item profile-meta-office">{getOfficeLabel()}</span>
+                )}
+              </div>
             </div>
           </div>
+          {headlineText && (
+            <p className="profile-headline">
+              {decodeHtmlEntities(headlineText)}
+            </p>
+          )}
         </div>
 
         {/* Biography accordion – closed by default, 2–3 paragraph synopsis */}
@@ -261,6 +254,9 @@ function PoliticianProfile() {
             </div>
           </div>
         )}
+
+        {/* Latest News (Google News RSS) */}
+        {politician?.name && <ProfileNewsFeed name={politician.name} limit={5} />}
 
         {/* Social Embeds Section */}
         {politician && <SocialEmbeds politician={politician} />}

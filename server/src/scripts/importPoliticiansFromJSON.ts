@@ -19,7 +19,8 @@ const adminPassword = process.env.POCKETBASE_ADMIN_PASSWORD || '';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const projectRoot = path.resolve(__dirname, '../..');
+// From server/src/scripts go up 3 levels to repo root (where data/ lives)
+const projectRoot = path.resolve(__dirname, '../../..');
 
 interface PoliticianData {
   name: string;
