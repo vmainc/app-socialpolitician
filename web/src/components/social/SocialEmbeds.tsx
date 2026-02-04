@@ -44,6 +44,8 @@ class WidgetErrorBoundary extends Component<{ children: ReactNode }, { hasError:
 
 interface SocialEmbedsProps {
   politician: Record<string, any>;
+  /** When true, omit section wrapper and title (e.g. when inside an accordion) */
+  hideTitle?: boolean;
 }
 
 // Extend Window interface for third-party scripts
@@ -215,7 +217,7 @@ function parseYouTube(url: string): {
   }
 }
 
-export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
+export default function SocialEmbeds({ politician, hideTitle = false }: SocialEmbedsProps) {
   const xWrapRef = useRef<HTMLDivElement>(null);
   const fbWrapRef = useRef<HTMLDivElement>(null);
   const [xLoaded, setXLoaded] = useState(false);
@@ -354,26 +356,27 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
 
 
   if (!hasAny) {
-    return (
+    const emptyContent = (
+      <div style={{ 
+        padding: '2rem', 
+        textAlign: 'center', 
+        color: '#6b7280',
+        backgroundColor: '#f9fafb',
+        borderRadius: '0.5rem'
+      }}>
+        <p style={{ margin: 0 }}>No social accounts available.</p>
+      </div>
+    );
+    return hideTitle ? emptyContent : (
       <div className="profile-section">
         <h2 className="profile-section-title">Social</h2>
-        <div style={{ 
-          padding: '2rem', 
-          textAlign: 'center', 
-          color: '#6b7280',
-          backgroundColor: '#f9fafb',
-          borderRadius: '0.5rem'
-        }}>
-          <p style={{ margin: 0 }}>No social accounts available.</p>
-        </div>
+        {emptyContent}
       </div>
     );
   }
 
-  return (
-    <div className="profile-section">
-      <h2 className="profile-section-title">Social</h2>
-      <div style={{
+  const gridContent = (
+    <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
         gap: '1.5rem',
@@ -523,7 +526,7 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
           </div>
         )}
 
-        {/* YouTube Card – same scrollable layout as Facebook */}
+        {/* YouTube Card – same scrollable card layout as Facebook */}
         {hasYouTube && (
           <div style={{
             border: '1px solid #e5e7eb',
@@ -550,8 +553,15 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
                 }}
               >
                 {youtube.embedUrl ? (
-                  // Single video embed – allow scroll so card matches Facebook height
-                  <div style={{ display: 'flex', justifyContent: 'center', minHeight: '100%' }}>
+                  // Single video – same card height as Facebook, video centered and sized like a feed item
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'flex-start',
+                    width: '100%',
+                    height: '100%',
+                    minHeight: '500px'
+                  }}>
                     <iframe
                       src={youtube.embedUrl}
                       title="YouTube"
@@ -568,7 +578,7 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
                     />
                   </div>
                 ) : youtube.channelId ? (
-                  // Channel feed: tall playlist embed so list scrolls inside the card (like Facebook)
+                  // Channel feed: playlist embed sized to card (like Facebook) – list scrolls inside iframe
                   (() => {
                     const id = youtube.channelId;
                     const uploadsPlaylistId = id.startsWith('UC') ? 'UU' + id.slice(2) : id;
@@ -582,11 +592,9 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
                         allowFullScreen
                         style={{
                           width: '100%',
-                          maxWidth: '900px',
-                          height: '900px',
+                          height: '568px',
                           borderRadius: '0.375rem',
                           border: 'none',
-                          minHeight: '500px',
                           display: 'block'
                         }}
                       />
@@ -663,6 +671,12 @@ export default function SocialEmbeds({ politician }: SocialEmbedsProps) {
           </div>
         )}
       </div>
+  );
+
+  return hideTitle ? gridContent : (
+    <div className="profile-section">
+      <h2 className="profile-section-title">Social</h2>
+      {gridContent}
     </div>
   );
 }

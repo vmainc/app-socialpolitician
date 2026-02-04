@@ -14,12 +14,12 @@ export interface Politician {
   office_type?: string | null; // Schema: text field (fallback)
   chamber?: 'Senator' | 'Representative' | 'Governor' | 'Other' | 'Unknown' | null; // Schema: select field
   status?: 'Incumbent' | 'Challenger' | 'Former' | 'Retired' | 'Deceased' | 'Candidate' | 'Unknown' | null; // Schema: select field
-  /** Short line under name (displayed as headline). Renamed from bio in PocketBase. */
+  /** Short summary shown in full in the profile hero (first box with photo). */
   headline?: string | null;
-  /** Long 2–3 paragraph synopsis for Biography accordion (no footnotes). */
-  biography?: string | null;
-  /** @deprecated Use headline. Kept for backward compatibility. */
+  /** ~500-word summary from Wikipedia for the Biography accordion (major events, career). */
   bio?: string | null;
+  /** @deprecated Use bio. Kept for backward compatibility. */
+  biography?: string | null;
   /** PocketBase file field – use pb.files.getUrl(record, record.photo) */
   photo?: string | null;
   official_website_domain?: string | null; // Schema field (was website_url)

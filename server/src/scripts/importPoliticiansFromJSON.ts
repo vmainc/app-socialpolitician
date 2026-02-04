@@ -60,26 +60,24 @@ async function importFromJSON(jsonPath: string, pb: PocketBase): Promise<{ creat
   let errors = 0;
 
   for (const politician of politicians) {
+    const { sources, ...rest } = politician as Record<string, unknown>;
+    const payload = rest as PoliticianData;
     try {
-      // Check if exists by slug
-      const existing = await pb.collection('politicians').getFirstListItem(`slug="${politician.slug}"`, {});
-      
-      // Update existing
-      await pb.collection('politicians').update(existing.id, politician);
+      const existing = await pb.collection('politicians').getFirstListItem(`slug="${payload.slug}"`, {});
+      await pb.collection('politicians').update(existing.id, payload);
       updated++;
     } catch (err: any) {
       if (err?.status === 404) {
-        // Not found, create new
         try {
-          await pb.collection('politicians').create(politician);
+          await pb.collection('politicians').create(payload);
           created++;
         } catch (createErr: any) {
           errors++;
-          console.error(`❌ Failed to create ${politician.slug}: ${createErr?.message}`);
+          console.error(`❌ Failed to create ${payload.slug}: ${createErr?.message}`);
         }
       } else {
         errors++;
-        console.error(`❌ Error with ${politician.slug}: ${err?.message}`);
+        console.error(`❌ Error with ${payload.slug}: ${err?.message}`);
       }
     }
   }

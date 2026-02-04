@@ -215,19 +215,6 @@ function PoliticianProfile() {
           )}
         </div>
 
-        {/* Sources */}
-        {politician.sources && politician.sources.length > 0 && (
-          <div className="bg-white rounded-lg shadow-md p-6 mt-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Sources</h2>
-            <ul className="list-disc list-inside space-y-2">
-              {politician.sources.map((source, idx) => (
-                <li key={idx} className="text-gray-700">
-                  {typeof source === 'string' ? source : JSON.stringify(source)}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </div>
     </div>
   );

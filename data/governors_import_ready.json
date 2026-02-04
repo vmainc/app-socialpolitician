@@ -5,6 +5,7 @@
     "state": "Alabama",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Kay_Ivey",
     "position_start_date": "2017-04-10"
   },
@@ -14,6 +15,7 @@
     "state": "Alaska",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Mike_Dunleavy_(politician)",
     "position_start_date": "1961-05-05"
   },
@@ -23,6 +25,7 @@
     "state": "Arizona",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Katie_Hobbs",
     "position_start_date": "1969-12-28"
   },
@@ -32,6 +35,7 @@
     "state": "Arkansas",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Sarah_Huckabee_Sanders",
     "position_start_date": "1982-08-13"
   },
@@ -41,6 +45,7 @@
     "state": "California",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Gavin_Newsom",
     "position_start_date": "1967-10-10"
   },
@@ -50,6 +55,7 @@
     "state": "Colorado",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Jared_Polis",
     "position_start_date": "1975-05-12"
   },
@@ -59,6 +65,7 @@
     "state": "Connecticut",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Ned_Lamont",
     "position_start_date": "1954-01-03"
   },
@@ -68,6 +75,7 @@
     "state": "Delaware",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Matt_Meyer",
     "position_start_date": "1971-09-29"
   },
@@ -77,6 +85,7 @@
     "state": "Florida",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Ron_DeSantis",
     "position_start_date": "1978-09-14"
   },
@@ -86,6 +95,7 @@
     "state": "Georgia",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Brian_Kemp",
     "position_start_date": "1963-11-02"
   },
@@ -95,6 +105,7 @@
     "state": "Hawaii",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Josh_Green_(politician)",
     "position_start_date": "1970-02-11"
   },
@@ -104,6 +115,7 @@
     "state": "Idaho",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Brad_Little",
     "position_start_date": "1954-02-15"
   },
@@ -113,6 +125,7 @@
     "state": "Illinois",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/JB_Pritzker",
     "position_start_date": "1965-01-19"
   },
@@ -122,6 +135,7 @@
     "state": "Indiana",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Mike_Braun",
     "position_start_date": "1954-03-24"
   },
@@ -131,6 +145,7 @@
     "state": "Iowa",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Kim_Reynolds",
     "position_start_date": "1959-08-04"
   },
@@ -140,6 +155,7 @@
     "state": "Kansas",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Laura_Kelly",
     "position_start_date": "1950-01-24"
   },
@@ -149,6 +165,7 @@
     "state": "Kentucky",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Andy_Beshear",
     "position_start_date": "1977-11-29"
   },
@@ -158,6 +175,7 @@
     "state": "Louisiana",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Jeff_Landry",
     "position_start_date": "1970-12-23"
   },
@@ -167,6 +185,7 @@
     "state": "Maine",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Janet_Mills",
     "position_start_date": "2019-01-02"
   },
@@ -176,6 +195,7 @@
     "state": "Maryland",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Wes_Moore",
     "position_start_date": "1978-10-15"
   },
@@ -185,6 +205,7 @@
     "state": "Massachusetts",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Maura_Healey",
     "position_start_date": "1971-02-08"
   },
@@ -194,6 +215,7 @@
     "state": "Michigan",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Gretchen_Whitmer",
     "position_start_date": "1971-08-23"
   },
@@ -203,6 +225,7 @@
     "state": "Minnesota",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Tim_Walz",
     "position_start_date": "1964-04-06"
   },
@@ -212,6 +235,7 @@
     "state": "Mississippi",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Tate_Reeves",
     "position_start_date": "1974-06-05"
   },
@@ -221,6 +245,7 @@
     "state": "Missouri",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Mike_Kehoe",
     "position_start_date": "1962-01-17"
   },
@@ -230,6 +255,7 @@
     "state": "Montana",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Greg_Gianforte",
     "position_start_date": "1961-04-17"
   },
@@ -239,6 +265,7 @@
     "state": "Nebraska",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Jim_Pillen",
     "position_start_date": "1955-12-31"
   },
@@ -248,6 +275,7 @@
     "state": "Nevada",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Joe_Lombardo",
     "position_start_date": "1962-11-08"
   },
@@ -257,6 +285,7 @@
     "state": "New Hampshire",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Kelly_Ayotte",
     "position_start_date": "1968-06-27"
   },
@@ -266,6 +295,7 @@
     "state": "New Jersey",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Phil_Murphy",
     "position_start_date": "1957-08-16"
   },
@@ -275,6 +305,7 @@
     "state": "New Mexico",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Michelle_Lujan_Grisham",
     "position_start_date": "1959-10-24"
   },
@@ -284,6 +315,7 @@
     "state": "New York",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Kathy_Hochul",
     "position_start_date": "1958-08-27"
   },
@@ -293,6 +325,7 @@
     "state": "North Carolina",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Josh_Stein",
     "position_start_date": "1966-09-13"
   },
@@ -302,6 +335,7 @@
     "state": "North Dakota",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Kelly_Armstrong",
     "position_start_date": "1976-10-06"
   },
@@ -311,6 +345,7 @@
     "state": "Ohio",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Mike_DeWine",
     "position_start_date": "2019-01-14"
   },
@@ -320,6 +355,7 @@
     "state": "Oklahoma",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Kevin_Stitt",
     "position_start_date": "1972-12-28"
   },
@@ -329,6 +365,7 @@
     "state": "Oregon",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Tina_Kotek",
     "position_start_date": "1966-09-30"
   },
@@ -338,6 +375,7 @@
     "state": "Pennsylvania",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Josh_Shapiro",
     "position_start_date": "1973-06-20"
   },
@@ -347,6 +385,7 @@
     "state": "Rhode Island",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Dan_McKee",
     "position_start_date": "1951-06-16"
   },
@@ -356,6 +395,7 @@
     "state": "South Carolina",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Henry_McMaster",
     "position_start_date": "2017-01-24"
   },
@@ -365,6 +405,7 @@
     "state": "South Dakota",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Larry_Rhoden",
     "position_start_date": "1959-02-05"
   },
@@ -374,6 +415,7 @@
     "state": "Tennessee",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Bill_Lee_(Tennessee_politician)",
     "position_start_date": "1959-10-09"
   },
@@ -383,6 +425,7 @@
     "state": "Texas",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Greg_Abbott",
     "position_start_date": "1957-11-13"
   },
@@ -392,6 +435,7 @@
     "state": "Utah",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Spencer_Cox_(politician)",
     "position_start_date": "1975-07-11"
   },
@@ -401,6 +445,7 @@
     "state": "Vermont",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Phil_Scott",
     "position_start_date": "1958-08-04"
   },
@@ -410,6 +455,7 @@
     "state": "Virginia",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Abigail_Spanberger",
     "position_start_date": "1979-08-07"
   },
@@ -419,6 +465,7 @@
     "state": "Washington",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Bob_Ferguson_(politician)",
     "position_start_date": "1965-02-23"
   },
@@ -428,6 +475,7 @@
     "state": "West Virginia",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Patrick_Morrisey",
     "position_start_date": "1967-12-21"
   },
@@ -437,6 +485,7 @@
     "state": "Wisconsin",
     "political_party": "Democrat",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Tony_Evers",
     "position_start_date": "1951-11-05"
   },
@@ -446,6 +495,7 @@
     "state": "Wyoming",
     "political_party": "Republican",
     "current_position": "Governor",
+    "office_type": "governor",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Mark_Gordon",
     "position_start_date": "1957-03-14"
   }

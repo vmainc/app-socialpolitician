@@ -83,9 +83,11 @@ interface ProfileNewsFeedProps {
   name: string;
   /** Optional limit (default 5) */
   limit?: number;
+  /** When true, omit section wrapper and title (e.g. when inside an accordion) */
+  hideTitle?: boolean;
 }
 
-export default function ProfileNewsFeed({ name, limit = LIMIT }: ProfileNewsFeedProps) {
+export default function ProfileNewsFeed({ name, limit = LIMIT, hideTitle = false }: ProfileNewsFeedProps) {
   const [items, setItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -131,52 +133,66 @@ export default function ProfileNewsFeed({ name, limit = LIMIT }: ProfileNewsFeed
   }, [name, limit]);
 
   if (loading) {
-    return (
-      <div className="profile-section profile-news-feed">
-        <h2 className="profile-section-title">Latest News</h2>
+    const inner = (
+      <>
+        {!hideTitle && <h2 className="profile-section-title">Latest News</h2>}
         <p className="profile-news-loading">Loading news…</p>
-      </div>
+      </>
+    );
+    return hideTitle ? <div className="profile-news-feed">{inner}</div> : (
+      <div className="profile-section profile-news-feed">{inner}</div>
     );
   }
 
   if (error) {
-    return (
-      <div className="profile-section profile-news-feed">
-        <h2 className="profile-section-title">Latest News</h2>
+    const inner = (
+      <>
+        {!hideTitle && <h2 className="profile-section-title">Latest News</h2>}
         <p className="profile-news-error">{error}</p>
-      </div>
+      </>
+    );
+    return hideTitle ? <div className="profile-news-feed">{inner}</div> : (
+      <div className="profile-section profile-news-feed">{inner}</div>
     );
   }
 
   if (items.length === 0) {
-    return (
-      <div className="profile-section profile-news-feed">
-        <h2 className="profile-section-title">Latest News</h2>
+    const inner = (
+      <>
+        {!hideTitle && <h2 className="profile-section-title">Latest News</h2>}
         <p className="profile-news-empty">No relevant news found.</p>
-      </div>
+      </>
+    );
+    return hideTitle ? <div className="profile-news-feed">{inner}</div> : (
+      <div className="profile-section profile-news-feed">{inner}</div>
     );
   }
 
-  return (
+  const listInner = (
+    <ul className="profile-news-list" aria-label="Latest news">
+      {items.map((entry, i) => (
+        <li key={`${entry.link}-${i}`} className="profile-news-item">
+          <a
+            href={entry.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="profile-news-link"
+          >
+            {entry.title}
+          </a>
+          <small className="profile-news-meta">
+            {entry.source}, {entry.pubDate}
+          </small>
+        </li>
+      ))}
+    </ul>
+  );
+  return hideTitle ? (
+    <div className="profile-news-feed">{listInner}</div>
+  ) : (
     <div className="profile-section profile-news-feed">
       <h2 className="profile-section-title">Latest News</h2>
-      <ul className="profile-news-list" aria-label="Latest news">
-        {items.map((entry, i) => (
-          <li key={`${entry.link}-${i}`} className="profile-news-item">
-            <a
-              href={entry.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="profile-news-link"
-            >
-              {entry.title}
-            </a>
-            <small className="profile-news-meta">
-              {entry.source}, {entry.pubDate}
-            </small>
-          </li>
-        ))}
-      </ul>
+      {listInner}
     </div>
   );
 }

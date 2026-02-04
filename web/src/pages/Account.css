@@ -24,10 +24,49 @@
   text-align: center;
 }
 
-.sign-in-form {
+.sign-in-form,
+.account-form {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+.account-message {
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.account-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.account-success {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.sign-up-link,
+.account-toggle {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+
+.sign-up-link a,
+.account-toggle a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.sign-up-link a:hover,
+.account-toggle a:hover {
+  text-decoration: underline;
 }
 
 .form-group {
@@ -70,8 +109,13 @@
   transition: background-color 0.2s;
 }
 
-.btn-sign-in:hover {
+.btn-sign-in:hover:not(:disabled) {
   background: #1d4ed8;
+}
+
+.btn-sign-in:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .btn-sign-out {
@@ -83,22 +127,6 @@
   background: #b91c1c;
 }
 
-.sign-up-link {
-  text-align: center;
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin-top: 0.5rem;
-}
-
-.sign-up-link a {
-  color: #2563eb;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.sign-up-link a:hover {
-  text-decoration: underline;
-}
 
 .account-info {
   text-align: center;
