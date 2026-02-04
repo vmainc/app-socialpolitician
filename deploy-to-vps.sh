@@ -47,10 +47,19 @@ if grep -r "current_position!~" web/dist 2>/dev/null; then
 fi
 echo "✅ Build OK - no localhost URLs, no old filter syntax"
 
+# Step 4.5: Setup news proxy (enables Latest News feed on profiles)
+echo "📰 Setting up news proxy..."
+if [ -f "$APP_DIR/scripts/setup-news-proxy-on-vps.sh" ]; then
+  bash "$APP_DIR/scripts/setup-news-proxy-on-vps.sh" || echo "⚠️  News proxy setup had warnings"
+else
+  echo "   Skipping (script not found)"
+fi
+
 # Step 5: Restart services
 echo "🔄 Restarting services..."
 sudo systemctl restart socialpolitician-app-pocketbase.service 2>/dev/null || echo "⚠️  PocketBase service not found"
 sudo systemctl restart socialpolitician-app-api.service 2>/dev/null || echo "⚠️  API service not found"
+sudo systemctl restart socialpolitician-news-proxy.service 2>/dev/null || echo "⚠️  News proxy service not found"
 sudo systemctl reload nginx || echo "⚠️  Nginx reload failed"
 
 # Step 6: Health check
