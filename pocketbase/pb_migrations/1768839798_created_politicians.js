@@ -1,6 +1,8 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
-  if (app.findCollectionByNameOrId("pbc_3830222512") || app.findCollectionByNameOrId("politicians")) return;
+  try {
+    if (app.findCollectionByNameOrId("pbc_3830222512") || app.findCollectionByNameOrId("politicians")) return;
+  } catch (_) { /* ignore */ }
   const collection = new Collection({
     "createRule": null,
     "deleteRule": null,
@@ -30,9 +32,14 @@ migrate((app) => {
     "viewRule": ""
   });
 
-  return app.save(collection);
+  try {
+    return app.save(collection);
+  } catch (e) {
+    if (String(e && e.message || e).includes("already exists") || String(e && e.message || e).includes("unique")) return;
+    throw e;
+  }
 }, (app) => {
-  const collection = app.findCollectionByNameOrId("pbc_3830222512");
-
+  const collection = app.findCollectionByNameOrId("pbc_3830222512") || app.findCollectionByNameOrId("politicians");
+  if (!collection) return;
   return app.delete(collection);
 })
