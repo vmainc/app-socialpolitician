@@ -7,8 +7,8 @@ Type=simple
 User=doug
 Group=doug
 WorkingDirectory=/var/www/socialpolitician-app/pb_linux
-# Run the binary with serve; data is in ./pb_data (default)
-ExecStart=/var/www/socialpolitician-app/pb_linux/pocketbase serve --http=127.0.0.1:8091
+# Use production data in pocketbase/pb_data; migrations via pb_linux/pb_migrations (symlink to pocketbase/pb_migrations)
+ExecStart=/var/www/socialpolitician-app/pb_linux/pocketbase serve --http=127.0.0.1:8091 --dir=/var/www/socialpolitician-app/pocketbase
 Restart=on-failure
 RestartSec=5
 
