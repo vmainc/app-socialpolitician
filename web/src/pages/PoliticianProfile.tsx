@@ -13,10 +13,19 @@ import ProfileAccordion from '../components/ProfileAccordion';
 import ProfileNewsFeed from '../components/ProfileNewsFeed';
 import './PoliticianProfile.css';
 
+interface FavoriteRecord {
+  id: string;
+  user: string;
+  politician: string;
+}
+
 function PoliticianProfile() {
   const { slug } = useParams<{ slug: string }>();
   const [politician, setPolitician] = useState<Politician | null>(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(pb.authStore.model as { id: string } | null);
+  const [favoriteId, setFavoriteId] = useState<string | null>(null);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   // Determine back link based on politician type
   const getBackLink = () => {
@@ -35,6 +44,15 @@ function PoliticianProfile() {
     // Default to home
     return '/';
   };
+
+  // Sync auth state
+  useEffect(() => {
+    setUser(pb.authStore.model as { id: string } | null);
+    const unsub = pb.authStore.onChange(() => {
+      setUser(pb.authStore.model as { id: string } | null);
+    });
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     if (!slug) return;
@@ -57,6 +75,54 @@ function PoliticianProfile() {
 
     loadProfile();
   }, [slug]);
+
+  // Load favorite state when user + politician are set
+  useEffect(() => {
+    if (!user?.id || !politician?.id) {
+      setFavoriteId(null);
+      return;
+    }
+    let cancelled = false;
+    pb.collection('user_favorites')
+      .getList<FavoriteRecord>(1, 1, {
+        filter: `user="${user.id}" && politician="${politician.id}"`,
+      })
+      .then((res) => {
+        if (!cancelled && res.items.length > 0) setFavoriteId(res.items[0].id);
+        else if (!cancelled) setFavoriteId(null);
+      })
+      .catch(() => {
+        if (!cancelled) setFavoriteId(null);
+      });
+    return () => { cancelled = true; };
+  }, [user?.id, politician?.id]);
+
+  const handleAddFavorite = async () => {
+    if (!user?.id || !politician?.id || favoriteLoading) return;
+    setFavoriteLoading(true);
+    try {
+      const rec = await pb.collection('user_favorites').create<FavoriteRecord>({
+        user: user.id,
+        politician: politician.id,
+      });
+      setFavoriteId(rec.id);
+    } catch (_) {
+      // e.g. duplicate
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
+
+  const handleRemoveFavorite = async () => {
+    if (!favoriteId || favoriteLoading) return;
+    setFavoriteLoading(true);
+    try {
+      await pb.collection('user_favorites').delete(favoriteId);
+      setFavoriteId(null);
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
 
   const getOfficeLabel = () => {
     const type = (politician?.office_type ?? politician?.chamber)?.toString().toLowerCase();
@@ -202,6 +268,29 @@ function PoliticianProfile() {
                   <span className="profile-meta-item profile-meta-office">{getOfficeLabel()}</span>
                 )}
               </div>
+              {user && (
+                <div className="profile-favorite-row">
+                  {favoriteId ? (
+                    <button
+                      type="button"
+                      className="profile-favorite-btn profile-favorite-remove"
+                      onClick={handleRemoveFavorite}
+                      disabled={favoriteLoading}
+                    >
+                      ♥ In your favorites — Remove
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="profile-favorite-btn profile-favorite-add"
+                      onClick={handleAddFavorite}
+                      disabled={favoriteLoading}
+                    >
+                      {favoriteLoading ? '…' : '☆ Add to Favorites'}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           {headlineText && (

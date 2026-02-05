@@ -88,14 +88,14 @@ function PoliticiansDirectory() {
             return false;
           }
           
-          // Filter out media entries, presidents, and previous representatives
+          // Filter out media entries and previous representatives
           return !isMediaEntry(p) && 
                  !isPresident(p) && 
                  !isPreviousRepresentative(p);
         });
         
         const filteredCount = records.length - filteredRecords.length;
-        console.log(`✅ Loaded ${filteredRecords.length} ${officeType}s (client-side filtered ${filteredCount} entries: media/presidents/former)`);
+        console.log(`✅ Loaded ${filteredRecords.length} ${officeType}s (client-side filtered ${filteredCount} entries: media/former)`);
         setPoliticians(filteredRecords);
       } catch (error: any) {
         console.error('❌ Failed to load politicians:', error);

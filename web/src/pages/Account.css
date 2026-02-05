@@ -129,7 +129,7 @@
 
 .btn-sign-out {
   background: #dc2626;
-  margin-top: 1rem;
+  margin-top: 0;
 }
 
 .btn-sign-out:hover {
@@ -151,9 +151,62 @@
   color: #1f2937;
 }
 
+/* Your favorites section */
+.account-favorites {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.account-favorites-loading,
+.account-favorites-empty {
+  font-size: 0.9375rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.account-favorites-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.account-favorite-item {
+  margin: 0;
+  padding: 0;
+}
+
+.account-favorite-link {
+  display: inline-block;
+  padding: 0.625rem 1rem;
+  background: #fdf2f8;
+  border: 1px solid #fbcfe8;
+  border-radius: 0.5rem;
+  color: #be185d;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.account-favorite-link:hover {
+  background: #fce7f3;
+  border-color: #f9a8d4;
+}
+
 /* My comments section */
 .account-my-comments {
   margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Footer: Sign Out at bottom */
+.account-footer {
+  margin-top: 2.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid #e5e7eb;
 }

@@ -1,9 +1,7 @@
 /**
- * Helper functions for formatting President profile data
+ * Helper functions for formatting profile data (dates, terms, arrays)
  * Strict TypeScript - no `any` types
  */
-
-import { President } from '../types/president';
 
 /**
  * Format a date string to human-readable format
@@ -50,7 +48,7 @@ export function formatTermRange(
 }
 
 /**
- * Format multiple terms for multi-term presidents
+ * Format multiple terms (e.g. term ranges)
  * Returns "Jan 20, 2017 – Jan 20, 2021; Jan 20, 2025 – Present"
  */
 export function formatTerms(
@@ -65,20 +63,6 @@ export function formatTerms(
   if (formatted.length === 0) return null;
   
   return formatted.join('; ');
-}
-
-/**
- * Compute the "Served" label for a president
- * Prefers terms[] array if available, otherwise uses term_start/term_end
- */
-export function computeServedLabel(president: President): string | null {
-  // Prefer terms[] array for multi-term presidents
-  if (president.terms && Array.isArray(president.terms) && president.terms.length > 0) {
-    return formatTerms(president.terms);
-  }
-  
-  // Fall back to term_start/term_end
-  return formatTermRange(president.term_start, president.term_end || null);
 }
 
 /**
@@ -163,22 +147,3 @@ export function normalizeSources(
   return [];
 }
 
-/**
- * Get all sources for a president (sources array + wikipedia_url if present)
- */
-export function getAllSources(president: President): Array<{ label: string; url: string }> {
-  const sources = normalizeSources(president.sources);
-  
-  // Always include Wikipedia if present
-  if (president.wikipedia_url) {
-    const hasWikipedia = sources.some(s => s.url === president.wikipedia_url);
-    if (!hasWikipedia) {
-      sources.unshift({
-        label: 'Wikipedia',
-        url: president.wikipedia_url,
-      });
-    }
-  }
-  
-  return sources;
-}

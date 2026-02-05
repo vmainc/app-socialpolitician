@@ -1,17 +1,16 @@
 /**
- * Politician Profile Page
- * Shows factual profile information and social media feeds
+ * Politician Profile Page (web/pages duplicate)
+ * Loads from politicians collection only. News/social come from ProfileNewsFeed and SocialEmbeds in src version.
  */
 
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
-import { Politician, Feed } from '../types/politician';
+import { Politician } from '../types/politician';
 
 function PoliticianProfile() {
   const { slug } = useParams<{ slug: string }>();
   const [politician, setPolitician] = useState<Politician | null>(null);
-  const [feeds, setFeeds] = useState<Feed[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,24 +18,10 @@ function PoliticianProfile() {
 
     async function loadProfile() {
       try {
-        // Load politician
         const politicianRecord = await pb
           .collection('politicians')
           .getFirstListItem<Politician>(`slug="${slug}"`, {});
-
         setPolitician(politicianRecord);
-
-        // Load feeds
-        try {
-          const feedRecords = await pb.collection('feeds').getFullList<Feed>({
-            filter: `politician="${politicianRecord.id}"`,
-            sort: '-fetched_at',
-          });
-          setFeeds(feedRecords);
-        } catch (feedError) {
-          // Feeds might not exist yet, that's okay
-          console.log('No feeds found yet');
-        }
       } catch (error: any) {
         if (error?.status === 404) {
           console.error('Politician not found');
@@ -119,7 +104,6 @@ function PoliticianProfile() {
   }
 
   const socialLinks = getSocialLinks();
-  const hasFeeds = feeds.length > 0;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -185,35 +169,6 @@ function PoliticianProfile() {
             </div>
           </div>
         )}
-
-        {/* Feeds Section */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Full Feeds</h2>
-          {hasFeeds ? (
-            <div className="space-y-4">
-              {feeds.map((feed) => (
-                <div key={feed.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-gray-900 capitalize">{feed.platform}</span>
-                    <span className="text-sm text-gray-600">
-                      {new Date(feed.fetched_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                  {feed.normalized_items && Array.isArray(feed.normalized_items) && (
-                    <div className="text-sm text-gray-700">
-                      {feed.normalized_items.length} items
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-600">
-              <p className="mb-2">Feeds will appear after the next daily refresh.</p>
-              <p className="text-sm">Our system refreshes politician feeds daily.</p>
-            </div>
-          )}
-        </div>
 
       </div>
     </div>

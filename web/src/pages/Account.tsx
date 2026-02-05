@@ -13,6 +13,12 @@ interface MyComment {
   expand?: { politician?: { slug?: string; name?: string } };
 }
 
+interface FavoriteRecord {
+  id: string;
+  politician: string;
+  expand?: { politician?: { slug?: string; name?: string } };
+}
+
 type View = 'signin' | 'signup';
 
 export default function Account() {
@@ -26,6 +32,8 @@ export default function Account() {
   const [success, setSuccess] = useState('');
   const [myComments, setMyComments] = useState<MyComment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
+  const [favorites, setFavorites] = useState<FavoriteRecord[]>([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
 
   // Sync auth state from PocketBase
   useEffect(() => {
@@ -63,6 +71,32 @@ export default function Account() {
       });
     return () => { cancelled = true; };
   }, [user?.id, (user as { email?: string })?.email]);
+
+  // Load current user's favorites when logged in
+  useEffect(() => {
+    if (!user?.id) {
+      setFavorites([]);
+      return;
+    }
+    let cancelled = false;
+    setFavoritesLoading(true);
+    pb.collection('user_favorites')
+      .getList<FavoriteRecord>(1, 100, {
+        filter: `user="${user.id}"`,
+        sort: '-created',
+        expand: 'politician',
+      })
+      .then((res) => {
+        if (!cancelled) setFavorites(res.items);
+      })
+      .catch(() => {
+        if (!cancelled) setFavorites([]);
+      })
+      .finally(() => {
+        if (!cancelled) setFavoritesLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   // Sync view with hash so "Sign up" link works
   useEffect(() => {
@@ -163,10 +197,32 @@ export default function Account() {
           <h1>Account</h1>
           <div className="account-info">
             <p><strong>Email:</strong> {user.email ?? email}</p>
-            <button onClick={handleSignOut} className="btn-sign-out" type="button">
-              Sign Out
-            </button>
           </div>
+
+          <section className="account-favorites">
+            <h2 className="account-section-title">Your favorites</h2>
+            {favoritesLoading ? (
+              <p className="account-favorites-loading">Loading your favorites…</p>
+            ) : favorites.length === 0 ? (
+              <p className="account-favorites-empty">
+                Politicians you add to favorites (from their profile page) will appear here.
+              </p>
+            ) : (
+              <ul className="account-favorites-list">
+                {favorites.map((fav) => (
+                  <li key={fav.id} className="account-favorite-item">
+                    {fav.expand?.politician?.slug ? (
+                      <Link to={`/${fav.expand.politician.slug}`} className="account-favorite-link">
+                        {fav.expand.politician.name || 'View profile'} →
+                      </Link>
+                    ) : (
+                      <span>Politician profile</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
           <section className="account-my-comments">
             <h2 className="account-section-title">My comments</h2>
@@ -197,6 +253,12 @@ export default function Account() {
               </ul>
             )}
           </section>
+
+          <div className="account-footer">
+            <button onClick={handleSignOut} className="btn-sign-out" type="button">
+              Sign Out
+            </button>
+          </div>
         </div>
       </div>
     );

@@ -1,7 +1,7 @@
 /**
  * Social Embeds Component
- * Displays X (Twitter), Facebook, and YouTube embeds for politicians
- * SSR-safe and defensive against missing/invalid URLs
+ * Displays Facebook and YouTube embeds for politicians (X/Twitter removed – no embed support).
+ * SSR-safe and defensive against missing/invalid URLs.
  */
 
 import { useEffect, useRef, useState, Component, ErrorInfo, ReactNode } from 'react';
@@ -18,16 +18,13 @@ class WidgetErrorBoundary extends Component<{ children: ReactNode }, { hasError:
   }
 
   static getDerivedStateFromError(error: Error) {
-    // Suppress removeChild errors - these are expected with third-party widgets
     if (error.message?.includes('removeChild') || error.name === 'NotFoundError') {
       return { hasError: false };
     }
-    // For other errors, show error state
     return { hasError: true };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Only log if it's not a removeChild error (which is expected with third-party widgets)
     if (!error.message?.includes('removeChild') && error.name !== 'NotFoundError') {
       console.warn('Widget error:', error, errorInfo);
     }
@@ -35,7 +32,6 @@ class WidgetErrorBoundary extends Component<{ children: ReactNode }, { hasError:
 
   render() {
     if (this.state.hasError) {
-      // For non-removeChild errors, show fallback
       return <div style={{ padding: '1rem', color: '#6b7280' }}>Widget failed to load</div>;
     }
     return this.props.children;
@@ -44,20 +40,13 @@ class WidgetErrorBoundary extends Component<{ children: ReactNode }, { hasError:
 
 interface SocialEmbedsProps {
   politician: Record<string, any>;
-  /** When true, omit section wrapper and title (e.g. when inside an accordion) */
   hideTitle?: boolean;
 }
 
-// Extend Window interface for third-party scripts
 declare global {
   interface Window {
-    twttr?: {
-      ready?: (callback: () => void) => void;
-      widgets?: {
-        load: (element?: HTMLElement | null) => void;
-      };
-    };
     FB?: {
+      init: (opts: { appId?: string; version: string; xfbml?: boolean }) => void;
       XFBML?: {
         parse: (element: HTMLElement | null) => void;
       };
@@ -93,40 +82,7 @@ function safeHttpUrl(v: any): string {
 }
 
 /**
- * Parse X/Twitter profile URL
- * Accepts https://x.com/<handle> or https://twitter.com/<handle>
- * Returns normalized https://x.com/<handle> or empty string
- */
-function parseXProfileUrl(url: string): string {
-  const safeUrl = safeHttpUrl(url);
-  if (!safeUrl) return '';
-  
-  try {
-    const urlObj = new URL(safeUrl);
-    const hostname = urlObj.hostname.toLowerCase();
-    
-    // Must be x.com or twitter.com
-    if (hostname !== 'x.com' && hostname !== 'twitter.com' && hostname !== 'www.x.com' && hostname !== 'www.twitter.com') {
-      return '';
-    }
-    
-    // Extract handle from path
-    const pathParts = urlObj.pathname.split('/').filter(p => p);
-    if (pathParts.length === 0) return '';
-    
-    const handle = pathParts[0];
-    if (!handle || handle.length === 0) return '';
-    
-    // Normalize to x.com
-    return `https://x.com/${handle}`;
-  } catch {
-    return '';
-  }
-}
-
-/**
- * Parse Facebook page URL
- * Returns normalized safe URL or empty string
+ * Parse Facebook page URL – returns normalized safe URL or empty string
  */
 function parseFacebookPageUrl(url: string): string {
   return safeHttpUrl(url);
@@ -217,66 +173,25 @@ function parseYouTube(url: string): {
   }
 }
 
+const FB_SDK_VERSION = 'v18.0';
+
 export default function SocialEmbeds({ politician, hideTitle = false }: SocialEmbedsProps) {
-  const xWrapRef = useRef<HTMLDivElement>(null);
   const fbWrapRef = useRef<HTMLDivElement>(null);
-  const [xLoaded, setXLoaded] = useState(false);
   const [fbLoaded, setFbLoaded] = useState(false);
-  const [xKey, setXKey] = useState(0);
   const [fbKey, setFbKey] = useState(0);
 
-  // Parse URLs
-  const xProfileUrl = parseXProfileUrl(politician?.x_url);
   const facebookUrl = parseFacebookPageUrl(politician?.facebook_url);
   const youtube = parseYouTube(politician?.youtube_url);
 
-  // Booleans
-  const hasX = xProfileUrl !== '';
   const hasFacebook = facebookUrl !== '';
   const hasYouTube = youtube.channelUrl !== '';
-  const hasAny = hasX || hasFacebook || hasYouTube;
-
-  // Reset keys when URLs change to force remount
-  useEffect(() => {
-    if (hasX) setXKey(prev => prev + 1);
-  }, [xProfileUrl, hasX]);
+  const hasAny = hasFacebook || hasYouTube;
 
   useEffect(() => {
     if (hasFacebook) setFbKey(prev => prev + 1);
   }, [facebookUrl, hasFacebook]);
 
-  // X (Twitter) - Show link card immediately; timeline embeds are no longer supported by X
-  useEffect(() => {
-    if (!hasX || !xWrapRef.current) return;
-
-    const container = xWrapRef.current;
-    const urlMatch = xProfileUrl.match(/(?:x\.com|twitter\.com)\/([^\/\?]+)/);
-    const username = urlMatch ? urlMatch[1] : '';
-
-    container.innerHTML = `
-      <div style="padding: 2rem; text-align: center; color: #6b7280; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 400px;">
-        <div style="margin-bottom: 1.5rem;">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" style="color: #000;">
-            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-          </svg>
-        </div>
-        <p style="margin-bottom: 1rem; font-size: 1.125rem; color: #374151;">
-          View ${username ? `@${username}` : 'profile'} on X
-        </p>
-        <p style="margin-bottom: 1.5rem; color: #6b7280; max-width: 400px;">
-          X no longer supports timeline embeds. Click below to see the latest posts.
-        </p>
-        <a href="${xProfileUrl}" target="_blank" rel="noopener noreferrer" 
-           style="display: inline-block; padding: 0.75rem 1.5rem; background: #000; color: #fff; 
-                  text-decoration: none; border-radius: 0.5rem; font-weight: 600; font-size: 1rem;">
-          View on X →
-        </a>
-      </div>
-    `;
-    setXLoaded(true);
-  }, [hasX, xProfileUrl, xKey]);
-
-  // Initialize Facebook Page plugin
+  // Facebook Page plugin: load SDK, call FB.init(version), then XFBML.parse
   useEffect(() => {
     if (!hasFacebook || !fbWrapRef.current) return;
 
@@ -286,58 +201,57 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
 
     async function initFacebook() {
       try {
-        // Ensure fb-root exists
         if (typeof document !== 'undefined' && !document.getElementById('fb-root')) {
           const fbRoot = document.createElement('div');
           fbRoot.id = 'fb-root';
           document.body.prepend(fbRoot);
         }
 
-        await loadScriptOnce('fb-sdk', 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v18.0');
-        
-        if (!mounted || !container || !container.parentNode) return;
-        
-        // Use requestAnimationFrame to ensure DOM is ready
+        // Load SDK with version in URL so SDK knows version; then init before parse
+        await loadScriptOnce('fb-sdk', `https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=${FB_SDK_VERSION}`);
+        if (!mounted || !container?.parentNode) return;
+
         requestAnimationFrame(() => {
-          if (!mounted || !container || !container.parentNode) return;
-          
-          try {
-            // Clear container completely - React won't manage this content
-            container.innerHTML = '';
-            
-            // Create Facebook page div
-            const fbPageDiv = document.createElement('div');
-            fbPageDiv.className = 'fb-page';
-            fbPageDiv.setAttribute('data-href', facebookUrl);
-            fbPageDiv.setAttribute('data-tabs', 'timeline');
-            fbPageDiv.setAttribute('data-hide-cover', 'false');
-            fbPageDiv.setAttribute('data-show-facepile', 'false');
-            fbPageDiv.setAttribute('data-width', '500');
-            fbPageDiv.style.width = '100%';
-            fbPageDiv.style.minHeight = '500px';
-            container.appendChild(fbPageDiv);
-            
-            // Wait for FB to be available
-            let attempts = 0;
-            const checkFB = () => {
-              if (!mounted || !container || !container.parentNode) return;
-              
-              if (window.FB?.XFBML && container) {
-                try {
-                  window.FB.XFBML.parse(container);
-                  setFbLoaded(true);
-                } catch (e) {
-                  console.warn('Failed to parse Facebook widget:', e);
-                }
-              } else if (attempts < 20 && mounted) {
-                attempts++;
-                timeoutId = setTimeout(checkFB, 100);
-              }
-            };
-            checkFB();
-          } catch (error) {
-            console.warn('Failed to initialize Facebook widget:', error);
+          if (!mounted || !container?.parentNode) return;
+          if (!window.FB) {
+            console.warn('Facebook SDK did not load');
+            return;
           }
+          try {
+            // Required: init with valid version before XFBML.parse (fixes "init not called with valid version")
+            window.FB.init({ version: FB_SDK_VERSION, xfbml: true });
+          } catch (_) {
+            // init may throw if already called
+          }
+
+          container.innerHTML = '';
+          const fbPageDiv = document.createElement('div');
+          fbPageDiv.className = 'fb-page';
+          fbPageDiv.setAttribute('data-href', facebookUrl);
+          fbPageDiv.setAttribute('data-tabs', 'timeline');
+          fbPageDiv.setAttribute('data-hide-cover', 'false');
+          fbPageDiv.setAttribute('data-show-facepile', 'false');
+          fbPageDiv.setAttribute('data-width', '500');
+          fbPageDiv.style.width = '100%';
+          fbPageDiv.style.minHeight = '500px';
+          container.appendChild(fbPageDiv);
+
+          let attempts = 0;
+          const checkFB = () => {
+            if (!mounted || !container?.parentNode) return;
+            if (window.FB?.XFBML && container) {
+              try {
+                window.FB.XFBML.parse(container);
+                setFbLoaded(true);
+              } catch (e) {
+                console.warn('Failed to parse Facebook widget:', e);
+              }
+            } else if (attempts < 30 && mounted) {
+              attempts++;
+              timeoutId = setTimeout(checkFB, 150);
+            }
+          };
+          checkFB();
         });
       } catch (error) {
         console.warn('Failed to load Facebook SDK:', error);
@@ -349,8 +263,6 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
     return () => {
       mounted = false;
       if (timeoutId) clearTimeout(timeoutId);
-      // Don't try to clean up - let React handle it via key changes
-      // Third-party widgets manipulate DOM in ways that conflict with manual cleanup
     };
   }, [hasFacebook, facebookUrl, fbKey]);
 
@@ -382,78 +294,6 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
         gap: '1.5rem',
         marginTop: '1rem'
       }}>
-        {/* X (Twitter) Card */}
-        {hasX && (
-          <div style={{
-            border: '1px solid #e5e7eb',
-            borderRadius: '0.5rem',
-            overflow: 'hidden',
-            backgroundColor: '#fff',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            <div style={{
-              padding: '1rem',
-              borderBottom: '1px solid #e5e7eb',
-              backgroundColor: '#f9fafb'
-            }}>
-              <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>X (Twitter)</h3>
-            </div>
-            <WidgetErrorBoundary>
-              <div 
-                key={`x-widget-${xKey}-${xProfileUrl}`}
-                style={{
-                  height: '600px',
-                  overflow: 'auto',
-                  padding: '1rem',
-                  position: 'relative'
-                }}
-              >
-                {!xLoaded && (
-                  <div style={{ 
-                    position: 'absolute', 
-                    top: '50%', 
-                    left: '50%', 
-                    transform: 'translate(-50%, -50%)',
-                    color: '#6b7280',
-                    zIndex: 1
-                  }}>
-                    Loading timeline...
-                  </div>
-                )}
-                <div 
-                  ref={xWrapRef}
-                  suppressHydrationWarning
-                  style={{ width: '100%', height: '100%', minHeight: '500px' }}
-                />
-              </div>
-            </WidgetErrorBoundary>
-            <div style={{
-              padding: '1rem',
-              borderTop: '1px solid #e5e7eb',
-              backgroundColor: '#f9fafb'
-            }}>
-              <a
-                href={xProfileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'inline-block',
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#000',
-                  color: '#fff',
-                  textDecoration: 'none',
-                  borderRadius: '0.375rem',
-                  fontWeight: 500,
-                  fontSize: '0.875rem'
-                }}
-              >
-                View on X →
-              </a>
-            </div>
-          </div>
-        )}
-
         {/* Facebook Card */}
         {hasFacebook && (
           <div style={{

@@ -178,6 +178,50 @@
   color: #374151;
 }
 
+.profile-favorite-row {
+  margin-top: 0.75rem;
+}
+
+.profile-favorite-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.profile-favorite-add {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+.profile-favorite-add:hover:not(:disabled) {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.profile-favorite-remove {
+  background: #fdf2f8;
+  color: #be185d;
+  border-color: #fbcfe8;
+}
+
+.profile-favorite-remove:hover:not(:disabled) {
+  background: #fce7f3;
+  border-color: #f9a8d4;
+}
+
+.profile-favorite-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 /* Headline / short bio: full-width below, readable */
 .profile-headline {
   font-size: 1rem;
