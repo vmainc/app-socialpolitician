@@ -8,6 +8,7 @@ import { pb } from '../lib/pocketbase';
 import { Politician } from '../types/politician';
 import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
 import SocialEmbeds from '../components/social/SocialEmbeds';
+import ProfileComments from '../components/ProfileComments';
 import ProfileAccordion from '../components/ProfileAccordion';
 import ProfileNewsFeed from '../components/ProfileNewsFeed';
 import './PoliticianProfile.css';
@@ -258,6 +259,13 @@ function PoliticianProfile() {
           <ProfileAccordion title="Social">
             <SocialEmbeds politician={politician} hideTitle />
           </ProfileAccordion>
+        )}
+
+        {/* Comments – always visible section at the bottom */}
+        {politician && (
+          <section className="profile-comments-section">
+            <ProfileComments politicianId={politician.id} />
+          </section>
         )}
       </main>
     </div>
