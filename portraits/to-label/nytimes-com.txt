@@ -1,0 +1,12 @@
+Name: Nytimes.Com
+Slug: nytimes-com
+State: IA
+Office: N/A
+Party: Media
+Wikipedia: https://en.wikipedia.org/wiki/The_New_York_Times
+PocketBase ID: atlusq6y9hd7tnf
+
+Instructions:
+1. Verify this is the correct portrait
+2. If correct, move to 'labeled' folder
+3. If incorrect, delete and note the issue

@@ -1,0 +1,12 @@
+Name: Foxnews.Com
+Slug: foxnews-com
+State: IA
+Office: N/A
+Party: Media
+Wikipedia: https://en.wikipedia.org/wiki/Fox_News
+PocketBase ID: 6x2iwkj1jsodljj
+
+Instructions:
+1. Verify this is the correct portrait
+2. If correct, move to 'labeled' folder
+3. If incorrect, delete and note the issue

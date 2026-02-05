@@ -1,0 +1,155 @@
+#!/usr/bin/env node
+/**
+ * Upload labeled portraits to PocketBase
+ * 
+ * Reads portraits from portraits/labeled/ folder and uploads them to PocketBase
+ * 
+ * Usage:
+ *   POCKETBASE_URL=http://127.0.0.1:8091 \
+ *   POCKETBASE_ADMIN_EMAIL=admin@vma.agency \
+ *   POCKETBASE_ADMIN_PASSWORD=password \
+ *   node scripts/upload_portraits.js
+ */
+
+import PocketBase from 'pocketbase';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, '..');
+
+const pbUrl = process.env.POCKETBASE_URL || 'http://127.0.0.1:8091';
+const adminEmail = process.env.POCKETBASE_ADMIN_EMAIL || 'admin@vma.agency';
+const adminPassword = process.env.POCKETBASE_ADMIN_PASSWORD || '';
+
+const portraitsLabeledDir = path.join(projectRoot, 'portraits', 'labeled');
+const portraitsUploadedDir = path.join(projectRoot, 'portraits', 'uploaded');
+
+async function main() {
+  console.log('📤 Uploading Portraits to PocketBase');
+  console.log('====================================');
+  console.log(`PocketBase URL: ${pbUrl}`);
+  console.log(`Labeled portraits: ${portraitsLabeledDir}`);
+  console.log('');
+
+  if (!adminPassword) {
+    console.error('❌ POCKETBASE_ADMIN_PASSWORD required');
+    process.exit(1);
+  }
+
+  if (!fs.existsSync(portraitsLabeledDir)) {
+    console.error(`❌ Labeled portraits directory not found: ${portraitsLabeledDir}`);
+    console.error('   Run scripts/scrape_portraits.js first');
+    process.exit(1);
+  }
+
+  const pb = new PocketBase(pbUrl);
+
+  try {
+    await pb.admins.authWithPassword(adminEmail, adminPassword);
+    console.log('✅ Authenticated as admin');
+    console.log('');
+
+    // Get all image files
+    const files = fs.readdirSync(portraitsLabeledDir)
+      .filter(file => /\.(jpg|jpeg|png|webp)$/i.test(file))
+      .map(file => ({
+        fileName: file,
+        filePath: path.join(portraitsLabeledDir, file),
+        slug: file.replace(/\.(jpg|jpeg|png|webp)$/i, ''),
+      }));
+
+    if (files.length === 0) {
+      console.log('⚠️  No portrait files found in labeled directory');
+      console.log('   Move verified portraits to portraits/labeled/ first');
+      return;
+    }
+
+    console.log(`📁 Found ${files.length} portrait files to upload`);
+    console.log('');
+
+    let totalUploaded = 0;
+    let totalSkipped = 0;
+    let totalErrors = 0;
+
+    for (const file of files) {
+      try {
+        // Find politician by slug
+        const politician = await pb.collection('politicians').getFirstListItem(
+          `slug="${file.slug}"`,
+          {}
+        );
+
+        // Skip if already has photo
+        if (politician.photo) {
+          console.log(`⏭️  ${politician.name} - already has photo`);
+          totalSkipped++;
+          continue;
+        }
+
+        console.log(`📤 Uploading ${politician.name}...`);
+
+        // Create FormData for file upload (Node.js compatible)
+        // PocketBase SDK accepts file path directly or File/Blob
+        const fileContent = fs.readFileSync(file.filePath);
+        const fileBlob = new Blob([fileContent], { 
+          type: file.fileName.match(/\.png$/i) ? 'image/png' : 
+                file.fileName.match(/\.webp$/i) ? 'image/webp' : 
+                'image/jpeg' 
+        });
+        
+        // Create FormData
+        const formData = new FormData();
+        formData.append('photo', fileBlob, file.fileName);
+
+        // Update politician record with photo
+        await pb.collection('politicians').update(politician.id, formData);
+
+        // Move file to uploaded directory
+        if (!fs.existsSync(portraitsUploadedDir)) {
+          fs.mkdirSync(portraitsUploadedDir, { recursive: true });
+        }
+        const uploadedPath = path.join(portraitsUploadedDir, file.fileName);
+        fs.renameSync(file.filePath, uploadedPath);
+
+        // Also move label file if exists
+        const labelFile = file.filePath.replace(/\.(jpg|jpeg|png|webp)$/i, '.txt');
+        if (fs.existsSync(labelFile)) {
+          const uploadedLabelPath = path.join(portraitsUploadedDir, path.basename(labelFile));
+          fs.renameSync(labelFile, uploadedLabelPath);
+        }
+
+        totalUploaded++;
+        console.log(`   ✅ Uploaded and moved to uploaded/`);
+
+      } catch (error) {
+        if (error?.status === 404) {
+          console.log(`   ⚠️  Politician not found: ${file.slug}`);
+          totalSkipped++;
+        } else {
+          console.error(`   ❌ Error: ${error.message}`);
+          totalErrors++;
+        }
+      }
+    }
+
+    console.log('');
+    console.log('📊 Summary:');
+    console.log(`   ✅ Uploaded: ${totalUploaded}`);
+    console.log(`   ⏭️  Skipped: ${totalSkipped}`);
+    console.log(`   ❌ Errors: ${totalErrors}`);
+    console.log('');
+    console.log(`📁 Uploaded portraits moved to: ${portraitsUploadedDir}`);
+
+  } catch (error) {
+    console.error('❌ Failed:', error.message);
+    if (error.response) {
+      console.error('   Response:', JSON.stringify(error.response, null, 2));
+    }
+    process.exit(1);
+  }
+}
+
+main();

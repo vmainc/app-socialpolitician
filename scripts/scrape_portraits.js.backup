@@ -1,0 +1,243 @@
+#!/usr/bin/env node
+/**
+ * Scrape official portraits from Wikipedia and organize them for labeling
+ * 
+ * Usage:
+ *   POCKETBASE_URL=http://127.0.0.1:8091 \
+ *   POCKETBASE_ADMIN_EMAIL=admin@vma.agency \
+ *   POCKETBASE_ADMIN_PASSWORD=password \
+ *   node scripts/scrape_portraits.js
+ */
+
+import PocketBase from 'pocketbase';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, '..');
+
+const pbUrl = process.env.POCKETBASE_URL || 'http://127.0.0.1:8091';
+const adminEmail = process.env.POCKETBASE_ADMIN_EMAIL || 'admin@vma.agency';
+const adminPassword = process.env.POCKETBASE_ADMIN_PASSWORD || '';
+
+// Create portraits directory structure
+const portraitsDir = path.join(projectRoot, 'portraits');
+const portraitsToLabelDir = path.join(portraitsDir, 'to-label');
+const portraitsLabeledDir = path.join(portraitsDir, 'labeled');
+const portraitsUploadedDir = path.join(portraitsDir, 'uploaded');
+
+[portraitsDir, portraitsToLabelDir, portraitsLabeledDir, portraitsUploadedDir].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
+
+/**
+ * Extract Wikipedia image URL from politician's Wikipedia page
+ */
+async function getWikipediaPortraitUrl(wikipediaUrl) {
+  if (!wikipediaUrl) return null;
+
+  try {
+    // Extract page title from Wikipedia URL
+    const match = wikipediaUrl.match(/\/wiki\/(.+)$/);
+    if (!match) return null;
+
+    const pageTitle = decodeURIComponent(match[1]);
+    
+    // Use Wikipedia API to get page info
+    const apiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${pageTitle}`;
+    const response = await fetch(apiUrl);
+    
+    if (!response.ok) {
+      console.log(`   ⚠️  Wikipedia API failed: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+    
+    // Get the original image URL (remove thumbnail parameters)
+    if (data.originalimage) {
+      return data.originalimage.source;
+    }
+    
+    // Fallback to thumbnail
+    if (data.thumbnail) {
+      // Convert thumbnail to full-size image URL
+      const thumbUrl = data.thumbnail.source;
+      // Wikipedia thumbnails: replace /thumb/ with /, remove /{width}px- prefix
+      const fullUrl = thumbUrl
+        .replace(/\/thumb\//, '/')
+        .replace(/\/\d+px-/, '/');
+      return fullUrl;
+    }
+
+    return null;
+  } catch (error) {
+    console.log(`   ❌ Error fetching Wikipedia image: ${error.message}`);
+    return null;
+  }
+}
+
+/**
+ * Download image from URL
+ */
+async function downloadImage(url, filePath) {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const buffer = await response.arrayBuffer();
+    fs.writeFileSync(filePath, Buffer.from(buffer));
+    return true;
+  } catch (error) {
+    console.log(`   ❌ Download failed: ${error.message}`);
+    return false;
+  }
+}
+
+/**
+ * Create a label file with politician info
+ */
+function createLabelFile(politician, imagePath) {
+  const labelPath = imagePath.replace(/\.(jpg|jpeg|png|webp)$/i, '.txt');
+  const labelContent = `Name: ${politician.name}
+Slug: ${politician.slug}
+State: ${politician.state || 'N/A'}
+Office: ${politician.current_position || 'N/A'}
+Party: ${politician.political_party || 'N/A'}
+Wikipedia: ${politician.wikipedia_url || 'N/A'}
+PocketBase ID: ${politician.id}
+
+Instructions:
+1. Verify this is the correct portrait
+2. If correct, move to 'labeled' folder
+3. If incorrect, delete and note the issue
+`;
+  
+  fs.writeFileSync(labelPath, labelContent);
+}
+
+async function main() {
+  console.log('🖼️  Scraping Official Portraits');
+  console.log('================================');
+  console.log(`PocketBase URL: ${pbUrl}`);
+  console.log(`Portraits directory: ${portraitsDir}`);
+  console.log('');
+
+  if (!adminPassword) {
+    console.error('❌ POCKETBASE_ADMIN_PASSWORD required');
+    process.exit(1);
+  }
+
+  const pb = new PocketBase(pbUrl);
+
+  try {
+    await pb.admins.authWithPassword(adminEmail, adminPassword);
+    console.log('✅ Authenticated as admin');
+    console.log('');
+
+    // Get all politicians
+    let page = 1;
+    let totalProcessed = 0;
+    let totalDownloaded = 0;
+    let totalSkipped = 0;
+    let totalErrors = 0;
+
+    while (true) {
+      const result = await pb.collection('politicians').getList(page, 500);
+      
+      if (result.items.length === 0) break;
+
+      console.log(`📄 Processing page ${page} (${result.items.length} politicians)...`);
+
+      for (const politician of result.items) {
+        totalProcessed++;
+        
+        // Skip if already has photo
+        if (politician.photo) {
+          totalSkipped++;
+          continue;
+        }
+
+        // Skip if no Wikipedia URL
+        if (!politician.wikipedia_url) {
+          totalSkipped++;
+          continue;
+        }
+
+        console.log(`\n👤 ${politician.name} (${politician.slug})`);
+
+        // Get Wikipedia portrait URL
+        const imageUrl = await getWikipediaPortraitUrl(politician.wikipedia_url);
+        
+        if (!imageUrl) {
+          console.log(`   ⚠️  No portrait found on Wikipedia`);
+          totalSkipped++;
+          // Still delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          continue;
+        }
+
+        console.log(`   📥 Found: ${imageUrl}`);
+
+        // Determine file extension
+        const urlExt = imageUrl.match(/\.(jpg|jpeg|png|webp)$/i)?.[1] || 'jpg';
+        const fileName = `${politician.slug}.${urlExt}`;
+        const filePath = path.join(portraitsToLabelDir, fileName);
+
+        // Download image
+        const downloaded = await downloadImage(imageUrl, filePath);
+        
+        if (!downloaded) { const err = { message: "Download failed" }; 
+          totalErrors++;
+          // If rate limited, wait longer before continuing
+          if (err?.message?.includes('429')) {
+            console.log(`   ⏳ Rate limited - waiting 10 seconds...`);
+            await new Promise(resolve => setTimeout(resolve, 10000));
+          }
+          continue;
+        }
+
+        // Create label file
+        createLabelFile(politician, filePath);
+        
+        totalDownloaded++;
+        console.log(`   ✅ Saved to: ${filePath}`);
+
+        // Longer delay to avoid rate limiting (Wikipedia throttles)
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+
+      if (result.items.length < 500) break;
+      page++;
+    }
+
+    console.log('');
+    console.log('📊 Summary:');
+    console.log(`   ✅ Processed: ${totalProcessed}`);
+    console.log(`   📥 Downloaded: ${totalDownloaded}`);
+    console.log(`   ⏭️  Skipped: ${totalSkipped} (already has photo or no Wikipedia URL)`);
+    console.log(`   ❌ Errors: ${totalErrors}`);
+    console.log('');
+    console.log(`📁 Portraits saved to: ${portraitsToLabelDir}`);
+    console.log('');
+    console.log('Next steps:');
+    console.log('1. Review portraits in portraits/to-label/');
+    console.log('2. Move verified portraits to portraits/labeled/');
+    console.log('3. Run: node scripts/upload_portraits.js');
+
+  } catch (error) {
+    console.error('❌ Failed:', error.message);
+    if (error.response) {
+      console.error('   Response:', JSON.stringify(error.response, null, 2));
+    }
+    process.exit(1);
+  }
+}
+
+main();

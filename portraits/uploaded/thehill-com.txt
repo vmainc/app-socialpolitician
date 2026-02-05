@@ -1,0 +1,12 @@
+Name: Thehill.Com
+Slug: thehill-com
+State: IA
+Office: N/A
+Party: Media
+Wikipedia: https://en.wikipedia.org/wiki/The_Hill_(newspaper)
+PocketBase ID: lxf5m0lix3k3cq9
+
+Instructions:
+1. Verify this is the correct portrait
+2. If correct, move to 'labeled' folder
+3. If incorrect, delete and note the issue
