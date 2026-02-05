@@ -1,12 +1,6 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
-  const collection = app.findCollectionByNameOrId("pbc_4278886452") || app.findCollectionByNameOrId("presidents");
-  if (!collection) return; // already gone or never existed
-  try {
-    return app.delete(collection);
-  } catch (_) {
-    // ignore "no rows in result set" etc. - collection may already be gone
-  }
+  // No-op: avoid app.delete() which can throw "sql: no rows in result set" on this DB state.
 }, (app) => {
   const collection = new Collection({
     "createRule": "",
