@@ -5,11 +5,13 @@ Run: cd /var/www/socialpolitician-app && python3 scripts/vps-reset-admin-passwor
 Uses bcrypt; if missing: pip install bcrypt (or: apt install python3-bcrypt)
 Password must be 8+ chars (PocketBase requirement).
 """
+import os
 import secrets
 import sqlite3
 import sys
 
-DB = "/var/www/socialpolitician-app/pocketbase/pb_data/data.db"
+# Server uses --dir=.../pocketbase/pb_data, so data.db is here. Override with PB_DB_PATH env.
+DB = os.environ.get("PB_DB_PATH", "/var/www/socialpolitician-app/pocketbase/pb_data/data.db")
 EMAIL = "admin@vma.agency"
 NEW_PASSWORD = "12345678"  # 8+ chars required by PocketBase
 
