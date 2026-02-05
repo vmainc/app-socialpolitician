@@ -806,3 +806,64 @@
     font-size: 2.25rem;
   }
 }
+
+/* Social embeds – mobile: prevent cut-off, scrollable, responsive */
+.social-embeds-grid {
+  max-width: 100%;
+}
+
+@media (max-width: 767px) {
+  .social-embeds-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    margin-top: 0.75rem;
+  }
+
+  .social-embed-card {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .social-embed-widget-wrap {
+    height: auto;
+    min-height: 320px;
+    max-height: 70vh;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.75rem;
+  }
+
+  .social-embed-fb .social-embed-widget-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+  }
+
+  .social-embed-fb-inner {
+    min-width: 280px;
+    min-height: 400px;
+  }
+
+  .social-embed-yt-wrap {
+    min-height: 220px;
+    max-height: 60vh;
+  }
+
+  .social-embed-yt-video-wrap {
+    min-height: 0;
+  }
+
+  .social-embed-yt-iframe {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 16 / 9;
+    min-height: 180px;
+  }
+
+  .social-embed-yt-playlist {
+    aspect-ratio: 16 / 9;
+    height: auto !important;
+    min-height: 200px;
+    max-height: 45vh;
+  }
+}

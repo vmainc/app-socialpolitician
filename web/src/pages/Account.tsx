@@ -19,6 +19,11 @@ interface FavoriteRecord {
   expand?: { politician?: { slug?: string; name?: string } };
 }
 
+interface PoliticianInfo {
+  slug: string;
+  name?: string;
+}
+
 type View = 'signin' | 'signup';
 
 export default function Account() {
@@ -34,6 +39,7 @@ export default function Account() {
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [favorites, setFavorites] = useState<FavoriteRecord[]>([]);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
+  const [politicianDetails, setPoliticianDetails] = useState<Record<string, PoliticianInfo>>({});
 
   // Sync auth state from PocketBase
   useEffect(() => {
@@ -72,31 +78,59 @@ export default function Account() {
     return () => { cancelled = true; };
   }, [user?.id, (user as { email?: string })?.email]);
 
-  // Load current user's favorites when logged in
+  // Load current user's favorites when logged in; refetch on window focus (e.g. after adding on profile page)
   useEffect(() => {
     if (!user?.id) {
       setFavorites([]);
       return;
     }
     let cancelled = false;
-    setFavoritesLoading(true);
-    pb.collection('user_favorites')
-      .getList<FavoriteRecord>(1, 100, {
-        filter: `user="${user.id}"`,
-        sort: '-created',
-        expand: 'politician',
-      })
-      .then((res) => {
-        if (!cancelled) setFavorites(res.items);
-      })
-      .catch(() => {
-        if (!cancelled) setFavorites([]);
-      })
-      .finally(() => {
-        if (!cancelled) setFavoritesLoading(false);
-      });
-    return () => { cancelled = true; };
+    const fetchFavorites = () => {
+      setFavoritesLoading(true);
+      pb.collection('user_favorites')
+        .getList<FavoriteRecord>(1, 100, {
+          filter: `user="${user.id}"`,
+          sort: '-created',
+          expand: 'politician',
+        })
+        .then((res) => {
+          if (!cancelled) setFavorites(res.items || []);
+        })
+        .catch((err) => {
+          if (!cancelled) {
+            console.error('Account: failed to load favorites', err);
+            setFavorites([]);
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setFavoritesLoading(false);
+        });
+    };
+    fetchFavorites();
+    const onFocus = () => {
+      if (pb.authStore.model?.id) fetchFavorites();
+    };
+    window.addEventListener('focus', onFocus);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', onFocus);
+    };
   }, [user?.id]);
+
+  // When favorites have items but expand.politician is missing, fetch politician details so we can show links
+  useEffect(() => {
+    const missing = favorites.filter((f) => f.politician && !f.expand?.politician?.slug);
+    if (missing.length === 0) return;
+    const ids = [...new Set(missing.map((f) => f.politician))];
+    Promise.all(ids.map((id) => pb.collection('politicians').getOne(id).catch(() => null)))
+      .then((results) => {
+        const next: Record<string, PoliticianInfo> = {};
+        results.forEach((rec, i) => {
+          if (rec?.id && rec?.slug) next[ids[i]] = { slug: rec.slug, name: rec.name };
+        });
+        setPoliticianDetails((prev) => ({ ...prev, ...next }));
+      });
+  }, [favorites]);
 
   // Sync view with hash so "Sign up" link works
   useEffect(() => {
@@ -209,17 +243,21 @@ export default function Account() {
               </p>
             ) : (
               <ul className="account-favorites-list">
-                {favorites.map((fav) => (
-                  <li key={fav.id} className="account-favorite-item">
-                    {fav.expand?.politician?.slug ? (
-                      <Link to={`/${fav.expand.politician.slug}`} className="account-favorite-link">
-                        {fav.expand.politician.name || 'View profile'} →
-                      </Link>
-                    ) : (
-                      <span>Politician profile</span>
-                    )}
-                  </li>
-                ))}
+                {favorites.map((fav) => {
+                  const slug = fav.expand?.politician?.slug ?? politicianDetails[fav.politician]?.slug;
+                  const name = fav.expand?.politician?.name ?? politicianDetails[fav.politician]?.name;
+                  return (
+                    <li key={fav.id} className="account-favorite-item">
+                      {slug ? (
+                        <Link to={`/${slug}`} className="account-favorite-link">
+                          {name || 'View profile'} →
+                        </Link>
+                      ) : (
+                        <span className="account-favorites-loading">Loading…</span>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </section>

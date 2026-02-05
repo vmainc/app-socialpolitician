@@ -231,9 +231,10 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
           fbPageDiv.setAttribute('data-tabs', 'timeline');
           fbPageDiv.setAttribute('data-hide-cover', 'false');
           fbPageDiv.setAttribute('data-show-facepile', 'false');
-          fbPageDiv.setAttribute('data-width', '500');
+          const fbWidth = typeof window !== 'undefined' ? Math.min(500, Math.max(280, (window.innerWidth || 320) - 48)) : 500;
+          fbPageDiv.setAttribute('data-width', String(fbWidth));
           fbPageDiv.style.width = '100%';
-          fbPageDiv.style.minHeight = '500px';
+          fbPageDiv.style.minHeight = '400px';
           container.appendChild(fbPageDiv);
 
           let attempts = 0;
@@ -288,7 +289,7 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
   }
 
   const gridContent = (
-    <div style={{
+    <div className="social-embeds-grid" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
         gap: '1.5rem',
@@ -296,7 +297,7 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
       }}>
         {/* Facebook Card */}
         {hasFacebook && (
-          <div style={{
+          <div className="social-embed-card social-embed-fb" style={{
             border: '1px solid #e5e7eb',
             borderRadius: '0.5rem',
             overflow: 'hidden',
@@ -313,6 +314,7 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
             </div>
             <WidgetErrorBoundary>
               <div 
+                className="social-embed-widget-wrap"
                 key={`fb-widget-${fbKey}-${facebookUrl}`}
                 style={{
                   height: '600px',
@@ -336,6 +338,7 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
                 <div 
                   ref={fbWrapRef}
                   suppressHydrationWarning
+                  className="social-embed-fb-inner"
                   style={{ width: '100%', height: '100%', minHeight: '500px' }}
                 />
               </div>
@@ -366,9 +369,9 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
           </div>
         )}
 
-        {/* YouTube Card – same scrollable card layout as Facebook */}
+        {/* YouTube Card */}
         {hasYouTube && (
-          <div style={{
+          <div className="social-embed-card social-embed-yt" style={{
             border: '1px solid #e5e7eb',
             borderRadius: '0.5rem',
             overflow: 'hidden',
@@ -385,6 +388,7 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
             </div>
             <WidgetErrorBoundary>
               <div
+                className="social-embed-widget-wrap social-embed-yt-wrap"
                 style={{
                   height: '600px',
                   overflow: 'auto',
@@ -393,8 +397,7 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
                 }}
               >
                 {youtube.embedUrl ? (
-                  // Single video – same card height as Facebook, video centered and sized like a feed item
-                  <div style={{
+                  <div className="social-embed-yt-video-wrap" style={{
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'flex-start',
@@ -408,6 +411,7 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
                       frameBorder="0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                       allowFullScreen
+                      className="social-embed-yt-iframe"
                       style={{
                         width: '100%',
                         maxWidth: '560px',
@@ -418,7 +422,6 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
                     />
                   </div>
                 ) : youtube.channelId ? (
-                  // Channel feed: playlist embed sized to card (like Facebook) – list scrolls inside iframe
                   (() => {
                     const id = youtube.channelId;
                     const uploadsPlaylistId = id.startsWith('UC') ? 'UU' + id.slice(2) : id;
@@ -430,6 +433,7 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                         allowFullScreen
+                        className="social-embed-yt-iframe social-embed-yt-playlist"
                         style={{
                           width: '100%',
                           height: '568px',
