@@ -12,7 +12,10 @@ dist/
 
 # PocketBase data (keep migrations, ignore DB and generated files)
 pocketbase/pb_data/
-pb_linux/
+# Allow pb_linux/pocketbase binary so deploy can run migrations on VPS; ignore local DB
+pb_linux/pb_data/
+pb_linux/*.db
+pb_linux/*.db-*
 
 # Logs and temp
 *.log

@@ -21,6 +21,22 @@ else
 fi
 git pull origin main || { echo "⚠️  Git pull failed - continuing anyway"; }
 
+# Step 1.5: Run PocketBase migrations (if binary found)
+# Migrations must run against the same pb_data the live PocketBase uses.
+PB_DIR="$APP_DIR/pocketbase"
+PB_BIN="$APP_DIR/pb_linux/pocketbase"
+if [[ -f "$PB_BIN" && -x "$PB_BIN" && -d "$PB_DIR/pb_migrations" ]]; then
+  echo "📦 Running PocketBase migrations..."
+  # Try pocketbase/ first (pb_data in pocketbase/). If live app uses pb_linux/pb_data, run from pb_linux.
+  if [[ -d "$APP_DIR/pb_linux/pb_data" ]]; then
+    (cd "$APP_DIR/pb_linux" && ln -sf ../pocketbase/pb_migrations pb_migrations 2>/dev/null); true
+    (cd "$APP_DIR/pb_linux" && "$PB_BIN" migrate up 2>/dev/null) && echo "   ✅ Migrations OK (pb_linux)" || \
+    (cd "$PB_DIR" && "$PB_BIN" migrate up 2>/dev/null) && echo "   ✅ Migrations OK (pocketbase)" || true
+  else
+    (cd "$PB_DIR" && "$PB_BIN" migrate up 2>/dev/null) && echo "   ✅ Migrations OK" || true
+  fi
+fi
+
 # Step 2: Install dependencies (if needed)
 echo "📦 Installing dependencies..."
 npm install
