@@ -1,7 +1,8 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
-  const collection = app.findCollectionByNameOrId("pbc_3830222512")
-
+  try {
+    const collection = app.findCollectionByNameOrId("pbc_3830222512") || app.findCollectionByNameOrId("politicians")
+    if (!collection) return
   // add field
   collection.fields.addAt(3, new Field({
     "autogeneratePattern": "",
@@ -45,9 +46,11 @@ migrate((app) => {
   }))
 
   return app.save(collection)
+  } catch (_) { /* no-op */ }
 }, (app) => {
-  const collection = app.findCollectionByNameOrId("pbc_3830222512")
-
+  try {
+    const collection = app.findCollectionByNameOrId("pbc_3830222512") || app.findCollectionByNameOrId("politicians")
+    if (!collection) return
   // remove field
   collection.fields.removeById("text2744374011")
 
@@ -58,4 +61,5 @@ migrate((app) => {
   collection.fields.removeById("url1098005667")
 
   return app.save(collection)
+  } catch (_) { /* no-op */ }
 })
