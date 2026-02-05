@@ -7,8 +7,8 @@ APP_DIR="/var/www/socialpolitician-app"
 DB="$APP_DIR/pocketbase/pb_data/data.db"
 cd "$APP_DIR"
 
-# Other-app migration files (voices of the presidency etc.) - remove from disk and mark applied so PB starts
-OTHER_APP_MIGRATIONS="add_persona_fields.js add_president_facts_collection.js add_profile_fields.js"
+# Other-app migration files (voices of the presidency / wrong project) - remove from disk and mark applied so PB starts
+OTHER_APP_MIGRATIONS="add_persona_fields.js add_president_facts_collection.js add_profile_fields.js create_feeds_collection.js create_politicians_collection.js"
 
 echo "=== 1. Remove other-app migration files from any migrations dir ==="
 for name in $OTHER_APP_MIGRATIONS; do
