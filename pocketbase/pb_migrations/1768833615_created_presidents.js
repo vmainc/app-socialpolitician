@@ -1,5 +1,9 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
+  // Skip if presidents collection already exists (e.g. production DB)
+  if (app.findCollectionByNameOrId("presidents") || app.findCollectionByNameOrId("pbc_4278886452")) {
+    return;
+  }
   const collection = new Collection({
     "createRule": "",
     "deleteRule": "",
@@ -31,7 +35,7 @@ migrate((app) => {
 
   return app.save(collection);
 }, (app) => {
-  const collection = app.findCollectionByNameOrId("pbc_4278886452");
-
+  const collection = app.findCollectionByNameOrId("pbc_4278886452") || app.findCollectionByNameOrId("presidents");
+  if (!collection) return;
   return app.delete(collection);
 })
