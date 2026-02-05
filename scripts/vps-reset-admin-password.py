@@ -10,7 +10,7 @@ import secrets
 import sqlite3
 import sys
 
-# Server uses --dir=.../pocketbase/pb_data, so data.db is here. Override with PB_DB_PATH env.
+# App DB with data: --dir=.../pocketbase/pb_data (577 politicians, etc.). Override with PB_DB_PATH env.
 DB = os.environ.get("PB_DB_PATH", "/var/www/socialpolitician-app/pocketbase/pb_data/data.db")
 EMAIL = "admin@vma.agency"
 NEW_PASSWORD = "12345678"  # 8+ chars required by PocketBase

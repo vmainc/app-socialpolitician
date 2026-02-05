@@ -37,15 +37,19 @@ fi
 
 echo ""
 echo "4️⃣ Checking nginx configuration..."
-if [ -f /etc/nginx/sites-available/app.socialpolitician.com ]; then
-    echo "   ✅ Nginx config file exists"
-    if grep -q "location /pb/" /etc/nginx/sites-available/app.socialpolitician.com; then
+NGINX_CONF=""
+for f in /etc/nginx/sites-available/app.socialpolitician.com.conf /etc/nginx/sites-available/app.socialpolitician.com; do
+  if [ -f "$f" ]; then NGINX_CONF="$f"; break; fi
+done
+if [ -n "$NGINX_CONF" ]; then
+    echo "   ✅ Nginx config: $NGINX_CONF"
+    if grep -q "location /pb/" "$NGINX_CONF"; then
         echo "   ✅ /pb/ location block found"
     else
-        echo "   ❌ /pb/ location block NOT found in nginx config"
+        echo "   ❌ /pb/ location block NOT found - add proxy for PocketBase"
     fi
 else
-    echo "   ⚠️  Nginx config file not found at expected location"
+    echo "   ⚠️  Nginx config not found (checked .conf and no extension)"
 fi
 
 echo ""

@@ -50,16 +50,23 @@ export default function Account() {
     return () => unsub();
   }, []);
 
-  // Load current user's comments (by author_name = email) when logged in
+  // Only app users (users collection) have favorites/comments; admins see sign-in form
+  const isAppUser = !!user && (user as RecordModel & { collectionName?: string }).collectionName === 'users';
+
+  // Load current user's comments (by author_name = email) when logged in as app user
   useEffect(() => {
+    if (!isAppUser) {
+      setMyComments([]);
+      return;
+    }
     const model = pb.authStore.model as { email?: string } | null;
     if (!model?.email) {
       setMyComments([]);
       return;
     }
     let cancelled = false;
-    setCommentsLoading(true);
     const safeEmail = model.email.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    setCommentsLoading(true);
     pb.collection('profile_comments')
       .getList<MyComment>(1, 50, {
         filter: `author_name="${safeEmail}"`,
@@ -76,11 +83,11 @@ export default function Account() {
         if (!cancelled) setCommentsLoading(false);
       });
     return () => { cancelled = true; };
-  }, [user?.id, (user as { email?: string })?.email]);
+  }, [isAppUser, user?.id, (user as { email?: string })?.email]);
 
-  // Load current user's favorites when logged in; refetch on window focus (e.g. after adding on profile page)
+  // Load current user's favorites when logged in as app user; refetch on window focus
   useEffect(() => {
-    if (!user?.id) {
+    if (!isAppUser || !user?.id) {
       setFavorites([]);
       return;
     }
@@ -91,7 +98,7 @@ export default function Account() {
         .getList<FavoriteRecord>(1, 100, {
           filter: `user="${user.id}"`,
           sort: '-created',
-          expand: 'politician',
+          // Omit expand=politician to avoid 400 when relation collectionId is wrong on server
         })
         .then((res) => {
           if (!cancelled) setFavorites(res.items || []);
@@ -115,7 +122,7 @@ export default function Account() {
       cancelled = true;
       window.removeEventListener('focus', onFocus);
     };
-  }, [user?.id]);
+  }, [isAppUser, user?.id]);
 
   // When favorites have items but expand.politician is missing, fetch politician details so we can show links
   useEffect(() => {
@@ -224,13 +231,13 @@ export default function Account() {
     }
   }
 
-  if (user) {
+  if (isAppUser) {
     return (
       <div className="account-page">
         <div className="account-container account-dashboard">
           <h1>Account</h1>
           <div className="account-info">
-            <p><strong>Email:</strong> {user.email ?? email}</p>
+            <p><strong>Email:</strong> {user?.email ?? email}</p>
           </div>
 
           <section className="account-favorites">
@@ -306,7 +313,18 @@ export default function Account() {
     <div className="account-page">
       <div className="account-container">
         <h1>{view === 'signup' ? 'Create account' : 'Sign In'}</h1>
-
+        {user && !isAppUser && (
+          <>
+            <p className="account-message account-info-message">
+              You're signed in as an admin. Sign in below with your account email to see your favorites and comments.
+            </p>
+            <p className="account-toggle">
+              <button type="button" onClick={handleSignOut} className="btn-sign-out-inline">
+                Sign out (admin)
+              </button>
+            </p>
+          </>
+        )}
         {view === 'signin' ? (
           <form onSubmit={handleSignIn} className="account-form">
             {error && <div className="account-message account-error">{error}</div>}

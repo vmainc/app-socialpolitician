@@ -50,4 +50,6 @@ ENDPY
 python3 scripts/vps-reset-admin-password.py
 ```
 
-Then log in at https://app.socialpolitician.com/pb/_/ with **admin@vma.agency** / **123456** (use incognito or clear cookies for the site).
+Then log in at https://app.socialpolitician.com/pb/_/ with **admin@vma.agency** / **12345678** (use incognito or clear cookies for the site).
+
+**Important:** The service runs with `--dir=.../pocketbase`, so the DB file is `pocketbase/data.db` (not `pocketbase/pb_data/data.db`). The script uses that path so the server sees the updated password.

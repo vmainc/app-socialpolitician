@@ -71,6 +71,15 @@ else
   echo "   Skipping (script not found)"
 fi
 
+# Step 4.8: Ensure PocketBase systemd unit is installed (fixes 203/EXEC if path was wrong)
+if [[ -f "$APP_DIR/etc/systemd/socialpolitician-app-pocketbase.service" ]]; then
+  echo "📋 Installing/updating PocketBase systemd unit..."
+  sudo cp "$APP_DIR/etc/systemd/socialpolitician-app-pocketbase.service" /etc/systemd/system/
+  sudo systemctl daemon-reload
+fi
+# Ensure binary is executable
+chmod +x "$APP_DIR/pb_linux/pocketbase" 2>/dev/null || true
+
 # Step 5: Restart services
 echo "🔄 Restarting services..."
 sudo systemctl restart socialpolitician-app-pocketbase.service 2>/dev/null || echo "⚠️  PocketBase service not found"

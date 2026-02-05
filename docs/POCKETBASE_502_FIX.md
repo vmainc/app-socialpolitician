@@ -96,7 +96,9 @@ That works only if:
 1. **PocketBase is running** on the VPS and listening on `127.0.0.1:8091` (see steps above).
 2. **Nginx** proxies `/pb/` to that backend.
 
-On the VPS, ensure your Nginx config for `app.socialpolitician.com` includes a location for PocketBase. For example (path may be `sites-available/app.socialpolitician.com` or `app.socialpolitician.com.conf`):
+PocketBase listens on `127.0.0.1:8091`, so redirects and links it generates use that URL. To keep the admin UI and API on **https://app.socialpolitician.com/pb/_/** (and avoid redirects to localhost), Nginx must proxy with the right headers and **rewrite redirects** (`proxy_redirect`).
+
+On the VPS, the **active** config is **`/etc/nginx/sites-available/app.socialpolitician.com.conf`** (sites-enabled links to it). Edit that file — not `app.socialpolitician.com` (no .conf). Add or update the `/pb/` block:
 
 ```nginx
 location /pb/ {
@@ -106,6 +108,10 @@ location /pb/ {
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Host $host;
+    # Rewrite redirects from PocketBase (127.0.0.1:8091) to the public URL so the admin UI stays on https://app.socialpolitician.com/pb/_/
+    proxy_redirect http://127.0.0.1:8091/ https://app.socialpolitician.com/pb/;
+    proxy_redirect https://127.0.0.1:8091/ https://app.socialpolitician.com/pb/;
 }
 ```
 

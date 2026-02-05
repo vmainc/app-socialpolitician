@@ -7,8 +7,8 @@ Type=simple
 User=doug
 Group=doug
 WorkingDirectory=/var/www/socialpolitician-app/pb_linux
-# Use production data in pocketbase/pb_data; migrations via pb_linux/pb_migrations (symlink to pocketbase/pb_migrations)
-ExecStart=/var/www/socialpolitician-app/pb_linux/pocketbase serve --http=127.0.0.1:8091 --dir=/var/www/socialpolitician-app/pocketbase
+# Data: pocketbase/pb_data (has politicians + app data). Migrations: pocketbase/pb_migrations.
+ExecStart=/var/www/socialpolitician-app/pb_linux/pocketbase serve --http=127.0.0.1:8091 --dir=/var/www/socialpolitician-app/pocketbase/pb_data --migrationsDir=/var/www/socialpolitician-app/pocketbase/pb_migrations
 Restart=on-failure
 RestartSec=5
 

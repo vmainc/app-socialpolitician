@@ -15,9 +15,9 @@ migrate((app) => {
   }
 
   const usersCol = app.findCollectionByNameOrId("users");
-  const politiciansId = "pbc_3830222512";
-  if (!usersCol) {
-    console.warn("users collection not found, skipping user_favorites");
+  const politiciansCol = app.findCollectionByNameOrId("politicians") || app.findCollectionByNameOrId("pbc_3830222512");
+  if (!usersCol || !politiciansCol) {
+    console.warn("users or politicians collection not found, skipping user_favorites");
     return;
   }
 
@@ -39,7 +39,7 @@ migrate((app) => {
         name: "politician",
         type: "relation",
         required: true,
-        collectionId: politiciansId,
+        collectionId: politiciansCol.id,
         cascadeDelete: true,
         minSelect: 1,
         maxSelect: 1,
