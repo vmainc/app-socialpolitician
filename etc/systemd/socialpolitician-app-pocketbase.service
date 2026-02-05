@@ -1,0 +1,16 @@
+[Unit]
+Description=PocketBase for app.socialpolitician.com
+After=network.target
+
+[Service]
+Type=simple
+User=doug
+Group=doug
+WorkingDirectory=/var/www/socialpolitician-app/pb_linux
+# Run the binary with serve; data is in ./pb_data (default)
+ExecStart=/var/www/socialpolitician-app/pb_linux/pocketbase serve --http=127.0.0.1:8091
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
