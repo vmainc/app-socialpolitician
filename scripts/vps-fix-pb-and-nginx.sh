@@ -8,20 +8,35 @@ APP_DIR="/var/www/socialpolitician-app"
 DB="$APP_DIR/pocketbase/pb_data/data.db"
 NGINX_CONF="/etc/nginx/sites-available/app.socialpolitician.com.conf"
 
-echo "=== 1. Mark add_persona_fields.js as applied (so PocketBase stops trying to run it) ==="
+echo "=== 1. Remove add_persona_fields.js from EVERY possible migrations path ==="
+for path in "$APP_DIR/pocketbase/pb_migrations/add_persona_fields.js" \
+            "$APP_DIR/pb_migrations/add_persona_fields.js" \
+            "$APP_DIR/pb_linux/pb_migrations/add_persona_fields.js"; do
+  if [ -f "$path" ] || [ -L "$path" ]; then
+    rm -f "$path" && echo "   Removed: $path"
+  fi
+done
+find "$APP_DIR" -name "add_persona_fields.js" 2>/dev/null | while read -r path; do
+  rm -f "$path" && echo "   Removed: $path"
+done
+echo "   ✅ No add_persona_fields.js left under $APP_DIR"
+echo ""
+
+echo "=== 2. Mark add_persona_fields.js as applied in DB (so PB skips it if it ever sees it) ==="
 if [ ! -f "$DB" ]; then
   echo "   ❌ Database not found: $DB"
   exit 1
 fi
-# PocketBase _migrations: (file, applied) or (file). Try both.
+echo "   _migrations schema:"
+sqlite3 "$DB" ".schema _migrations" 2>/dev/null || true
 APPLIED_TS=$(($(date +%s) * 1000))
-if ! sqlite3 "$DB" "INSERT OR IGNORE INTO _migrations (file, applied) VALUES ('add_persona_fields.js', $APPLIED_TS);" 2>/dev/null; then
+sqlite3 "$DB" "INSERT OR IGNORE INTO _migrations (file, applied) VALUES ('add_persona_fields.js', $APPLIED_TS);" 2>/dev/null || \
   sqlite3 "$DB" "INSERT OR IGNORE INTO _migrations (file) VALUES ('add_persona_fields.js');" 2>/dev/null || true
-fi
+echo "   Rows for persona: $(sqlite3 "$DB" "SELECT file FROM _migrations WHERE file LIKE '%persona%';" 2>/dev/null || echo 'none')"
 echo "   ✅ Done"
 echo ""
 
-echo "=== 2. Restart PocketBase ==="
+echo "=== 3. Restart PocketBase ==="
 sudo systemctl restart socialpolitician-app-pocketbase.service
 sleep 2
 if curl -sf http://127.0.0.1:8091/api/health >/dev/null; then
@@ -33,7 +48,7 @@ else
 fi
 echo ""
 
-echo "=== 3. Nginx: add /pb/ proxy (no location /pb/ block found) ==="
+echo "=== 4. Nginx: add /pb/ proxy (no location /pb/ block found) ==="
 echo "   Edit the config and add this block inside the server { } for app.socialpolitician.com:"
 echo ""
 echo "   sudo nano $NGINX_CONF"
