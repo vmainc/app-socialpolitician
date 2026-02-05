@@ -1,7 +1,17 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
 import type { RecordModel } from 'pocketbase';
 import './Account.css';
+
+interface MyComment {
+  id: string;
+  content: string;
+  author_name?: string;
+  created: string;
+  politician: string;
+  expand?: { politician?: { slug?: string; name?: string } };
+}
 
 type View = 'signin' | 'signup';
 
@@ -14,6 +24,8 @@ export default function Account() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [myComments, setMyComments] = useState<MyComment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
 
   // Sync auth state from PocketBase
   useEffect(() => {
@@ -23,6 +35,34 @@ export default function Account() {
     });
     return () => unsub();
   }, []);
+
+  // Load current user's comments (by author_name = email) when logged in
+  useEffect(() => {
+    const model = pb.authStore.model as { email?: string } | null;
+    if (!model?.email) {
+      setMyComments([]);
+      return;
+    }
+    let cancelled = false;
+    setCommentsLoading(true);
+    const safeEmail = model.email.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    pb.collection('profile_comments')
+      .getList<MyComment>(1, 50, {
+        filter: `author_name="${safeEmail}"`,
+        sort: '-created',
+        expand: 'politician',
+      })
+      .then((res) => {
+        if (!cancelled) setMyComments(res.items);
+      })
+      .catch(() => {
+        if (!cancelled) setMyComments([]);
+      })
+      .finally(() => {
+        if (!cancelled) setCommentsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [user?.id, (user as { email?: string })?.email]);
 
   // Sync view with hash so "Sign up" link works
   useEffect(() => {
@@ -107,10 +147,19 @@ export default function Account() {
     setView('signin');
   };
 
+  function formatCommentDate(iso: string): string {
+    try {
+      const d = new Date(iso);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return iso;
+    }
+  }
+
   if (user) {
     return (
       <div className="account-page">
-        <div className="account-container">
+        <div className="account-container account-dashboard">
           <h1>Account</h1>
           <div className="account-info">
             <p><strong>Email:</strong> {user.email ?? email}</p>
@@ -118,6 +167,36 @@ export default function Account() {
               Sign Out
             </button>
           </div>
+
+          <section className="account-my-comments">
+            <h2 className="account-section-title">My comments</h2>
+            {commentsLoading ? (
+              <p className="account-comments-loading">Loading your comments…</p>
+            ) : myComments.length === 0 ? (
+              <p className="account-comments-empty">
+                Comments you post on politician profiles (while signed in with this email) will appear here.
+              </p>
+            ) : (
+              <ul className="account-comments-list">
+                {myComments.map((c) => (
+                  <li key={c.id} className="account-comment-item">
+                    <p className="account-comment-content">{c.content}</p>
+                    <p className="account-comment-meta">
+                      {c.expand?.politician?.slug ? (
+                        <Link to={`/${c.expand.politician.slug}`} className="account-comment-link">
+                          {c.expand.politician.name || 'View profile'} →
+                        </Link>
+                      ) : (
+                        <span>Politician profile</span>
+                      )}
+                      {' · '}
+                      {formatCommentDate(c.created)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </div>
       </div>
     );

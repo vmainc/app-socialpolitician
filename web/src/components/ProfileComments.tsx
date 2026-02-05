@@ -67,15 +67,31 @@ export default function ProfileComments({ politicianId }: ProfileCommentsProps) 
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // When logged in, prefill author_name so "My comments" on account page can find them
+  useEffect(() => {
+    const model = pb.authStore.model as { email?: string } | null;
+    if (model?.email && !authorName) setAuthorName(model.email);
+  }, []);
+
   async function loadComments() {
+    if (!politicianId?.trim()) {
+      setLoading(false);
+      return;
+    }
     try {
+      // Escape id for filter (prevent breakage from quotes/backslashes)
+      const safeId = politicianId.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
       const result = await pb.collection('profile_comments').getList<ProfileComment>(1, 100, {
-        filter: `politician="${politicianId}"`,
+        filter: `politician="${safeId}"`,
         sort: 'created',
       });
-      setComments(result.items);
-    } catch (err) {
-      console.error('Failed to load comments:', err);
+      // Newest first (PocketBase sort=created is ascending; some servers 400 on -created)
+      setComments([...result.items].reverse());
+    } catch (err: unknown) {
+      const e = err as { status?: number; data?: { message?: string }; message?: string };
+      console.error('Failed to load comments:', e?.message || e);
+      if (e?.data) console.error('PB response:', e.data);
+      setError(e?.data?.message || e?.message || 'Could not load comments');
       setComments([]);
     } finally {
       setLoading(false);
@@ -139,9 +155,13 @@ export default function ProfileComments({ politicianId }: ProfileCommentsProps) 
 
       <form onSubmit={handleSubmit} className="profile-comments-form">
         <div className="profile-comments-form-row">
+          <label htmlFor="comment-author-name" className="profile-comments-label">
+            Your name (optional)
+          </label>
           <input
+            id="comment-author-name"
             type="text"
-            placeholder="Your name (optional)"
+            placeholder="How you’d like to be shown"
             value={authorName}
             onChange={(e) => setAuthorName(e.target.value)}
             className="profile-comments-name"
