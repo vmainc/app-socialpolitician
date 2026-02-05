@@ -1,40 +1,14 @@
 /// <reference path="../pb_data/types.d.ts" />
 /**
- * Fix politicians collection public access rules
- * Sets listRule and viewRule to allow public read access
- * Compatible with PocketBase v0.35.1
- *
- * Rule syntax: 'id != ""' evaluates to true for all records, allowing public access
- * Wrapped in try/catch so "sql: no rows in result set" on save does not block startup.
+ * Fix politicians collection public access rules (no-op on production).
+ * app.save(collection) can fail with "sql: no rows in result set" when DB state
+ * doesn't match, and PocketBase exits before JS catch runs. So we do not call
+ * app.save() here - migration always succeeds and PocketBase starts.
+ * Set politicians listRule/viewRule via Admin UI or SQL if needed.
  */
 migrate((app) => {
-  let collection = app.findCollectionByNameOrId("pbc_3830222512")
-  if (!collection) {
-    collection = app.findCollectionByNameOrId("politicians")
-  }
-  if (!collection) {
-    return
-  }
-
-  collection.listRule = 'id != ""'
-  collection.viewRule = 'id != ""'
-
-  try {
-    return app.save(collection)
-  } catch (e) {
-    // e.g. "sql: no rows in result set" when DB state doesn't match - allow startup
-    console.log('⚠️  Could not save politicians rules (collection may already match):', e?.message || e)
-    return
-  }
+  // No-op: avoid app.save(collection) which can crash startup on production DB
+  return
 }, (app) => {
-  const collection = app.findCollectionByNameOrId("pbc_3830222512") ||
-                     app.findCollectionByNameOrId("politicians")
-  if (!collection) return
-  collection.listRule = ""
-  collection.viewRule = ""
-  try {
-    return app.save(collection)
-  } catch (_) {
-    return
-  }
+  return
 })
