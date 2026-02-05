@@ -1,5 +1,6 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
+  if (app.findCollectionByNameOrId("pbc_3097184542") || app.findCollectionByNameOrId("profile_comments")) return;
   const collection = new Collection({
     "createRule": null,
     "deleteRule": null,
