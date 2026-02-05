@@ -1,6 +1,6 @@
 /**
  * PocketBase client singleton
- * Uses runtime config to avoid hardcoded localhost URLs
+ * Uses runtime config (PB_BASE) so the same build works in dev and production.
  */
 
 import PocketBase from 'pocketbase';

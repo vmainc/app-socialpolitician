@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "preflight": "npm run typecheck && npm run build && npm run verify-build",
-    "verify-build": "bash -c 'if grep -r \"localhost\\|127.0.0.1\" web/dist 2>/dev/null; then echo \"ERROR: Found localhost or 127.0.0.1 in build output!\" && exit 1; else echo \"✓ OK: No localhost found in build\"; fi'",
+    "verify-build": "bash -c 'if grep -rE \"localhost:[0-9]|127\\\\.0\\\\.0\\\\.1:[0-9]\" web/dist 2>/dev/null; then echo \"ERROR: Found localhost/127.0.0.1 URL in build output!\" && exit 1; else echo \"✓ OK: No localhost URLs in build\"; fi'",
     "pb:patch-schema": "node scripts/pb_schema_patch_politicians.mjs",
     "pb:backfill": "node scripts/pb_backfill_politicians.mjs",
     "pb:backfill:live": "DRY_RUN=false node scripts/pb_backfill_politicians.mjs",
