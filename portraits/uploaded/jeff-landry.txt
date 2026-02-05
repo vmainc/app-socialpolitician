@@ -1,0 +1,12 @@
+Name: Jeff Landry
+Slug: jeff-landry
+State: Louisiana
+Office: Governor
+Party: Republican
+Wikipedia: https://en.wikipedia.org/wiki/Jeff_Landry
+PocketBase ID: r94ds57dv07rcdg
+
+Instructions:
+1. Verify this is the correct portrait
+2. If correct, move to 'labeled' folder
+3. If incorrect, delete and note the issue

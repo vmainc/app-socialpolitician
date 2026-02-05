@@ -1,0 +1,12 @@
+Name: cnn.com
+Slug: cnn-com
+State: IA
+Office: N/A
+Party: Media
+Wikipedia: https://en.wikipedia.org/wiki/CNN
+PocketBase ID: gy46j5z3dleuabz
+
+Instructions:
+1. Verify this is the correct portrait
+2. If correct, move to 'labeled' folder
+3. If incorrect, delete and note the issue

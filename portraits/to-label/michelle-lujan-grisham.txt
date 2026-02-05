@@ -1,0 +1,12 @@
+Name: Michelle Lujan Grisham
+Slug: michelle-lujan-grisham
+State: New Mexico
+Office: Governor
+Party: Democrat
+Wikipedia: https://en.wikipedia.org/wiki/Michelle_Lujan_Grisham
+PocketBase ID: 289zy0b5w0ara3i
+
+Instructions:
+1. Verify this is the correct portrait
+2. If correct, move to 'labeled' folder
+3. If incorrect, delete and note the issue

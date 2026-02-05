@@ -1,0 +1,28 @@
+#!/bin/bash
+# Batch scrape with better rate limiting - run multiple times to get all portraits
+
+POCKETBASE_URL=http://127.0.0.1:8091
+POCKETBASE_ADMIN_EMAIL=admin@vma.agency
+POCKETBASE_ADMIN_PASSWORD='VMAmadmia42O200!'
+
+echo '🖼️  Batch Portrait Scraping'
+echo '============================'
+echo 'This will run the scraper multiple times with delays'
+echo ''
+
+for i in {1..5}; do
+  echo "\n--- Batch Run /5 ---"
+  POCKETBASE_URL=$POCKETBASE_URL \
+  POCKETBASE_ADMIN_EMAIL=$POCKETBASE_ADMIN_EMAIL \
+  POCKETBASE_ADMIN_PASSWORD=$POCKETBASE_ADMIN_PASSWORD \
+  node scripts/scrape_portraits.js 2>&1 | tail -20
+  
+  if [ $i -lt 5 ]; then
+    echo "\n⏳ Waiting 60 seconds before next batch..."
+    sleep 60
+  fi
+done
+
+echo "\n✅ Batch scraping complete!"
+ls -lh portraits/to-label/*.{jpg,png,webp} 2>/dev/null | wc -l
+echo "portraits downloaded"
