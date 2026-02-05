@@ -1,5 +1,7 @@
 # PocketBase 502 / service 203/EXEC fix
 
+**app.socialpolitician.com only.** Production must use **`pocketbase/pb_migrations`** for migrations. The root **`pb_migrations/`** folder is for other projects (e.g. voices of the presidency) and must not be used on this app's VPS. Ensure the symlink: `pb_linux/pb_migrations` → `../pocketbase/pb_migrations` (run `scripts/vps-use-app-migrations-only.sh` on the VPS if unsure).
+
 If the site shows **502 Bad Gateway** and the PocketBase service has **status=203/EXEC**, systemd is failing to run the ExecStart command (wrong path, binary not executable, or **wrong OS**: repo has a macOS binary but the VPS needs Linux).
 
 ## If 203/EXEC persists: use the Linux binary
@@ -78,6 +80,45 @@ Production uses **data** in `pocketbase/pb_data` and **migrations** from `pocket
    sudo systemctl reload nginx
    ```
 
-The unit file in `etc/systemd/socialpolitician-app-pocketbase.service` points `ExecStart` at the correct binary: `/var/www/socialpolitician-app/pb_linux/pocketbase serve --http=127.0.0.1:8091`, with `WorkingDirectory=/var/www/socialpolitician-app/pb_linux` so it uses `pb_linux/pb_data`.
+The unit file uses `--dir=/var/www/socialpolitician-app/pocketbase` so PocketBase uses production data in `pocketbase/pb_data`. After a deploy, the deploy script copies this unit and runs `daemon-reload`.
 
-After a deploy, the deploy script will copy this unit and run `daemon-reload` so future restarts use the correct path.
+---
+
+## How the app connects to PocketBase (https://app.socialpolitician.com/pb/_/)
+
+The frontend is configured to use the **relative** path `/pb`, so in production it talks to:
+
+- **API:** `https://app.socialpolitician.com/pb/api/...` (e.g. `/pb/api/health`, `/pb/api/collections/...`)
+- **Admin UI:** `https://app.socialpolitician.com/pb/_/`
+
+That works only if:
+
+1. **PocketBase is running** on the VPS and listening on `127.0.0.1:8091` (see steps above).
+2. **Nginx** proxies `/pb/` to that backend.
+
+On the VPS, ensure your Nginx config for `app.socialpolitician.com` includes a location for PocketBase. For example (path may be `sites-available/app.socialpolitician.com` or `app.socialpolitician.com.conf`):
+
+```nginx
+location /pb/ {
+    proxy_pass http://127.0.0.1:8091/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+Then:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+Check from the server that the backend is up before testing the public URL:
+
+```bash
+curl -s http://127.0.0.1:8091/api/health
+```
+
+If that returns JSON, then `https://app.socialpolitician.com/pb/api/health` should work once Nginx is configured and reloaded.
