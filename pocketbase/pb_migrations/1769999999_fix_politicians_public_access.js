@@ -3,8 +3,9 @@
  * Fix politicians collection public access rules
  * Sets listRule and viewRule to allow public read access
  * Compatible with PocketBase v0.35.1
- * 
+ *
  * Rule syntax: 'id != ""' evaluates to true for all records, allowing public access
+ * Wrapped in try/catch so "sql: no rows in result set" on save does not block startup.
  */
 migrate((app) => {
   let collection = app.findCollectionByNameOrId("pbc_3830222512")
@@ -26,7 +27,7 @@ migrate((app) => {
     return
   }
 }, (app) => {
-  const collection = app.findCollectionByNameOrId("pbc_3830222512") || 
+  const collection = app.findCollectionByNameOrId("pbc_3830222512") ||
                      app.findCollectionByNameOrId("politicians")
   if (!collection) return
   collection.listRule = ""
