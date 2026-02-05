@@ -1,8 +1,8 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
-  const collection = app.findCollectionByNameOrId("pbc_3830222512");
-
-  return app.delete(collection);
+  const collection = app.findCollectionByNameOrId("pbc_3830222512") || app.findCollectionByNameOrId("politicians");
+  if (!collection) return;
+  try { return app.delete(collection); } catch (_) {}
 }, (app) => {
   const collection = new Collection({
     "createRule": null,
