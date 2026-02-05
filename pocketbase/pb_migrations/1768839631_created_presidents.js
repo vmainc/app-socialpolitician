@@ -1,5 +1,6 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
+  if (app.findCollectionByNameOrId("pbc_4278886452") || app.findCollectionByNameOrId("presidents")) return;
   const collection = new Collection({
     "createRule": null,
     "deleteRule": null,
