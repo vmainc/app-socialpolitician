@@ -94,18 +94,16 @@ export default function Account() {
     let cancelled = false;
     const fetchFavorites = () => {
       setFavoritesLoading(true);
+      // Rely on list rule (user = @request.auth.id); no filter to avoid 400 from filter handling on server
       pb.collection('user_favorites')
-        .getList<FavoriteRecord>(1, 100, {
-          filter: `user="${user.id}"`,
-          sort: '-created',
-          // Omit expand=politician to avoid 400 when relation collectionId is wrong on server
-        })
+        .getList<FavoriteRecord>(1, 100, { sort: '-created' })
         .then((res) => {
           if (!cancelled) setFavorites(res.items || []);
         })
-        .catch((err) => {
+        .catch((err: unknown) => {
           if (!cancelled) {
-            console.error('Account: failed to load favorites', err);
+            const e = err as { status?: number; response?: { code?: number; message?: string }; data?: unknown };
+            console.error('Account: failed to load favorites', e?.status, e?.response ?? e?.data ?? e);
             setFavorites([]);
           }
         })
