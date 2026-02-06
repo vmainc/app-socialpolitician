@@ -731,6 +731,9 @@
 }
 
 .profile-comments-item {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
   padding: 1rem 1.25rem;
   background: #fff;
   border-radius: 0.5rem;
@@ -741,6 +744,37 @@
 .profile-comments-item:hover {
   border-color: #e5e7eb;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.profile-comments-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+}
+
+.profile-comments-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-comments-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #4f46e5;
+}
+
+.profile-comments-item-body {
+  flex: 1;
+  min-width: 0;
 }
 
 .profile-comments-item-header {

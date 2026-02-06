@@ -40,6 +40,7 @@ export default function Account() {
   const [favorites, setFavorites] = useState<FavoriteRecord[]>([]);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
   const [politicianDetails, setPoliticianDetails] = useState<Record<string, PoliticianInfo>>({});
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   // Sync auth state from PocketBase
   useEffect(() => {
@@ -224,6 +225,35 @@ export default function Account() {
     setView('signin');
   };
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user?.id || !isAppUser) return;
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose a JPEG, PNG, GIF, or WebP image.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Image must be under 2 MB.');
+      e.target.value = '';
+      return;
+    }
+    setAvatarUploading(true);
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.set('avatar', file);
+      const updated = await pb.collection('users').update(user.id, formData);
+      // Auth store is updated automatically by SDK when updating current user
+      setUser(updated as RecordModel);
+    } catch (err: unknown) {
+      const msg = err && typeof err === 'object' && 'message' in err ? String((err as { message: string }).message) : 'Failed to update photo.';
+      setError(msg);
+    } finally {
+      setAvatarUploading(false);
+      e.target.value = '';
+    }
+  };
+
   function formatCommentDate(iso: string): string {
     try {
       const d = new Date(iso);
@@ -233,11 +263,37 @@ export default function Account() {
     }
   }
 
+  const userWithAvatar = user as (RecordModel & { avatar?: string }) | null;
+  const avatarUrl = userWithAvatar?.avatar && userWithAvatar?.id
+    ? pb.files.getURL(userWithAvatar, userWithAvatar.avatar)
+    : null;
+
   if (isAppUser) {
     return (
       <div className="account-page">
         <div className="account-container account-dashboard">
           <h1>Account</h1>
+          <div className="account-profile-photo">
+            <div className="account-avatar-wrap" aria-hidden>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="account-avatar-img" />
+              ) : (
+                <span className="account-avatar-placeholder">
+                  {(user?.email ?? email).slice(0, 1).toUpperCase() || '?'}
+                </span>
+              )}
+            </div>
+            <label className="account-avatar-label">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                onChange={handleAvatarChange}
+                disabled={avatarUploading}
+                aria-label="Change profile photo"
+              />
+              {avatarUploading ? 'Uploading…' : 'Change photo'}
+            </label>
+          </div>
           <div className="account-info">
             <p><strong>Email:</strong> {user?.email ?? email}</p>
           </div>
@@ -283,8 +339,18 @@ export default function Account() {
               <ul className="account-comments-list">
                 {myComments.map((c) => (
                   <li key={c.id} className="account-comment-item">
-                    <p className="account-comment-content">{c.content}</p>
-                    <p className="account-comment-meta">
+                    <div className="account-comment-avatar-wrap" aria-hidden>
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt="" className="account-comment-avatar-img" />
+                      ) : (
+                        <span className="account-comment-avatar-placeholder">
+                          {(user?.email ?? email).slice(0, 1).toUpperCase() || '?'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="account-comment-item-inner">
+                      <p className="account-comment-content">{c.content}</p>
+                      <p className="account-comment-meta">
                       {c.expand?.politician?.slug ? (
                         <Link to={`/${c.expand.politician.slug}`} className="account-comment-link">
                           {c.expand.politician.name || 'View profile'} →
@@ -292,9 +358,10 @@ export default function Account() {
                       ) : (
                         <span>Politician profile</span>
                       )}
-                      {' · '}
-                      {formatCommentDate(c.created)}
-                    </p>
+                        {' · '}
+                        {formatCommentDate(c.created)}
+                      </p>
+                    </div>
                   </li>
                 ))}
               </ul>

@@ -53,8 +53,27 @@ function formatDate(iso: string): string {
   }
 }
 
-function getMediaUrl(record: ProfileComment, filename: string): string {
+  function getMediaUrl(record: ProfileComment, filename: string): string {
   return pb.files.getURL(record, filename);
+}
+
+function CommentAvatar({ authorName }: { authorName?: string }) {
+  const model = pb.authStore.model as { email?: string; avatar?: string; id?: string } | null;
+  const isCurrentUser = !!authorName && !!model?.email && authorName === model.email;
+  const avatarUrl =
+    isCurrentUser && model?.avatar && model?.id
+      ? pb.files.getURL(model as { id: string; avatar: string; collectionId?: string; collectionName?: string }, model.avatar)
+      : null;
+  const initial = authorName?.trim()?.slice(0, 1).toUpperCase() || '?';
+  return (
+    <div className="profile-comments-avatar" aria-hidden>
+      {avatarUrl ? (
+        <img src={avatarUrl} alt="" />
+      ) : (
+        <span className="profile-comments-avatar-placeholder">{initial}</span>
+      )}
+    </div>
+  );
 }
 
 export default function ProfileComments({ politicianId }: ProfileCommentsProps) {
@@ -238,24 +257,27 @@ export default function ProfileComments({ politicianId }: ProfileCommentsProps) 
           <ul className="profile-comments-thread" aria-label="Comments">
             {comments.map((c) => (
               <li key={c.id} className="profile-comments-item">
-                <div className="profile-comments-item-header">
-                  <span className="profile-comments-author">{c.author_name || 'Anonymous'}</span>
-                  <span className="profile-comments-date">{formatDate(c.created)}</span>
-                </div>
-                <div className="profile-comments-item-content">{c.content}</div>
-                {c.media && (Array.isArray(c.media) ? c.media : [c.media]).length > 0 && (
-                  <div className="profile-comments-item-media">
-                    {(Array.isArray(c.media) ? c.media : [c.media]).map((filename: string, i: number) => {
-                      const url = getMediaUrl(c, filename);
-                      const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(filename);
-                      return isVideo ? (
-                        <video key={i} src={url} controls />
-                      ) : (
-                        <img key={i} src={url} alt="" loading="lazy" />
-                      );
-                    })}
+                <CommentAvatar authorName={c.author_name || undefined} />
+                <div className="profile-comments-item-body">
+                  <div className="profile-comments-item-header">
+                    <span className="profile-comments-author">{c.author_name || 'Anonymous'}</span>
+                    <span className="profile-comments-date">{formatDate(c.created)}</span>
                   </div>
-                )}
+                  <div className="profile-comments-item-content">{c.content}</div>
+                  {c.media && (Array.isArray(c.media) ? c.media : [c.media]).length > 0 && (
+                    <div className="profile-comments-item-media">
+                      {(Array.isArray(c.media) ? c.media : [c.media]).map((filename: string, i: number) => {
+                        const url = getMediaUrl(c, filename);
+                        const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(filename);
+                        return isVideo ? (
+                          <video key={i} src={url} controls />
+                        ) : (
+                          <img key={i} src={url} alt="" loading="lazy" />
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
