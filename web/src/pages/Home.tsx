@@ -1,5 +1,5 @@
 /**
- * Home page - Modern Politician Directory
+ * Home page – Your Guide to U.S. Elected Leaders
  * Clean, beautiful design with search, filters, and pagination
  */
 
@@ -102,9 +102,9 @@ function Home() {
     <div className="home-page">
       {/* Header - Matching PoliticiansDirectory style */}
       <header className="page-header">
-        <h1 className="page-title">Politician Directory</h1>
+        <h1 className="page-title">Your Guide to U.S. Elected Leaders</h1>
         <p className="page-subtitle">
-          {result ? `${result.totalItems.toLocaleString()} Total Politicians` : 'Search and explore U.S. Senators, Representatives, and Governors'}
+          {result ? `${result.totalItems.toLocaleString()} senators, representatives, and governors` : 'Search and explore U.S. Senators, Representatives, and Governors'}
         </p>
       </header>
 
