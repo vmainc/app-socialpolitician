@@ -231,14 +231,19 @@ function PoliticianProfile() {
     return '';
   };
 
-  // Short structured bio. Executive: "Name is serving as [position]." Others: "Name has been serving as [position] for [state] since [date]. They are a member of the [Party] Party."
+  // One line for everyone: "{name} has been serving as {position} for {state} since {date}." (executive: no state/date, "is serving as {position}.")
   const buildStructuredBio = (): string | null => {
     const name = politician?.name?.trim();
     if (!name) return null;
-    const position = (politician?.current_position || politician?.office_title)?.trim();
-    if (isExecutive && position) {
+    const position =
+      getOfficeLabel() ||
+      (politician?.current_position || politician?.office_title)?.trim();
+    if (!position) return null;
+
+    if (isExecutive) {
       return `${name} is serving as ${position}.`;
     }
+
     const state = politician?.state?.trim();
     const raw = politician as unknown as Record<string, unknown>;
     const startDateRaw = (raw.position_start_date || raw.term_start_date) as string | undefined;
@@ -249,25 +254,12 @@ function PoliticianProfile() {
         sinceDate = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       }
     }
-    const party = (politician?.political_party || politician?.party)?.trim();
-    const parts: string[] = [];
-    if (position) {
-      let serving = `${name} has been serving as ${position}`;
-      if (state) serving += ` for ${state}`;
-      if (sinceDate) serving += ` since ${sinceDate}`;
-      serving += '.';
-      parts.push(serving);
-    }
-    if (party) {
-      const lower = party.toLowerCase();
-      if (lower.includes('independent')) {
-        parts.push('They are an Independent.');
-      } else {
-        const partyLabel = lower.includes('democrat') ? 'Democrat' : lower.includes('republican') ? 'Republican' : party;
-        parts.push(`They are a member of the ${partyLabel} Party.`);
-      }
-    }
-    return parts.length > 0 ? parts.join(' ') : null;
+
+    let line = `${name} has been serving as ${position}`;
+    if (state) line += ` for ${state}`;
+    if (sinceDate) line += ` since ${sinceDate}`;
+    line += '.';
+    return line;
   };
 
   const structuredBio = buildStructuredBio();
