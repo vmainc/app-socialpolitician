@@ -357,7 +357,7 @@ function PoliticianProfile() {
               )}
             </div>
           </div>
-          {headlineText && !isExecutive && (
+          {headlineText && (
             <p className="profile-headline">
               {decodeHtmlEntities(headlineText)}
             </p>
