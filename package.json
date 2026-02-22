@@ -21,6 +21,7 @@
     "pb:fetch-website": "node scripts/fetch_website_urls.mjs",
     "pb:fetch-website:live": "DRY_RUN=false node scripts/fetch_website_urls.mjs",
     "pb:import": "npx tsx server/src/scripts/importPoliticiansFromJSON.ts",
+    "pb:import:executive": "npx tsx server/src/scripts/importPoliticiansFromJSON.ts --file=executive_import_ready.json",
     "pb:reps:json": "npx tsx server/src/scripts/importRepresentativesFromWikipedia.ts --output-json",
     "pb:reps:import": "npx tsx server/src/scripts/importRepresentativesFromWikipedia.ts",
     "pb:admin:create": "./pb_linux/pocketbase superuser create admin@vma.agency 'VMAmadmia42O200!' --dir=./pocketbase/pb_data --migrationsDir=./pocketbase/pb_migrations",

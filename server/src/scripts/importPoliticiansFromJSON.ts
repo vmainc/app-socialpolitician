@@ -1,11 +1,14 @@
 /**
  * Import politicians from JSON files to PocketBase
- * 
+ *
  * Usage:
  *   POCKETBASE_URL=http://127.0.0.1:8091 \
  *   POCKETBASE_ADMIN_EMAIL=admin@vma.agency \
  *   POCKETBASE_ADMIN_PASSWORD=password \
  *   npx tsx server/src/scripts/importPoliticiansFromJSON.ts
+ *
+ * Options:
+ *   --file=executive_import_ready.json  import only this file (e.g. for pushing executives to live)
  */
 
 import PocketBase from 'pocketbase';
@@ -156,13 +159,19 @@ async function main() {
     console.log('');
 
     const dataDir = path.join(projectRoot, 'data');
-    const jsonFiles = [
-      path.join(dataDir, 'senators_import_ready.json'),
-      path.join(dataDir, 'representatives_import_ready.json'),
-      path.join(dataDir, 'governors_import_ready.json'),
-      path.join(dataDir, 'politicians_import_ready.json'),
-      path.join(dataDir, 'executive_import_ready.json'),
+    const fileArg = process.argv.find((a) => a.startsWith('--file='));
+    const singleFile = fileArg ? fileArg.split('=')[1] : null;
+    const defaultFiles = [
+      'senators_import_ready.json',
+      'representatives_import_ready.json',
+      'governors_import_ready.json',
+      'politicians_import_ready.json',
+      'executive_import_ready.json',
     ];
+    const jsonFiles = singleFile
+      ? [path.join(dataDir, singleFile)]
+      : defaultFiles.map((f) => path.join(dataDir, f));
+    if (singleFile) console.log(`📌 Importing only: ${singleFile}\n`);
 
     let totalCreated = 0;
     let totalUpdated = 0;
