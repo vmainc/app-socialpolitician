@@ -9,7 +9,7 @@
  *   POCKETBASE_ADMIN_PASSWORD='...' \
  *   npx tsx server/src/scripts/backfillBiosFromWikipedia.ts
  *
- * Optional: --office-type=governor  (or senator, representative) to only backfill that type.
+ * Optional: --office-type=governor  (or senator, representative, executive) to only backfill that type.
  */
 
 import PocketBase from 'pocketbase';
@@ -56,17 +56,27 @@ function getWikipediaTitle(url: string | null | undefined): string | null {
 
 const TARGET_BIO_WORDS = 500;
 
-function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
+/** Remove Wikipedia-style citation markers like [1], [2], [1][2] from text. */
+function stripCitationMarkers(text: string): string {
+  return text
+    .replace(/\s*\[\s*\d+\s*\]\s*/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function stripHtml(html: string): string {
+  return stripCitationMarkers(
+    html
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
 }
 
 /** Extract up to ~500 words from the first paragraphs (after infobox) for Biography accordion. */
@@ -93,7 +103,7 @@ function extractBio500Words(html: string): string | null {
         totalWords = TARGET_BIO_WORDS;
       }
     }
-    const joined = parts.join(' ').replace(/\s+/g, ' ').trim();
+    const joined = stripCitationMarkers(parts.join(' ').replace(/\s+/g, ' ').trim());
     return joined.length >= 100 ? joined : null;
   } catch (_) {}
   return null;
@@ -128,6 +138,8 @@ async function main() {
       officeFilter = `(office_type="senator" || current_position~"Senator") && ${officeFilter}`;
     } else if (officeType === 'representative') {
       officeFilter = `(office_type="representative" || current_position~"Representative") && ${officeFilter}`;
+    } else if (officeType === 'executive') {
+      officeFilter = `(office_type="president" || office_type="vice_president" || office_type="cabinet") && ${officeFilter}`;
     } else {
       officeFilter = `office_type="${officeType}" && ${officeFilter}`;
     }

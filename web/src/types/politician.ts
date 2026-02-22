@@ -12,7 +12,7 @@ export interface Politician {
   party?: 'Democrat' | 'Republican' | 'Independent' | 'Other' | 'Unknown' | null; // Schema: select field
   office_title?: string | null; // Schema: text field
   office_type?: string | null; // Schema: text field (fallback)
-  chamber?: 'Senator' | 'Representative' | 'Governor' | 'Other' | 'Unknown' | null; // Schema: select field
+  chamber?: 'Senator' | 'Representative' | 'Governor' | 'President' | 'Vice President' | 'Cabinet' | 'Other' | 'Unknown' | null; // Schema: select field
   status?: 'Incumbent' | 'Challenger' | 'Former' | 'Retired' | 'Deceased' | 'Candidate' | 'Unknown' | null; // Schema: select field
   /** Short summary shown in full in the profile hero (first box with photo). */
   headline?: string | null;

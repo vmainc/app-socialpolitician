@@ -69,7 +69,7 @@ If profile pages show no image after a re-import (record IDs changed) or a gover
   ```bash
   node scripts/removeMediaFromPoliticiansData.mjs
   ```
-- Import uses `data/senators_import_ready.json`, `data/representatives_import_ready.json`, `data/governors_import_ready.json`, and `data/politicians_import_ready.json` (no media; `sources` field is never written to PocketBase).
+- Import uses `data/senators_import_ready.json`, `data/representatives_import_ready.json`, `data/governors_import_ready.json`, and `data/politicians_import_ready.json` (no media; `sources` field is never written to PocketBase). **Only active politicians:** `data/politicians_import_ready.json` has had historical presidents (Lincoln, Jackson, etc.) removed; run `node scripts/remove_historical_presidents.mjs` to re-apply. To remove them from an existing PocketBase: `npm run pb:delete-historical-presidents` (with env vars set).
 
 ### Deployment
 - `scripts/complete_deployment.sh` - Full deployment (pull, build, reload)

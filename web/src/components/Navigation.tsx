@@ -76,6 +76,13 @@ export default function Navigation() {
             Governors
           </Link>
           <Link 
+            to="/executive" 
+            className={`nav-link ${isActive('/executive') ? 'active' : ''}`}
+            onClick={closeMenu}
+          >
+            Executive
+          </Link>
+          <Link 
             to="/account" 
             className={`nav-link nav-account ${isActive('/account') ? 'active' : ''}`}
             onClick={closeMenu}

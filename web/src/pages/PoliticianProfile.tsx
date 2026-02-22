@@ -27,6 +27,21 @@ function PoliticianProfile() {
   const [favoriteId, setFavoriteId] = useState<string | null>(null);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
 
+  const isExecutive =
+    politician &&
+    (() => {
+      const officeType = politician.office_type?.toLowerCase();
+      const chamber = politician.chamber?.toLowerCase();
+      return (
+        officeType === 'president' ||
+        officeType === 'vice_president' ||
+        officeType === 'cabinet' ||
+        chamber === 'president' ||
+        chamber === 'vice president' ||
+        chamber === 'cabinet'
+      );
+    })();
+
   // Determine back link based on politician type
   const getBackLink = () => {
     if (politician) {
@@ -38,10 +53,11 @@ function PoliticianProfile() {
         return '/senators';
       } else if (officeType === 'representative' || chamber === 'representative') {
         return '/representatives';
+      } else if (officeType === 'president' || officeType === 'vice_president' || officeType === 'cabinet' || chamber === 'president' || chamber === 'vice president' || chamber === 'cabinet') {
+        return '/executive';
       }
     }
-    
-    // Default to home
+
     return '/';
   };
 
@@ -129,6 +145,9 @@ function PoliticianProfile() {
     if (type === 'governor') return 'Governor';
     if (type === 'senator') return 'U.S. Senator';
     if (type === 'representative') return 'U.S. Representative';
+    if (type === 'president') return 'President of the United States';
+    if (type === 'vice_president' || type === 'vice president') return 'Vice President of the United States';
+    if (type === 'cabinet') return politician?.office_title || politician?.current_position || 'Cabinet Member';
     return politician?.office_title || politician?.current_position || null;
   };
 
@@ -212,13 +231,66 @@ function PoliticianProfile() {
     return '';
   };
 
-  // Headline = short summary shown in full in the hero (first box with photo).
-  // Bio = ~500-word summary for the Biography accordion (scraped/summarized from Wikipedia).
+  // Short structured bio. Executive: "Name is serving as [position]." Others: "Name has been serving as [position] for [state] since [date]. They are a member of the [Party] Party."
+  const buildStructuredBio = (): string | null => {
+    const name = politician?.name?.trim();
+    if (!name) return null;
+    const position = (politician?.current_position || politician?.office_title)?.trim();
+    if (isExecutive && position) {
+      return `${name} is serving as ${position}.`;
+    }
+    const state = politician?.state?.trim();
+    const raw = politician as unknown as Record<string, unknown>;
+    const startDateRaw = (raw.position_start_date || raw.term_start_date) as string | undefined;
+    let sinceDate = '';
+    if (startDateRaw && typeof startDateRaw === 'string') {
+      const d = new Date(startDateRaw);
+      if (!isNaN(d.getTime())) {
+        sinceDate = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      }
+    }
+    const party = (politician?.political_party || politician?.party)?.trim();
+    const parts: string[] = [];
+    if (position) {
+      let serving = `${name} has been serving as ${position}`;
+      if (state) serving += ` for ${state}`;
+      if (sinceDate) serving += ` since ${sinceDate}`;
+      serving += '.';
+      parts.push(serving);
+    }
+    if (party) {
+      const lower = party.toLowerCase();
+      if (lower.includes('independent')) {
+        parts.push('They are an Independent.');
+      } else {
+        const partyLabel = lower.includes('democrat') ? 'Democrat' : lower.includes('republican') ? 'Republican' : party;
+        parts.push(`They are a member of the ${partyLabel} Party.`);
+      }
+    }
+    return parts.length > 0 ? parts.join(' ') : null;
+  };
+
+  const structuredBio = buildStructuredBio();
+
+  // Strip Wikipedia-style citation markers [1], [2] so bios read cleanly.
+  const stripCitationMarkers = (s: string) =>
+    s.replace(/\s*\[\s*\d+\s*\]\s*/g, ' ').replace(/\s+/g, ' ').trim();
+
+  // Cap long bios at ~500 words when using stored Wikipedia content.
+  const BIO_DISPLAY_WORD_LIMIT = 500;
+  const truncateToWordLimit = (text: string, limit: number) => {
+    const words = text.trim().split(/\s+/).filter(Boolean);
+    if (words.length <= limit) return text;
+    return words.slice(0, limit).join(' ') + ' …';
+  };
+
+  // Prefer short structured bio (like Abigail Spanberger) when we have the data; otherwise stored headline/bio.
   const raw = politician as unknown as Record<string, unknown>;
-  const headlineText = (
-    (raw.headline ?? raw.bio) as string | undefined
-  )?.trim() ?? '';
-  const bioForAccordion = (raw.bio as string | undefined)?.trim() ?? '';
+  const storedHeadline = stripCitationMarkers(((raw.headline ?? raw.bio) as string | undefined)?.trim() ?? '');
+  const storedBioRaw = stripCitationMarkers((raw.bio as string | undefined)?.trim() ?? '');
+  const storedBioCapped = truncateToWordLimit(storedBioRaw, BIO_DISPLAY_WORD_LIMIT);
+  const headlineText = structuredBio ?? storedHeadline;
+  const bioForAccordion = structuredBio ?? storedBioCapped;
   const showBiographyAccordion = bioForAccordion.length > 0;
   const bioParagraphs = bioForAccordion
     ? bioForAccordion.split(/\n\s*\n/).map((p) => decodeHtmlEntities(p.trim())).filter(Boolean)
@@ -293,7 +365,7 @@ function PoliticianProfile() {
               )}
             </div>
           </div>
-          {headlineText && (
+          {headlineText && !isExecutive && (
             <p className="profile-headline">
               {decodeHtmlEntities(headlineText)}
             </p>

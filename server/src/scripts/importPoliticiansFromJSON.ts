@@ -16,6 +16,7 @@ import { fileURLToPath } from 'url';
 const pbUrl = process.env.POCKETBASE_URL || 'http://127.0.0.1:8091';
 const adminEmail = process.env.POCKETBASE_ADMIN_EMAIL || 'admin@vma.agency';
 const adminPassword = process.env.POCKETBASE_ADMIN_PASSWORD || '';
+const DEBUG_IMPORT = process.env.DEBUG_IMPORT === '1' || process.env.DEBUG_IMPORT === 'true';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -59,25 +60,65 @@ async function importFromJSON(jsonPath: string, pb: PocketBase): Promise<{ creat
   let updated = 0;
   let errors = 0;
 
+  // Only these fields exist on the politicians collection; unknown fields can cause 400
+  const ALLOWED_KEYS = new Set([
+    'name', 'slug', 'office_type', 'state', 'district', 'political_party',
+    'current_position', 'position_start_date', 'photo', 'website_url', 'wikipedia_url',
+    'facebook_url', 'youtube_url', 'instagram_url', 'x_url', 'linkedin_url', 'tiktok_url', 'truth_social_url',
+    'bio', 'headline', 'birth_date', 'chamber', 'office_title', 'term_start_date', 'term_end_date',
+  ]);
+
+  function sanitizePayload(obj: Record<string, unknown>): Record<string, unknown> {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (!ALLOWED_KEYS.has(k)) continue;
+      if (v === undefined || v === null) continue;
+      if (typeof v === 'string' && v.trim() === '') continue;
+      out[k] = v;
+    }
+    if (obj.name != null && String(obj.name).trim()) out.name = String(obj.name).trim();
+    if (obj.slug != null && String(obj.slug).trim()) out.slug = String(obj.slug).trim();
+    return out;
+  }
+
   for (const politician of politicians) {
     const { sources, ...rest } = politician as Record<string, unknown>;
-    const payload = rest as PoliticianData;
+    const raw = rest as PoliticianData;
+    const payload: Record<string, unknown> = { ...raw };
+    const clean = sanitizePayload(payload);
     try {
-      const existing = await pb.collection('politicians').getFirstListItem(`slug="${payload.slug}"`, {});
-      await pb.collection('politicians').update(existing.id, payload);
-      updated++;
+      const existing = await pb.collection('politicians').getFirstListItem(`slug="${clean.slug}"`, {});
+      try {
+        await pb.collection('politicians').update(existing.id, clean);
+        updated++;
+      } catch (updateErr: any) {
+        errors++;
+        const detail = updateErr?.data ?? updateErr?.response ?? updateErr;
+        const msg = detail && typeof detail === 'object' ? JSON.stringify(detail) : (updateErr?.message ?? String(updateErr));
+        console.error(`❌ Failed to update ${clean.slug}: ${msg}`);
+      }
     } catch (err: any) {
       if (err?.status === 404) {
         try {
-          await pb.collection('politicians').create(payload);
+          if (DEBUG_IMPORT && errors === 0) {
+            console.log(`\n[DEBUG] First create payload for ${clean.slug}:`, JSON.stringify(clean, null, 2));
+          }
+          await pb.collection('politicians').create(clean);
           created++;
         } catch (createErr: any) {
           errors++;
-          console.error(`❌ Failed to create ${payload.slug}: ${createErr?.message}`);
+          const detail = createErr?.data ?? createErr?.response ?? createErr;
+          const msg = detail && typeof detail === 'object' ? JSON.stringify(detail) : (createErr?.message ?? String(createErr));
+          console.error(`❌ Failed to create ${clean.slug}: ${msg}`);
+          if (DEBUG_IMPORT && errors === 1) {
+            console.error('[DEBUG] Full error object:', JSON.stringify(createErr, Object.getOwnPropertyNames(createErr), 2));
+          }
         }
       } else {
         errors++;
-        console.error(`❌ Error with ${payload.slug}: ${err?.message}`);
+        const detail = err?.data ?? err?.response ?? err;
+        const msg = detail && typeof detail === 'object' ? JSON.stringify(detail) : (err?.message ?? String(err));
+        console.error(`❌ Error with ${clean.slug}: ${msg}`);
       }
     }
   }
@@ -100,7 +141,17 @@ async function main() {
 
   try {
     // Authenticate as admin
-    await pb.admins.authWithPassword(adminEmail, adminPassword);
+    try {
+      await pb.admins.authWithPassword(adminEmail, adminPassword);
+    } catch (authErr: any) {
+      const status = authErr?.status ?? authErr?.response?.status;
+      const body = authErr?.data ?? authErr?.response;
+      console.error('❌ Admin auth failed.');
+      console.error(`   Status: ${status}`);
+      if (body && typeof body === 'object') console.error('   Body:', JSON.stringify(body, null, 2));
+      else console.error('   Body:', String(body ?? authErr?.message));
+      process.exit(1);
+    }
     console.log('✅ Authenticated as admin');
     console.log('');
 
@@ -110,6 +161,7 @@ async function main() {
       path.join(dataDir, 'representatives_import_ready.json'),
       path.join(dataDir, 'governors_import_ready.json'),
       path.join(dataDir, 'politicians_import_ready.json'),
+      path.join(dataDir, 'executive_import_ready.json'),
     ];
 
     let totalCreated = 0;

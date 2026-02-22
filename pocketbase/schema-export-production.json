@@ -1,0 +1,92 @@
+[
+  {
+    "id": "pbc_3142635823",
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "name": "_superusers",
+    "type": "auth",
+    "system": true
+  },
+  {
+    "id": "_pb_users_auth_",
+    "name": "users",
+    "type": "auth",
+    "listRule": "id = @request.auth.id",
+    "viewRule": "id = @request.auth.id",
+    "createRule": "",
+    "updateRule": "@request.auth.id = id",
+    "deleteRule": "id = @request.auth.id",
+    "system": false
+  },
+  {
+    "id": "pbc_4275539003",
+    "name": "_authOrigins",
+    "type": "base",
+    "system": true
+  },
+  {
+    "id": "pbc_2281828961",
+    "name": "_externalAuths",
+    "type": "base",
+    "system": true
+  },
+  {
+    "id": "pbc_2279338944",
+    "name": "_mfas",
+    "type": "base",
+    "system": true
+  },
+  {
+    "id": "pbc_1638494021",
+    "name": "_otps",
+    "type": "base",
+    "system": true
+  },
+  {
+    "id": "pbc_2439990212",
+    "name": "feeds",
+    "type": "base",
+    "listRule": "id != \"\"",
+    "viewRule": "id != \"\"",
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "system": false
+  },
+  {
+    "id": "pbc_3830222512",
+    "name": "politicians",
+    "type": "base",
+    "listRule": "id != \"\"",
+    "viewRule": "id != \"\"",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": "",
+    "system": false
+  },
+  {
+    "id": "pbc_3097184542",
+    "name": "profile_comments",
+    "type": "base",
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": null,
+    "deleteRule": "",
+    "system": false
+  },
+  {
+    "id": "pbc_3278018694",
+    "name": "user_favorites",
+    "type": "base",
+    "listRule": "user = @request.auth.id",
+    "viewRule": "user = @request.auth.id",
+    "createRule": "@request.auth.id != '' && user = @request.auth.id",
+    "updateRule": "",
+    "deleteRule": "user = @request.auth.id",
+    "system": false
+  }
+]

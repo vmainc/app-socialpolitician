@@ -1,0 +1,56 @@
+/* Executive page – President & VP on one line, Cabinet below */
+
+.politicians-page.executive-page .page-header .page-title,
+.politicians-page.executive-page .page-header .page-subtitle {
+  text-align: center;
+}
+
+.executive-top-row {
+  max-width: 1280px;
+  margin: 0 auto 2.5rem;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2.5rem 3rem;
+}
+
+.executive-top-row .executive-section {
+  margin: 0;
+  padding: 0;
+  flex: 0 1 auto;
+}
+
+.executive-top-row .politicians-card-grid {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.25rem;
+  grid-template-columns: unset;
+}
+
+.executive-section {
+  max-width: 1280px;
+  margin: 0 auto 2.5rem;
+  padding: 0 1.5rem;
+}
+
+.executive-section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #374151;
+  margin: 0 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+.politician-card-position {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0;
+  line-height: 1.3;
+}

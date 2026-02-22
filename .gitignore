@@ -21,6 +21,7 @@ pb_linux/*.db-*
 *.log
 .DS_Store
 *.tar.gz
+tmp/
 
 # IDE
 .idea/

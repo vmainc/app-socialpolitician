@@ -11,6 +11,13 @@
  */
 
 import PocketBase from 'pocketbase';
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, '../../..');
 
 interface RepresentativeData {
   name: string;
@@ -254,19 +261,19 @@ async function fetchWikipediaPage(): Promise<string> {
 }
 
 async function main() {
+  const outputJson = process.argv.includes('--output-json');
   const pbUrl = process.env.POCKETBASE_URL || 'http://127.0.0.1:8091';
   const pbAdminEmail = process.env.POCKETBASE_ADMIN_EMAIL || 'admin@vma.agency';
   const pbAdminPassword = process.env.POCKETBASE_ADMIN_PASSWORD || '';
   
   console.log('📊 US House Representatives Import Script');
   console.log('========================================');
-  console.log(`PocketBase URL: ${pbUrl}`);
-  console.log('');
-  
-  if (!pbAdminPassword) {
-    console.error('❌ POCKETBASE_ADMIN_PASSWORD environment variable required');
-    process.exit(1);
+  if (outputJson) {
+    console.log('Mode: --output-json (write data/representatives_import_ready.json only)');
+  } else {
+    console.log(`PocketBase URL: ${pbUrl}`);
   }
+  console.log('');
   
   // Fetch Wikipedia page
   let html: string;
@@ -285,6 +292,37 @@ async function main() {
   
   if (representatives.length === 0) {
     console.error('❌ No representatives found. Check parsing logic.');
+    process.exit(1);
+  }
+
+  if (outputJson) {
+    const dataDir = path.join(projectRoot, 'data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    const outPath = path.join(dataDir, 'representatives_import_ready.json');
+    const records = representatives.map((rep) => {
+      const slug = normalizeSlug(`${rep.name}-${rep.state}-${rep.district}`);
+      const party = rep.party === 'Democratic' ? 'Democrat' : rep.party;
+      return {
+        name: rep.name,
+        slug,
+        office_type: 'representative',
+        state: rep.state,
+        district: rep.district || undefined,
+        political_party: party,
+        current_position: 'U.S. Representative',
+        position_start_date: rep.position_start_date || undefined,
+        wikipedia_url: rep.wikipedia_url || undefined,
+      };
+    });
+    fs.writeFileSync(outPath, JSON.stringify(records, null, 2), 'utf-8');
+    console.log(`✅ Wrote ${records.length} representatives to ${outPath}`);
+    return;
+  }
+  
+  if (!pbAdminPassword) {
+    console.error('❌ POCKETBASE_ADMIN_PASSWORD environment variable required');
     process.exit(1);
   }
   
@@ -330,6 +368,8 @@ async function main() {
           await pb.collection('politicians').update(existing.id, {
             name: rep.name,
             state: rep.state,
+            district: rep.district || null,
+            office_type: 'representative',
             current_position: 'U.S. Representative',
             political_party: rep.party,
             wikipedia_url: rep.wikipedia_url || null,
@@ -347,6 +387,8 @@ async function main() {
             name: rep.name,
             slug: slug,
             state: rep.state,
+            district: rep.district || null,
+            office_type: 'representative',
             current_position: 'U.S. Representative',
             political_party: rep.party,
             wikipedia_url: rep.wikipedia_url || null,

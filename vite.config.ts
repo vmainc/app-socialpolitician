@@ -49,6 +49,7 @@ export default defineConfig({
   root: 'web',
   server: {
     // Dev server proxy - browser still uses /api and /pb paths
+    // Set VITE_USE_LIVE_PB=true to proxy /pb to live site (same data as production)
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:3001',
@@ -59,11 +60,19 @@ export default defineConfig({
           if (req.url?.startsWith('/api/news')) return req.url;
         },
       },
-      '/pb': {
-        target: 'http://127.0.0.1:8091',
-        changeOrigin: true,
-        secure: false,
-      },
+      '/pb': process.env.VITE_USE_LIVE_PB === 'true'
+        ? {
+            target: 'https://app.socialpolitician.com',
+            changeOrigin: true,
+            secure: true,
+            // /pb/* -> https://app.socialpolitician.com/pb/*
+          }
+        : {
+            target: 'http://127.0.0.1:8091',
+            changeOrigin: true,
+            secure: false,
+            rewrite: (path) => path.replace(/^\/pb/, '') || '/',
+          },
     },
   },
   build: {

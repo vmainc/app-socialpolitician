@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Navigation from './components/Navigation';
 import Home from './pages/Home';
 import PoliticiansDirectory from './pages/PoliticiansDirectory';
+import Executive from './pages/Executive';
 import PoliticianProfile from './pages/PoliticianProfile';
 import Account from './pages/Account';
 
@@ -14,6 +15,7 @@ function App() {
         <Route path="/senators" element={<PoliticiansDirectory />} />
         <Route path="/representatives" element={<PoliticiansDirectory />} />
         <Route path="/governors" element={<PoliticiansDirectory />} />
+        <Route path="/executive" element={<Executive />} />
         <Route path="/account" element={<Account />} />
         {/* Redirect old presidency routes to home */}
         <Route path="/presidents" element={<Navigate to="/" replace />} />

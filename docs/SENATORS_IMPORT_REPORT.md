@@ -1,12 +1,12 @@
 # US Senators Import Report
 
-Generated: 2026-01-19T17:11:28.039Z
+Generated: 2026-02-21T21:05:40.384Z
 
 ## Summary
 
 - **Total Senators**: 100
-- **Created**: 1
-- **Updated**: 99
+- **Created**: 2
+- **Updated**: 98
 - **Errors**: 0
 
 ## Party Distribution

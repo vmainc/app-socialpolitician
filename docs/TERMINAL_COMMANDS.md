@@ -17,7 +17,71 @@ npm install
 npm run dev
 ```
 
-- Opens app at `http://localhost:5173` (or similar). PocketBase must be running locally if you hit API.
+- **`npm run dev`** starts both **PocketBase** (http://127.0.0.1:8091) and **Vite** (http://localhost:5173) in one terminal. The app at localhost:5173 uses the local PocketBase API.
+- To run only the frontend: `npm run dev:vite`. To run only PocketBase: `npm run dev:pb`.
+
+**Use live site data in dev (same as production):**
+
+```bash
+npm run dev:live
+```
+
+Or: `VITE_USE_LIVE_PB=true npm run dev` (starts local PocketBase too, but app still uses live data).  
+With **dev:live**, only Vite runs; the app at http://localhost:5173 proxies `/pb` to **https://app.socialpolitician.com/pb**, so you see the same senators, representatives, and data as on the live site.
+
+### Wipe local PocketBase and match live schema
+
+If local PocketBase schema is wrong (e.g. office_type rejects president/cabinet), wipe and start fresh:
+
+1. **Stop PocketBase** (Ctrl+C on `npm run dev` or the terminal running `dev:pb`).
+2. **Wipe data** (from repo root):
+   ```bash
+   bash scripts/wipe-local-pocketbase.sh
+   ```
+   Confirm with `y`. This deletes `pocketbase/pb_data/*`.
+3. **Start again**: `npm run dev`. PocketBase will create a new DB and run all migrations, including one that makes politicians match live (office_type = text, same rules).
+4. **Create admin**: Open http://127.0.0.1:8091/_/ and create the first admin if prompted.
+5. **Import data**: Run the populate steps below (`pb:import` with env vars).
+
+### Push live site back to local (data + photos, including executives)
+
+To copy **all** politicians from the live site to local and attach their photos (so local has the same data and images as production):
+
+1. **Start local PocketBase** (e.g. `npm run dev:pb` in one terminal).
+2. In another terminal:
+
+```bash
+cd "/Users/doughigson/Desktop/DOUGS PLUGINS/app.socialpolitician.com"
+export POCKETBASE_URL=http://127.0.0.1:8091
+export POCKETBASE_ADMIN_EMAIL=admin@vma.agency
+export POCKETBASE_ADMIN_PASSWORD='YOUR_ADMIN_PASSWORD'
+npm run pb:sync-from-live
+```
+
+- **Executives** are in the same `politicians` collection on live, so they are included.
+- **Images** are downloaded from live and attached to each local record. See `docs/MISSING_IMAGES_AFTER_IMPORT.md` (Option 4).
+
+Use `npm run pb:sync-from-live -- --skip-photos` to sync only data (no photos).
+
+### Populate local data (politicians) from JSON
+
+Local PocketBase starts with an empty **politicians** collection. To load data from `data/*.json`:
+
+1. **Start PocketBase** (e.g. `npm run dev` or `npm run dev:pb` in another terminal).
+2. In a **new terminal**, from the project root:
+
+```bash
+cd "/Users/doughigson/Desktop/DOUGS PLUGINS/app.socialpolitician.com"
+
+export POCKETBASE_URL=http://127.0.0.1:8091
+export POCKETBASE_ADMIN_EMAIL=admin@vma.agency
+export POCKETBASE_ADMIN_PASSWORD='YOUR_ADMIN_PASSWORD'
+
+npm run pb:import
+```
+
+- Uses `data/senators_import_ready.json`, `data/representatives_import_ready.json`, `data/governors_import_ready.json`, `data/politicians_import_ready.json`, and `data/executive_import_ready.json` (skips any missing file). To create `representatives_import_ready.json` from Wikipedia, run `npm run pb:reps:json` first; or run `npm run pb:reps:import` to import representatives directly into PocketBase.
+- After this, http://localhost:5173 should show the imported politicians. The **Executive** page at http://localhost:5173/executive shows President, VP, and Cabinet (see `docs/EXECUTIVE.md` for images/social backfill).
 
 ### Save and push code (so VPS can pull it)
 

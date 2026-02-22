@@ -10,6 +10,7 @@
  *   POCKETBASE_ADMIN_EMAIL=admin@vma.agency \
  *   POCKETBASE_ADMIN_PASSWORD=password \
  *   node scripts/scrape_portraits.js [--use-labeled] [--limit=N] [--office-type=TYPE]
+ *   --office-type=executive  → President, VP, Cabinet (president | vice_president | cabinet)
  */
 
 import PocketBase from 'pocketbase';
@@ -163,13 +164,25 @@ async function downloadImage(url, filepath) {
  */
 function getWikipediaTitle(wikipediaUrl) {
   if (!wikipediaUrl) return null;
-  
+
   const match = wikipediaUrl.match(/\/wiki\/(.+)$/);
   if (match) {
     return decodeURIComponent(match[1].replace(/_/g, ' '));
   }
-  
+
   return null;
+}
+
+/**
+ * Derive a Wikipedia page title from politician name (when wikipedia_url is missing).
+ * Tries full name, then name without middle initial(s).
+ */
+function deriveWikipediaTitleFromName(name) {
+  if (!name || typeof name !== 'string') return null;
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  // Wikipedia titles usually use "First Last" or "First M. Last" - pass as-is first
+  return trimmed;
 }
 
 /**
@@ -243,7 +256,11 @@ async function main() {
     try {
       let filter = 'photo = "" || photo = null';
       if (officeType) {
-        filter = `(${filter}) && office_type="${officeType}"`;
+        if (officeType === 'executive') {
+          filter = `(${filter}) && (office_type="president" || office_type="vice_president" || office_type="cabinet")`;
+        } else {
+          filter = `(${filter}) && office_type="${officeType}"`;
+        }
       }
       
       const response = await pb.collection('politicians').getList(page, perPage, {
@@ -264,28 +281,26 @@ async function main() {
     }
   }
   
-  console.log(`✅ Found ${allRecords.length} politicians without photos${officeType ? ` (${officeType}s)` : ''}`);
+  console.log(`✅ Found ${allRecords.length} politicians without photos${officeType ? ` (${officeType === 'executive' ? 'executive branch' : officeType + 's'})` : ''}`);
   console.log('');
-  
-  // Filter to those with Wikipedia URLs
-  const recordsToProcess = allRecords.filter(r => r.wikipedia_url);
-  
+
+  const recordsToProcess = allRecords;
   if (limit) {
     recordsToProcess.splice(limit);
     console.log(`📋 Limiting to ${limit} records`);
   }
-  
-  console.log(`📋 Processing ${recordsToProcess.length} records`);
+
+  console.log(`📋 Processing ${recordsToProcess.length} records (using wikipedia_url or name)`);
   console.log('');
-  
+
   let downloaded = 0;
   let skipped = 0;
   let errors = 0;
-  
+
   for (let i = 0; i < recordsToProcess.length; i++) {
     const record = recordsToProcess[i];
     console.log(`[${i + 1}/${recordsToProcess.length}] ${record.name} (${record.slug})`);
-    
+
     // Check if already downloaded
     const existingEntry = index[record.id];
     if (existingEntry && fs.existsSync(existingEntry.filepath)) {
@@ -293,11 +308,14 @@ async function main() {
       skipped++;
       continue;
     }
-    
-    // Get Wikipedia title
-    const wikiTitle = getWikipediaTitle(record.wikipedia_url);
+
+    // Get Wikipedia title: from URL first, then fallback to name (for senators/reps without wikipedia_url)
+    let wikiTitle = getWikipediaTitle(record.wikipedia_url);
     if (!wikiTitle) {
-      console.log(`   ⚠️  No Wikipedia title found`);
+      wikiTitle = deriveWikipediaTitleFromName(record.name);
+    }
+    if (!wikiTitle) {
+      console.log(`   ⚠️  No Wikipedia title (need wikipedia_url or name)`);
       errors++;
       continue;
     }

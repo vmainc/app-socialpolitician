@@ -42,14 +42,22 @@ const force = args.includes('--force');
 const slugArg = args.find(a => a.startsWith('--slug='));
 const singleSlug = slugArg ? slugArg.split('=')[1] : null;
 
+/** Optional alias: filename slug -> PocketBase slug (for misnamed files). */
+const SLUG_ALIASES = {
+  'michelle-grisham': 'michelle-lujan-grisham',
+  'sarah-sanders': 'sarah-huckabee-sanders',
+};
+
 /**
- * Extract slug from filename (slug_recordId.ext)
+ * Extract slug from filename.
+ * Supports: slug_recordId.ext (slug before first _) or slug.ext (whole basename = slug).
  */
 function extractSlug(filename) {
   const base = path.basename(filename, path.extname(filename));
   const i = base.indexOf('_');
-  if (i === -1) return null;
-  return base.slice(0, i);
+  const slug = i === -1 ? base : base.slice(0, i);
+  if (!slug || slug.length < 2) return null;
+  return SLUG_ALIASES[slug] || slug;
 }
 
 function getMimeType(filepath) {

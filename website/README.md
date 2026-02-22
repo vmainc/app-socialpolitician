@@ -24,7 +24,7 @@ Landing page for **socialpolitician.com** that links to all app pages at **app.s
 | Senators | https://app.socialpolitician.com/senators |
 | Representatives | https://app.socialpolitician.com/representatives |
 | Governors | https://app.socialpolitician.com/governors |
-| Presidents | https://app.socialpolitician.com/presidents |
+| Executive | https://app.socialpolitician.com/executive |
 
 ## Customization
 

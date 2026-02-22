@@ -8,6 +8,10 @@
  *   POCKETBASE_ADMIN_EMAIL=admin@vma.agency \
  *   POCKETBASE_ADMIN_PASSWORD=password \
  *   npx tsx server/src/scripts/enrichPoliticiansFromWikipedia.ts
+ *
+ * Options:
+ *   --office-type=executive|senator|representative|governor  only that type
+ *   --fresh  ignore progress file, process all matching records (use when re-running for social links)
  */
 
 import PocketBase from 'pocketbase';
@@ -360,10 +364,10 @@ function extractBio(html: string): string | null {
       if (text.includes('may refer to:') || text.includes('disambiguation')) continue;
       if (text.match(/^\[?\d+\]?$/)) continue; // Just a reference number
       
-      // Clean up: remove multiple spaces, normalize
-      text = text.replace(/\s+/g, ' ').trim();
+      // Remove Wikipedia citation markers [1], [2], etc.
+      text = text.replace(/\s*\[\s*\d+\s*\]\s*/g, ' ').replace(/\s+/g, ' ').trim();
       
-      // Limit to first 500 characters for brevity
+      // Limit to first 500 characters for brevity (match other short bios)
       if (text.length > 500) {
         text = text.substring(0, 497) + '...';
       }
@@ -464,6 +468,17 @@ async function enrichPolitician(record: any): Promise<EnrichmentResult> {
     if (Object.keys(updates).length > 0) {
       await pb.collection('politicians').update(record.id, updates);
       result.success = true;
+      // Verify: re-fetch and confirm at least one updated field persisted
+      try {
+        const updated = await pb.collection('politicians').getOne(record.id, { fields: result.updatedFields.join(',') });
+        for (const field of result.updatedFields) {
+          if (updates[field] && !(updated as any)[field]) {
+            result.error = (result.error || '') + ` ${field} did not persist; `;
+          }
+        }
+      } catch (_) {
+        // Verification fetch failed; don't overwrite success
+      }
     } else {
       result.success = true; // No updates needed, but no error
     }
@@ -541,11 +556,16 @@ async function main() {
   const args = process.argv.slice(2);
   const officeTypeArg = args.find(arg => arg.startsWith('--office-type='));
   const officeType = officeTypeArg ? officeTypeArg.split('=')[1] : null;
+  const fresh = args.includes('--fresh');
   
   console.log('🔄 Enriching Politicians from Wikipedia');
   console.log('=======================================');
+  console.log(`   PocketBase: ${pbUrl} (updates are written here)`);
   if (officeType) {
     console.log(`   Filtering by office_type: ${officeType}`);
+  }
+  if (fresh) {
+    console.log('   --fresh: ignoring progress, processing all matching records');
   }
   console.log('');
   
@@ -563,11 +583,19 @@ async function main() {
     process.exit(1);
   }
   
-  // Load progress
-  const progress = loadProgress();
-  const results = loadResults();
+  // Load progress (or start fresh)
+  const progress = fresh ? {
+    lastProcessedId: null,
+    processedCount: 0,
+    updatedCount: 0,
+    errorCount: 0,
+    startTime: new Date().toISOString(),
+  } : loadProgress();
+  const results = fresh ? [] : loadResults();
   
-  console.log(`📊 Progress: ${progress.processedCount} processed, ${progress.updatedCount} updated, ${progress.errorCount} errors`);
+  if (!fresh) {
+    console.log(`📊 Progress: ${progress.processedCount} processed, ${progress.updatedCount} updated, ${progress.errorCount} errors`);
+  }
   console.log('');
   
   // Fetch politicians
@@ -580,7 +608,11 @@ async function main() {
     try {
       let filter = '';
       if (officeType) {
-        filter = `office_type="${officeType}"`;
+        if (officeType === 'executive') {
+          filter = `(office_type="president" || office_type="vice_president" || office_type="cabinet")`;
+        } else {
+          filter = `office_type="${officeType}"`;
+        }
       }
       
       const response = await pb.collection('politicians').getList(page, perPage, {
@@ -606,8 +638,8 @@ async function main() {
   
   // Filter records that need enrichment
   const recordsToEnrich = allRecords.filter(record => {
-    // Skip if already processed (resume support)
-    if (progress.lastProcessedId && record.id <= progress.lastProcessedId) {
+    // Skip if already processed (resume support), unless --fresh
+    if (!fresh && progress.lastProcessedId && record.id <= progress.lastProcessedId) {
       return false;
     }
     
@@ -670,6 +702,11 @@ async function main() {
   console.log(`   Updated: ${progress.updatedCount}`);
   console.log(`   Errors: ${progress.errorCount}`);
   console.log(`   Results saved to: ${RESULTS_FILE}`);
+  if (progress.updatedCount > 0) {
+    console.log('');
+    console.log('💡 To see social links in the app: use local PocketBase (npm run dev), not live.');
+    console.log(`   App at http://localhost:5173 reads from ${pbUrl} when using npm run dev.`);
+  }
   console.log('');
 }
 

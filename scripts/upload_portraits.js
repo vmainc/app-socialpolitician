@@ -75,15 +75,23 @@ function saveIndex(index) {
 }
 
 /**
- * Extract record ID from filename
+ * Extract record ID from filename (slug_recordId.ext)
  */
 function extractRecordId(filename) {
-  // Format: slug_recordId.ext
   const match = filename.match(/_([a-z0-9]{15})\./);
-  if (match) {
-    return match[1];
-  }
+  if (match) return match[1];
   return null;
+}
+
+/**
+ * Extract slug from filename (slug_recordId.ext or slug.ext).
+ * Used when record ID is missing or no longer exists (e.g. after re-import).
+ */
+function extractSlug(filename) {
+  const base = path.basename(filename, path.extname(filename));
+  const i = base.indexOf('_');
+  const slug = i === -1 ? base : base.slice(0, i);
+  return slug && slug.length >= 2 ? slug : null;
 }
 
 /**
@@ -251,17 +259,38 @@ async function main() {
   for (let i = 0; i < files.length; i++) {
     const filename = files[i];
     const filepath = path.join(sourceDir, filename);
-    
+
     console.log(`[${i + 1}/${files.length}] ${filename}`);
-    
-    // Extract record ID
-    const recordId = extractRecordId(filename);
-    if (!recordId) {
-      console.log(`   ⚠️  Could not extract record ID from filename`);
+
+    let recordId = extractRecordId(filename);
+    let record = null;
+
+    // Resolve record: by ID first, then by slug (handles re-import where IDs changed)
+    if (recordId) {
+      try {
+        record = await pb.collection('politicians').getOne(recordId);
+      } catch (_) {
+        record = null;
+      }
+    }
+    if (!record) {
+      const slug = extractSlug(filename);
+      if (slug) {
+        try {
+          record = await pb.collection('politicians').getFirstListItem(`slug="${slug}"`);
+          if (record) recordId = record.id;
+        } catch (_) {
+          record = null;
+        }
+      }
+    }
+
+    if (!record || !recordId) {
+      console.log(`   ⚠️  No matching politician (tried record ID and slug "${extractSlug(filename) || '?'}")`);
       errors++;
       continue;
     }
-    
+
     // Check if already uploaded (in index)
     const entry = index[recordId];
     if (entry && entry.status === 'uploaded') {
@@ -269,27 +298,19 @@ async function main() {
       skipped++;
       continue;
     }
-    
-    // Verify record exists
-    try {
-      const record = await pb.collection('politicians').getOne(recordId);
-      console.log(`   👤 Found: ${record.name}`);
-    } catch (error) {
-      console.log(`   ⚠️  Record not found: ${recordId}`);
-      errors++;
-      continue;
-    }
-    
+
+    console.log(`   👤 ${record.name} (${record.slug})`);
+
     // Upload
     if (!dryRun) {
       console.log(`   📤 Uploading...`);
       const success = await uploadPortrait(recordId, filepath);
-      
+
       if (success) {
         // Move file to uploaded directory
         const uploadedPath = path.join(UPLOADED_DIR, filename);
         fs.renameSync(filepath, uploadedPath);
-        
+
         // Update index
         if (entry) {
           entry.status = 'uploaded';
@@ -303,24 +324,23 @@ async function main() {
             uploaded_at: new Date().toISOString(),
           };
         }
-        
+
         uploaded++;
         console.log(`   ✅ Uploaded and moved to: ${uploadedPath}`);
       } else {
         errors++;
       }
     } else {
-      console.log(`   🧪 Would upload to record: ${recordId}`);
-      uploaded++; // Count as would-be uploaded
+      console.log(`   🧪 Would upload to: ${record.name}`);
+      uploaded++;
     }
-    
+
     // Save index every 10 records
     if ((i + 1) % 10 === 0 && !dryRun) {
       saveIndex(index);
       console.log(`   💾 Index saved`);
     }
-    
-    // Small delay
+
     await new Promise(resolve => setTimeout(resolve, 100));
   }
   

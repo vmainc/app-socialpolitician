@@ -22,17 +22,17 @@ migrate((app) => {
     ],
     "id": "pbc_2439990212",
     "indexes": [],
-    "listRule": "id != \"\"",
+    "listRule": null,
     "name": "feeds",
     "system": false,
     "type": "base",
     "updateRule": null,
-    "viewRule": "id != \"\""
+    "viewRule": null
   });
 
   return app.save(collection);
 }, (app) => {
-  const collection = app.findCollectionByNameOrId("pbc_2439990212");
-
+  const collection = app.findCollectionByNameOrId("pbc_2439990212") || app.findCollectionByNameOrId("feeds");
+  if (!collection) return;
   return app.delete(collection);
 })

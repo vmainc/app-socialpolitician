@@ -60,7 +60,8 @@ function looksLikeHtml(text: string): boolean {
   return trimmed.startsWith('<!') || trimmed.startsWith('<html') || (trimmed.length > 0 && !trimmed.includes('<channel') && !trimmed.includes('<item') && !trimmed.includes('<entry'));
 }
 
-function parseRssXml(xmlText: string, options?: { allowDuplicateSources?: boolean }): NewsItem[] {
+function parseRssXml(xmlText: string, options?: { allowDuplicateSources?: boolean; limit?: number }): NewsItem[] {
+  const maxItems = options?.limit ?? LIMIT;
   const parser = new DOMParser();
   const doc = parser.parseFromString(xmlText, 'text/xml');
   const parserError = doc.querySelector('parsererror');
@@ -71,10 +72,10 @@ function parseRssXml(xmlText: string, options?: { allowDuplicateSources?: boolea
   if (itemEls.length === 0) itemEls = doc.querySelectorAll('item');
   if (itemEls.length === 0) itemEls = doc.querySelectorAll('entry');
   const seen = new Set<string>();
-  const result: NewsItem[] = [];
+  const withDate: { title: string; link: string; pubDateRaw: string; source: string }[] = [];
   const allowDupSources = options?.allowDuplicateSources ?? true;
 
-  for (let i = 0; i < itemEls.length && result.length < LIMIT; i++) {
+  for (let i = 0; i < itemEls.length; i++) {
     const item = itemEls[i];
     const titleEl = item.querySelector('title');
     let linkEl: Element | null = item.querySelector('link');
@@ -101,15 +102,25 @@ function parseRssXml(xmlText: string, options?: { allowDuplicateSources?: boolea
     if (!allowDupSources && seen.has(source)) continue;
     seen.add(source);
 
-    result.push({
-      title,
-      link,
-      pubDate: formatPubDate(pubDateRaw),
-      source: source || 'News',
-    });
+    withDate.push({ title, link, pubDateRaw, source: source || 'News' });
   }
 
-  return result;
+  // Sort by date descending (newest first), then take limit
+  withDate.sort((a, b) => {
+    const timeA = new Date(a.pubDateRaw).getTime();
+    const timeB = new Date(b.pubDateRaw).getTime();
+    if (Number.isNaN(timeA) && Number.isNaN(timeB)) return 0;
+    if (Number.isNaN(timeA)) return 1;
+    if (Number.isNaN(timeB)) return -1;
+    return timeB - timeA;
+  });
+
+  return withDate.slice(0, maxItems).map(({ title, link, pubDateRaw, source }) => ({
+    title,
+    link,
+    pubDate: formatPubDate(pubDateRaw),
+    source,
+  }));
 }
 
 interface ProfileNewsFeedProps {
@@ -174,7 +185,7 @@ export default function ProfileNewsFeed({ name, limit = LIMIT, hideTitle = false
             lastError = 'News feed returned an error page.';
             continue;
           }
-          const list = parseRssXml(text).slice(0, limit);
+          const list = parseRssXml(text, { limit });
           if (list.length > 0) return { list, lastError: null };
           lastError = 'No relevant news found.';
         } catch (err) {

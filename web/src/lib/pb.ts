@@ -49,19 +49,18 @@ export function pbNotContains(field: string, value: string): string {
  * Previous/Former filtering is done client-side for reliability
  */
 export function buildOfficeFilter(
-  officeType: 'senator' | 'representative' | 'governor'
+  officeType: 'senator' | 'representative' | 'governor' | 'executive'
 ): string {
+  // Executive: President, Vice President, Cabinet
+  if (officeType === 'executive') {
+    return `(office_type="president" || office_type="vice_president" || office_type="cabinet")`;
+  }
+
   // SIMPLEST APPROACH: Use only office_type field
-  // PocketBase doesn't reliably support negated contains (!~ or !(field~"value"))
-  // We filter out Previous/Former on the client side instead
-  
   if (officeType === 'senator') {
-    // For senators, use OR to match either office_type OR current_position pattern
-    // This handles cases where office_type might be missing but current_position is set
     return `(office_type="senator" || current_position~"U.S. Senator")`;
   }
-  
-  // For representatives and governors, just use office_type
+
   return `office_type="${officeType}"`;
 }
 

@@ -13,15 +13,23 @@ git commit -m "Add VPS admin password reset script"
 git push origin main
 ```
 
-**On the VPS** (SSH in first: `ssh doug@69.169.103.23`):
+**On the VPS** (SSH in first, e.g. `ssh doug@your-vps-ip`):
 
 ```bash
 cd /var/www/socialpolitician-app
 git pull origin main
+
+# Stop PocketBase so the DB can be updated safely
+sudo systemctl stop socialpolitician-app-pocketbase.service
+
+# Reset password (sets admin@vma.agency to 12345678)
 python3 scripts/vps-reset-admin-password.py
+
+# Start PocketBase again
+sudo systemctl start socialpolitician-app-pocketbase.service
 ```
 
-Then open https://app.socialpolitician.com/pb/_/ in a private/incognito window and log in with **admin@vma.agency** / **123456**. Change the password in the admin UI after logging in.
+Then open https://app.socialpolitician.com/pb/_/ in a private/incognito window and log in with **admin@vma.agency** / **12345678**. Change the password in the admin UI after logging in.
 
 ---
 
@@ -52,4 +60,4 @@ python3 scripts/vps-reset-admin-password.py
 
 Then log in at https://app.socialpolitician.com/pb/_/ with **admin@vma.agency** / **12345678** (use incognito or clear cookies for the site).
 
-**Important:** The service runs with `--dir=.../pocketbase`, so the DB file is `pocketbase/data.db` (not `pocketbase/pb_data/data.db`). The script uses that path so the server sees the updated password.
+**Important:** The service runs with `--dir=.../pocketbase/pb_data`, so the DB file is `pocketbase/pb_data/data.db`. The script updates that file; stop the service before running so the update is applied cleanly.
