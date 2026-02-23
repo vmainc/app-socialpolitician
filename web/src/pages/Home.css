@@ -35,6 +35,18 @@
   padding: 1.5rem;
 }
 
+/* Search input: 16px on mobile prevents iOS zoom on focus; touch-action improves responsiveness */
+.home-search-input {
+  font-size: 0.875rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (max-width: 768px) {
+  .home-search-input {
+    font-size: 16px;
+  }
+}
+
 .home-card-grid {
   max-width: 1280px;
   margin: 0 auto;

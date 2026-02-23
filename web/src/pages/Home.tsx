@@ -119,11 +119,13 @@ function Home() {
             <div style={{ position: 'relative' }}>
               <input
                 id="search"
+                className="home-search-input"
                 type="text"
+                autoComplete="off"
                 value={filters.searchText}
                 onChange={(e) => updateSearchText(e.target.value)}
                 placeholder="Name or position..."
-                style={{ width: '100%', padding: '0.625rem 2.5rem 0.625rem 1rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', fontSize: '0.875rem' }}
+                style={{ width: '100%', padding: '0.625rem 2.5rem 0.625rem 1rem', border: '1px solid #d1d5db', borderRadius: '0.5rem' }}
               />
               <div style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', pointerEvents: 'none' }}>
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">

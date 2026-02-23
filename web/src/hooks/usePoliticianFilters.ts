@@ -6,7 +6,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-export type OfficeType = 'senator' | 'representative' | 'governor' | 'all';
+export type OfficeType = 'senator' | 'representative' | 'governor' | 'executive' | 'all';
 export type PartyType = 'Democratic' | 'Republican' | 'Independent' | 'Other' | 'all';
 export type SortOption = 'name' | '-name' | '-created' | 'created' | 'state' | 'party';
 
@@ -97,6 +97,8 @@ export function buildPocketBaseFilter(filters: PoliticianFilters): string {
       conditions.push(`(office_type="representative" || chamber="Representative")`);
     } else if (filters.selectedOffice === 'governor') {
       conditions.push(`(office_type="governor" || chamber="Governor")`);
+    } else if (filters.selectedOffice === 'executive') {
+      conditions.push(`(office_type="president" || office_type="vice_president" || office_type="cabinet" || chamber="President" || chamber="Vice President" || chamber="Cabinet")`);
     } else {
       conditions.push(`office_type="${filters.selectedOffice}"`);
     }
@@ -210,9 +212,21 @@ export function usePoliticianFilters() {
     setSearchParams(params, { replace: true });
   }, [filters, setSearchParams]);
   
-  // Build PocketBase filter string
-  const pbFilter = useMemo(() => buildPocketBaseFilter(filters), [filters]);
-  
+  // Debounced search for API (avoids request on every keystroke)
+  const [debouncedSearchText, setDebouncedSearchText] = useState(filters.searchText);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchText(filters.searchText);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [filters.searchText]);
+
+  // Build PocketBase filter string using debounced search so typing feels instant
+  const pbFilter = useMemo(
+    () => buildPocketBaseFilter({ ...filters, searchText: debouncedSearchText }),
+    [filters.page, filters.perPage, filters.selectedState, filters.selectedOffice, filters.selectedParty, filters.hasPhoto, filters.sort, debouncedSearchText]
+  );
+
   // Update functions
   const updateSearchText = useCallback((text: string) => {
     setFilters(prev => ({ ...prev, searchText: text, page: 1 }));
@@ -245,23 +259,9 @@ export function usePoliticianFilters() {
   const resetFilters = useCallback(() => {
     setFilters(DEFAULT_FILTERS);
   }, []);
-  
-  // Debounced search (300ms)
-  const [debouncedSearchText, setDebouncedSearchText] = useState(filters.searchText);
-  
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchText(filters.searchText);
-    }, 300);
-    
-    return () => clearTimeout(timer);
-  }, [filters.searchText]);
-  
+
   return {
-    filters: {
-      ...filters,
-      searchText: debouncedSearchText, // Use debounced version for actual filtering
-    },
+    filters, // immediate searchText for responsive input; pbFilter uses debounced search
     pbFilter,
     updateSearchText,
     updateState,
@@ -337,6 +337,7 @@ export const OFFICE_OPTIONS = [
   { value: 'senator', label: 'Senator' },
   { value: 'representative', label: 'Representative' },
   { value: 'governor', label: 'Governor' },
+  { value: 'executive', label: 'Executive' },
 ];
 
 export const PARTY_OPTIONS = [

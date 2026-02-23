@@ -51,9 +51,9 @@ export function pbNotContains(field: string, value: string): string {
 export function buildOfficeFilter(
   officeType: 'senator' | 'representative' | 'governor' | 'executive'
 ): string {
-  // Executive: President, Vice President, Cabinet
+  // Executive: President, Vice President, Cabinet (office_type and chamber for compatibility)
   if (officeType === 'executive') {
-    return `(office_type="president" || office_type="vice_president" || office_type="cabinet")`;
+    return `(office_type="president" || office_type="vice_president" || office_type="cabinet" || chamber="President" || chamber="Vice President" || chamber="Cabinet")`;
   }
 
   // SIMPLEST APPROACH: Use only office_type field
@@ -348,10 +348,9 @@ export async function listPoliticians(
       totalPages: response.totalPages,
     });
 
-    // Filter out media, title-based president entries, and previous representatives
+    // Filter out media and previous representatives only; include executive branch (President, VP, Cabinet)
     const filteredItems = response.items.filter(p => 
       !isMediaEntry(p) && 
-      !isPresident(p) && 
       !isPreviousRepresentative(p)
     );
     

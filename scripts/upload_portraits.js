@@ -48,6 +48,8 @@ const INDEX_FILE = path.join(PORTRAITS_DIR, 'index.json');
 const args = process.argv.slice(2);
 const useLabeled = args.includes('--use-labeled');
 const dryRun = args.includes('--dry-run');
+const slugsArg = args.find(a => a.startsWith('--slugs='));
+const slugsFilter = slugsArg ? new Set(slugsArg.split('=')[1].split(',').map(s => s.trim()).filter(Boolean)) : null;
 
 /**
  * Load index
@@ -238,12 +240,19 @@ async function main() {
     process.exit(1);
   }
   
-  // Get all image files
-  const files = fs.readdirSync(sourceDir).filter(f => {
+  // Get all image files (optionally filter by slug)
+  let files = fs.readdirSync(sourceDir).filter(f => {
     const ext = path.extname(f).toLowerCase();
     return ['.jpg', '.jpeg', '.png', '.webp'].includes(ext);
   });
-  
+  if (slugsFilter && slugsFilter.size > 0) {
+    files = files.filter(f => {
+      const base = path.basename(f, path.extname(f));
+      const slug = base.indexOf('_') === -1 ? base : base.slice(0, base.indexOf('_'));
+      return slugsFilter.has(slug);
+    });
+    console.log(`   Filtering to slugs: ${[...slugsFilter].join(', ')}`);
+  }
   console.log(`📋 Found ${files.length} portrait files in ${sourceDir}`);
   console.log('');
   

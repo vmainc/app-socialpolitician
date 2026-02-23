@@ -196,14 +196,23 @@ function parseWikipediaTable(html: string): GovernorData[] {
       }
     }
     
-    // Extract date from row (look for dates in any cell)
+    // Extract date from row: prefer "took office" over "born" (avoid using birth year)
+    // Collect all dates and use the most recent plausible office-start (e.g. year >= 2000 or latest in row)
     let startDate: string | null = null;
+    const candidates: string[] = [];
     for (const cell of cells) {
       const date = extractDate(cell);
-      if (date) {
-        startDate = date;
-        break;
-      }
+      if (date) candidates.push(date);
+    }
+    if (candidates.length > 0) {
+      const currentYear = new Date().getFullYear();
+      const recent = candidates.filter((d) => {
+        const y = new Date(d).getFullYear();
+        return y >= 2000 && y <= currentYear + 1;
+      });
+      startDate = recent.length > 0
+        ? recent.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0]
+        : null;
     }
     
     // Clean up state name (remove "(list)" or other suffixes)

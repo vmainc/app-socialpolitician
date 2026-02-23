@@ -33,17 +33,29 @@ export default function Navigation() {
           />
         </Link>
         
-        {/* Hamburger button for mobile */}
+        {/* Hamburger button for mobile - 44px min touch target */}
         <button 
           className="nav-hamburger"
           onClick={toggleMenu}
+          onTouchEnd={(e) => e.currentTarget.blur()}
           aria-label="Toggle menu"
           aria-expanded={isMenuOpen}
+          type="button"
         >
           <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
           <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
           <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
         </button>
+
+        {/* Backdrop when menu is open - tap to close, improves touch behavior */}
+        {isMenuOpen && (
+          <div
+            className="nav-backdrop"
+            aria-hidden
+            onClick={closeMenu}
+            onTouchEnd={(e) => { e.preventDefault(); closeMenu(); }}
+          />
+        )}
         
         {/* Navigation links - hidden on mobile, shown in dropdown when menu is open */}
         <div className={`nav-links ${isMenuOpen ? 'open' : ''}`}>

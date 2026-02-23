@@ -9,8 +9,10 @@
  *   POCKETBASE_URL=http://127.0.0.1:8091 \
  *   POCKETBASE_ADMIN_EMAIL=admin@vma.agency \
  *   POCKETBASE_ADMIN_PASSWORD=password \
- *   node scripts/scrape_portraits.js [--use-labeled] [--limit=N] [--office-type=TYPE]
- *   --office-type=executive  → President, VP, Cabinet (president | vice_president | cabinet)
+ *   node scripts/scrape_portraits.js [--use-labeled] [--limit=N] [--office-type=TYPE] [--slugs=a,b,c] [--force]
+ *   --office-type=executive  → President, VP, Cabinet
+ *   --slugs=donald-trump,marco-rubio  → Only those slugs (re-scrapes even if photo exists when used with --force)
+ *   --force  → Re-download even if file already in index
  */
 
 import PocketBase from 'pocketbase';
@@ -49,6 +51,9 @@ const limitArg = args.find(arg => arg.startsWith('--limit='));
 const limit = limitArg ? parseInt(limitArg.split('=')[1]) : null;
 const officeTypeArg = args.find(arg => arg.startsWith('--office-type='));
 const officeType = officeTypeArg ? officeTypeArg.split('=')[1] : null;
+const slugsArg = args.find(arg => arg.startsWith('--slugs='));
+const slugsList = slugsArg ? slugsArg.split('=')[1].split(',').map(s => s.trim()).filter(Boolean) : null;
+const forceRedownload = args.includes('--force');
 
 /**
  * Rate-limited fetch
@@ -254,15 +259,21 @@ async function main() {
   
   while (true) {
     try {
-      let filter = 'photo = "" || photo = null';
-      if (officeType) {
-        if (officeType === 'executive') {
-          filter = `(${filter}) && (office_type="president" || office_type="vice_president" || office_type="cabinet")`;
-        } else {
-          filter = `(${filter}) && office_type="${officeType}"`;
+      let filter;
+      if (slugsList && slugsList.length > 0) {
+        const slugList = slugsList.map(s => `slug="${s}"`).join(' || ');
+        filter = slugList;
+      } else {
+        filter = 'photo = "" || photo = null';
+        if (officeType) {
+          if (officeType === 'executive') {
+            filter = `(${filter}) && (office_type="president" || office_type="vice_president" || office_type="cabinet")`;
+          } else {
+            filter = `(${filter}) && office_type="${officeType}"`;
+          }
         }
       }
-      
+
       const response = await pb.collection('politicians').getList(page, perPage, {
         sort: 'id',
         filter: filter,
@@ -281,7 +292,11 @@ async function main() {
     }
   }
   
-  console.log(`✅ Found ${allRecords.length} politicians without photos${officeType ? ` (${officeType === 'executive' ? 'executive branch' : officeType + 's'})` : ''}`);
+  if (slugsList?.length) {
+    console.log(`✅ Found ${allRecords.length} politician(s) for slugs: ${slugsList.join(', ')}`);
+  } else {
+    console.log(`✅ Found ${allRecords.length} politicians without photos${officeType ? ` (${officeType === 'executive' ? 'executive branch' : officeType + 's'})` : ''}`);
+  }
   console.log('');
 
   const recordsToProcess = allRecords;
@@ -301,12 +316,14 @@ async function main() {
     const record = recordsToProcess[i];
     console.log(`[${i + 1}/${recordsToProcess.length}] ${record.name} (${record.slug})`);
 
-    // Check if already downloaded
-    const existingEntry = index[record.id];
-    if (existingEntry && fs.existsSync(existingEntry.filepath)) {
-      console.log(`   ⏭️  Already downloaded: ${existingEntry.filepath}`);
-      skipped++;
-      continue;
+    // Check if already downloaded (skip when --force)
+    if (!forceRedownload) {
+      const existingEntry = index[record.id];
+      if (existingEntry && fs.existsSync(existingEntry.filepath)) {
+        console.log(`   ⏭️  Already downloaded: ${existingEntry.filepath}`);
+        skipped++;
+        continue;
+      }
     }
 
     // Get Wikipedia title: from URL first, then fallback to name (for senators/reps without wikipedia_url)

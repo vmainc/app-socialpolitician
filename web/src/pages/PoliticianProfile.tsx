@@ -247,11 +247,22 @@ function PoliticianProfile() {
     const state = politician?.state?.trim();
     const raw = politician as unknown as Record<string, unknown>;
     const startDateRaw = (raw.position_start_date || raw.term_start_date) as string | undefined;
+    const birthDateRaw = raw.birth_date as string | undefined;
     let sinceDate = '';
     if (startDateRaw && typeof startDateRaw === 'string') {
       const d = new Date(startDateRaw);
       if (!isNaN(d.getTime())) {
-        sinceDate = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        const year = d.getFullYear();
+        const currentYear = new Date().getFullYear();
+        // Reject likely birth years: office start should be within plausible tenure (e.g. not 50+ years ago)
+        const plausibleMinYear = currentYear - 50;
+        const isSameAsBirth =
+          birthDateRaw &&
+          typeof birthDateRaw === 'string' &&
+          new Date(birthDateRaw).getFullYear() === year;
+        if (year >= plausibleMinYear && !isSameAsBirth) {
+          sinceDate = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        }
       }
     }
 
