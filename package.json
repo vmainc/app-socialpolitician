@@ -25,6 +25,8 @@
     "pb:import:representatives": "npx tsx server/src/scripts/importPoliticiansFromJSON.ts --file=representatives_import_ready.json",
     "pb:reps:json": "npx tsx server/src/scripts/importRepresentativesFromWikipedia.ts --output-json",
     "pb:reps:import": "npx tsx server/src/scripts/importRepresentativesFromWikipedia.ts",
+    "pb:backfill:reps-position-date": "npx tsx server/src/scripts/backfillRepresentativesPositionStartDate.ts",
+    "pb:backfill:reps-position-date:dry": "npx tsx server/src/scripts/backfillRepresentativesPositionStartDate.ts --dry-run",
     "pb:admin:create": "./pb_linux/pocketbase superuser create admin@vma.agency 'VMAmadmia42O200!' --dir=./pocketbase/pb_data --migrationsDir=./pocketbase/pb_migrations",
     "pb:sync-from-live": "npx tsx server/src/scripts/syncFromLiveToLocal.ts",
     "pb:sync-to-live": "npx tsx server/src/scripts/syncFromLocalToLive.ts",
