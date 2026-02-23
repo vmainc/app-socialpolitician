@@ -27,6 +27,8 @@
     "pb:reps:import": "npx tsx server/src/scripts/importRepresentativesFromWikipedia.ts",
     "pb:backfill:reps-position-date": "npx tsx server/src/scripts/backfillRepresentativesPositionStartDate.ts",
     "pb:backfill:reps-position-date:dry": "npx tsx server/src/scripts/backfillRepresentativesPositionStartDate.ts --dry-run",
+    "pb:backfill:governors-position-date": "npx tsx server/src/scripts/backfillGovernorsPositionStartDate.ts",
+    "pb:backfill:governors-position-date:dry": "npx tsx server/src/scripts/backfillGovernorsPositionStartDate.ts --dry-run",
     "pb:admin:create": "./pb_linux/pocketbase superuser create admin@vma.agency 'VMAmadmia42O200!' --dir=./pocketbase/pb_data --migrationsDir=./pocketbase/pb_migrations",
     "pb:sync-from-live": "npx tsx server/src/scripts/syncFromLiveToLocal.ts",
     "pb:sync-to-live": "npx tsx server/src/scripts/syncFromLocalToLive.ts",
