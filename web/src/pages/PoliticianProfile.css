@@ -182,6 +182,38 @@
   margin-top: 0.75rem;
 }
 
+/* Connect icons – same profile space as picture (hero card) */
+.profile-hero-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.profile-hero-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  background: #f3f4f6;
+  color: #374151;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.profile-hero-link:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.profile-hero-link-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
 .profile-favorite-btn {
   display: inline-flex;
   align-items: center;

@@ -154,8 +154,6 @@ function PoliticianProfile() {
   const getSocialLinks = () => {
     if (!politician) return [];
     const links: Array<{ label: string; url: string; icon: string; color: string }> = [];
-
-    // Order: social first, then Wikipedia, then website
     if (politician.x_url) {
       links.push({ label: 'X', url: politician.x_url, icon: '𝕏', color: 'text-black' });
     }
@@ -184,7 +182,6 @@ function PoliticianProfile() {
     if (websiteUrl) {
       links.push({ label: 'Website', url: websiteUrl, icon: '🌐', color: 'text-blue-600' });
     }
-
     return links;
   };
 
@@ -318,7 +315,7 @@ function PoliticianProfile() {
       </header>
 
       <main className="profile-content">
-        {/* Hero: one card — avatar, name + meta, then headline */}
+        {/* Hero: avatar + name/meta, then headline */}
         <div className="profile-hero">
           <div className="profile-hero-top">
             <div className="profile-avatar" aria-hidden>
@@ -374,6 +371,23 @@ function PoliticianProfile() {
                   )}
                 </div>
               )}
+              {/* Connect icons – same profile space as picture */}
+              {socialLinks.length > 0 && (
+                <div className="profile-hero-links">
+                  {socialLinks.map((link) => (
+                    <a
+                      key={link.url}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="profile-hero-link"
+                      title={link.label}
+                    >
+                      <span className="profile-hero-link-icon">{link.icon}</span>
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           {headlineText && (
@@ -396,29 +410,6 @@ function PoliticianProfile() {
           </ProfileAccordion>
         )}
 
-        {/* Connect & Learn More – accordion, closed by default */}
-        {socialLinks.length > 0 && (
-          <ProfileAccordion title="Connect & Learn More">
-            <div className="profile-social-links">
-              {socialLinks.map((link) => (
-                <a
-                  key={link.url}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="profile-social-link"
-                >
-                  <span className="profile-social-icon">{link.icon}</span>
-                  <div>
-                    <div className="profile-social-label">{link.label}</div>
-                    <div className="profile-social-subtext">Visit</div>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </ProfileAccordion>
-        )}
-
         {/* Latest News – accordion, closed by default */}
         {politician?.name && (
           <ProfileAccordion title="Latest News">
@@ -426,10 +417,17 @@ function PoliticianProfile() {
           </ProfileAccordion>
         )}
 
-        {/* Social (X, Facebook, YouTube) – accordion, closed by default */}
-        {politician && (
-          <ProfileAccordion title="Social">
-            <SocialEmbeds politician={politician} hideTitle />
+        {/* Facebook – own accordion when politician has Facebook */}
+        {politician?.facebook_url && (
+          <ProfileAccordion title="Facebook">
+            <SocialEmbeds politician={politician} hideTitle platform="facebook" />
+          </ProfileAccordion>
+        )}
+
+        {/* YouTube – own accordion when politician has YouTube */}
+        {politician?.youtube_url && (
+          <ProfileAccordion title="YouTube">
+            <SocialEmbeds politician={politician} hideTitle platform="youtube" />
           </ProfileAccordion>
         )}
 

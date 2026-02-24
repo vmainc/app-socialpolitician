@@ -41,6 +41,8 @@ class WidgetErrorBoundary extends Component<{ children: ReactNode }, { hasError:
 interface SocialEmbedsProps {
   politician: Record<string, any>;
   hideTitle?: boolean;
+  /** When set, only render this platform's embed (for use in separate accordions). */
+  platform?: 'facebook' | 'youtube';
 }
 
 declare global {
@@ -88,9 +90,25 @@ function parseFacebookPageUrl(url: string): string {
   return safeHttpUrl(url);
 }
 
+/** YouTube video IDs are 11 chars; allow alphanumeric, hyphen, underscore. */
+function sanitizeVideoId(raw: string): string {
+  const cleaned = raw.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 20);
+  return cleaned.length >= 1 ? cleaned : '';
+}
+
+/** Standard YouTube channel IDs start with UC and are 24 chars. */
+function isValidChannelId(id: string): boolean {
+  return /^UC[\w-]{22}$/.test(id);
+}
+
+/** Sanitize playlist ID for embed URL. */
+function sanitizePlaylistId(raw: string): string {
+  return raw.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 50) || '';
+}
+
 /**
  * Parse YouTube URL
- * Returns object with channelUrl, optional embedUrl (for videos), and channelId/username for feed
+ * Returns object with channelUrl, optional embedUrl (for videos/playlists/channel uploads), and channelId/username for feed
  */
 function parseYouTube(url: string): { 
   channelUrl: string; 
@@ -113,11 +131,13 @@ function parseYouTube(url: string): {
     }
     
     // Check for video ID (youtu.be/<id> or youtube.com/watch?v=<id>)
-    let videoId: string | null = null;
+    let videoId = '';
     if (hostname === 'youtu.be') {
-      videoId = urlObj.pathname.slice(1); // Remove leading /
+      const firstSegment = urlObj.pathname.replace(/^\/+|\/+$/g, '').split('/')[0] ?? '';
+      videoId = sanitizeVideoId(firstSegment);
     } else {
-      videoId = urlObj.searchParams.get('v');
+      const v = urlObj.searchParams.get('v');
+      if (v) videoId = sanitizeVideoId(v);
     }
     
     if (videoId) {
@@ -127,13 +147,16 @@ function parseYouTube(url: string): {
       };
     }
     
-    // Check for playlist
+    // Check for playlist (watch?list= or playlist?list=)
     const playlistId = urlObj.searchParams.get('list');
     if (playlistId) {
-      return {
-        channelUrl: safeUrl,
-        embedUrl: `https://www.youtube.com/embed/videoseries?list=${playlistId}`
-      };
+      const id = sanitizePlaylistId(playlistId);
+      if (id) {
+        return {
+          channelUrl: safeUrl,
+          embedUrl: `https://www.youtube.com/embed/videoseries?list=${id}`
+        };
+      }
     }
     
     // Extract channel ID or username from channel URL
@@ -141,32 +164,39 @@ function parseYouTube(url: string): {
     
     // Handle different YouTube URL formats
     if (path.startsWith('channel/')) {
-      const channelId = path.split('/')[1];
+      const rawId = path.split('/')[1] ?? '';
+      const channelId = isValidChannelId(rawId) ? rawId : '';
       return { 
         channelUrl: safeUrl,
-        channelId: channelId
+        ...(channelId ? { channelId } : {})
       };
-    } else if (path.startsWith('c/')) {
-      const username = path.split('/')[1];
+    }
+    if (path.startsWith('user/')) {
+      const username = (path.split('/')[1] ?? '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 100);
+      const embedUrl = username
+        ? `https://www.youtube.com/embed?listType=user_uploads&list=${encodeURIComponent(username)}`
+        : undefined;
       return { 
         channelUrl: safeUrl,
-        username: username
+        username: username || undefined,
+        ...(embedUrl ? { embedUrl } : {})
       };
-    } else if (path.startsWith('user/')) {
-      const username = path.split('/')[1];
+    }
+    if (path.startsWith('c/')) {
+      const username = (path.split('/')[1] ?? '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 100);
       return { 
         channelUrl: safeUrl,
-        username: username
+        username: username || undefined
       };
-    } else if (path.startsWith('@')) {
-      const username = path.split('/')[0].replace('@', '');
+    }
+    if (path.startsWith('@')) {
+      const handle = (path.split('/')[0] ?? '').replace(/^@/, '').replace(/[^a-zA-Z0-9_.-]/g, '').slice(0, 100);
       return { 
         channelUrl: safeUrl,
-        username: username
+        username: handle || undefined
       };
     }
     
-    // Just return channel URL (no embed)
     return { channelUrl: safeUrl };
   } catch {
     return { channelUrl: '' };
@@ -175,7 +205,12 @@ function parseYouTube(url: string): {
 
 const FB_SDK_VERSION = 'v18.0';
 
-export default function SocialEmbeds({ politician, hideTitle = false }: SocialEmbedsProps) {
+/** Facebook Page Plugin requires an App ID (Meta for Developers). */
+const FB_APP_ID = typeof import.meta !== 'undefined' && import.meta.env?.VITE_FACEBOOK_APP_ID
+  ? String(import.meta.env.VITE_FACEBOOK_APP_ID).trim()
+  : '';
+
+export default function SocialEmbeds({ politician, hideTitle = false, platform }: SocialEmbedsProps) {
   const fbWrapRef = useRef<HTMLDivElement>(null);
   const [fbLoaded, setFbLoaded] = useState(false);
   const [fbKey, setFbKey] = useState(0);
@@ -184,16 +219,24 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
   const youtube = parseYouTube(politician?.youtube_url);
 
   const hasFacebook = facebookUrl !== '';
+  const hasFacebookEmbed = hasFacebook && FB_APP_ID !== '';
   const hasYouTube = youtube.channelUrl !== '';
   const hasAny = hasFacebook || hasYouTube;
+
+  const showFacebook = platform === undefined || platform === 'facebook';
+  const showYouTube = platform === undefined || platform === 'youtube';
+  const onlyFacebook = platform === 'facebook';
+  const onlyYouTube = platform === 'youtube';
+  const hasContentForPlatform =
+    (onlyFacebook && hasFacebook) || (onlyYouTube && hasYouTube) || (!platform && hasAny);
 
   useEffect(() => {
     if (hasFacebook) setFbKey(prev => prev + 1);
   }, [facebookUrl, hasFacebook]);
 
-  // Facebook Page plugin: load SDK, call FB.init(version), then XFBML.parse
+  // Facebook Page plugin: requires App ID; load SDK with appId, init, then XFBML.parse
   useEffect(() => {
-    if (!hasFacebook || !fbWrapRef.current) return;
+    if (!hasFacebookEmbed || !fbWrapRef.current) return;
 
     let mounted = true;
     const container = fbWrapRef.current;
@@ -207,8 +250,8 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
           document.body.prepend(fbRoot);
         }
 
-        // Load SDK with version in URL so SDK knows version; then init before parse
-        await loadScriptOnce('fb-sdk', `https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=${FB_SDK_VERSION}`);
+        const sdkUrl = `https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=${FB_SDK_VERSION}&appId=${encodeURIComponent(FB_APP_ID)}`;
+        await loadScriptOnce('fb-sdk', sdkUrl);
         if (!mounted || !container?.parentNode) return;
 
         requestAnimationFrame(() => {
@@ -218,8 +261,7 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
             return;
           }
           try {
-            // Required: init with valid version before XFBML.parse (fixes "init not called with valid version")
-            window.FB.init({ version: FB_SDK_VERSION, xfbml: true });
+            window.FB.init({ appId: FB_APP_ID, version: FB_SDK_VERSION, xfbml: true });
           } catch (_) {
             // init may throw if already called
           }
@@ -265,10 +307,15 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
       mounted = false;
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [hasFacebook, facebookUrl, fbKey]);
+  }, [hasFacebookEmbed, facebookUrl, fbKey]);
 
 
-  if (!hasAny) {
+  if (!hasContentForPlatform) {
+    const emptyMessage = onlyFacebook
+      ? 'No Facebook page linked.'
+      : onlyYouTube
+        ? 'No YouTube channel linked.'
+        : 'No social accounts available.';
     const emptyContent = (
       <div style={{ 
         padding: '2rem', 
@@ -277,7 +324,7 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
         backgroundColor: '#f9fafb',
         borderRadius: '0.5rem'
       }}>
-        <p style={{ margin: 0 }}>No social accounts available.</p>
+        <p style={{ margin: 0 }}>{emptyMessage}</p>
       </div>
     );
     return hideTitle ? emptyContent : (
@@ -296,7 +343,7 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
         marginTop: '1rem'
       }}>
         {/* Facebook Card */}
-        {hasFacebook && (
+        {showFacebook && hasFacebook && (
           <div className="social-embed-card social-embed-fb" style={{
             border: '1px solid #e5e7eb',
             borderRadius: '0.5rem',
@@ -312,37 +359,56 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
             }}>
               <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>Facebook</h3>
             </div>
-            <WidgetErrorBoundary>
-              <div 
-                className="social-embed-widget-wrap"
-                key={`fb-widget-${fbKey}-${facebookUrl}`}
-                style={{
-                  height: '600px',
-                  overflow: 'auto',
-                  padding: '1rem',
-                  position: 'relative'
-                }}
-              >
-                {!fbLoaded && (
-                  <div style={{ 
-                    position: 'absolute', 
-                    top: '50%', 
-                    left: '50%', 
-                    transform: 'translate(-50%, -50%)',
-                    color: '#6b7280',
-                    zIndex: 1
-                  }}>
-                    Loading page...
-                  </div>
-                )}
+            {hasFacebookEmbed ? (
+              <WidgetErrorBoundary>
                 <div 
-                  ref={fbWrapRef}
-                  suppressHydrationWarning
-                  className="social-embed-fb-inner"
-                  style={{ width: '100%', height: '100%', minHeight: '500px' }}
-                />
+                  className="social-embed-widget-wrap"
+                  key={`fb-widget-${fbKey}-${facebookUrl}`}
+                  style={{
+                    height: '600px',
+                    overflow: 'auto',
+                    padding: '1rem',
+                    position: 'relative'
+                  }}
+                >
+                  {!fbLoaded && (
+                    <div style={{ 
+                      position: 'absolute', 
+                      top: '50%', 
+                      left: '50%', 
+                      transform: 'translate(-50%, -50%)',
+                      color: '#6b7280',
+                      zIndex: 1
+                    }}>
+                      Loading page...
+                    </div>
+                  )}
+                  <div 
+                    ref={fbWrapRef}
+                    suppressHydrationWarning
+                    className="social-embed-fb-inner"
+                    style={{ width: '100%', height: '100%', minHeight: '500px' }}
+                  />
+                </div>
+              </WidgetErrorBoundary>
+            ) : (
+              <div style={{
+                padding: '2rem 1rem',
+                textAlign: 'center',
+                color: '#6b7280',
+                backgroundColor: '#f9fafb',
+                minHeight: '120px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '1rem'
+              }}>
+                <p style={{ margin: 0, fontSize: '0.875rem' }}>
+                  To show the Facebook page embed, set <code style={{ fontSize: '0.8em', padding: '0.1em 0.3em', background: '#e5e7eb', borderRadius: '0.25rem' }}>VITE_FACEBOOK_APP_ID</code> in your environment (create an app at developers.facebook.com).
+                </p>
               </div>
-            </WidgetErrorBoundary>
+            )}
             <div style={{
               padding: '1rem',
               borderTop: '1px solid #e5e7eb',
@@ -370,7 +436,7 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
         )}
 
         {/* YouTube Card */}
-        {hasYouTube && (
+        {showYouTube && hasYouTube && (
           <div className="social-embed-card social-embed-yt" style={{
             border: '1px solid #e5e7eb',
             borderRadius: '0.5rem',
@@ -397,30 +463,38 @@ export default function SocialEmbeds({ politician, hideTitle = false }: SocialEm
                 }}
               >
                 {youtube.embedUrl ? (
-                  <div className="social-embed-yt-video-wrap" style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'flex-start',
-                    width: '100%',
-                    height: '100%',
-                    minHeight: '500px'
-                  }}>
-                    <iframe
-                      src={youtube.embedUrl}
-                      title="YouTube"
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      allowFullScreen
-                      className="social-embed-yt-iframe"
-                      style={{
+                  (() => {
+                    const isPlaylistOrChannel = youtube.embedUrl.includes('videoseries') || youtube.embedUrl.includes('listType=user_uploads');
+                    const iframeHeight = isPlaylistOrChannel ? 568 : 315;
+                    return (
+                      <div className="social-embed-yt-video-wrap" style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'flex-start',
                         width: '100%',
-                        maxWidth: '560px',
-                        height: '315px',
-                        borderRadius: '0.375rem',
-                        flexShrink: 0
-                      }}
-                    />
-                  </div>
+                        height: '100%',
+                        minHeight: isPlaylistOrChannel ? '568px' : '500px'
+                      }}>
+                        <iframe
+                          src={youtube.embedUrl}
+                          title="YouTube"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          className="social-embed-yt-iframe"
+                          style={{
+                            width: '100%',
+                            maxWidth: '560px',
+                            height: iframeHeight,
+                            borderRadius: '0.375rem',
+                            flexShrink: 0,
+                            border: 'none',
+                            display: 'block'
+                          }}
+                        />
+                      </div>
+                    );
+                  })()
                 ) : youtube.channelId ? (
                   (() => {
                     const id = youtube.channelId;
