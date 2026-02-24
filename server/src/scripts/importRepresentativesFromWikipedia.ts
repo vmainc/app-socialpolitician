@@ -231,11 +231,22 @@ function parseWikipediaTable(html: string): RepresentativeData[] {
       }
     }
     
-    // Extract start date if available (usually in "Assumed office" column)
+    // Extract start date: prefer "Assumed office" over "Born" (first date in row is often birth)
     let startDate: string | null = null;
-    const dateMatch = extractDate(row);
-    if (dateMatch) {
-      startDate = dateMatch;
+    const candidates: string[] = [];
+    for (const cell of cells) {
+      const date = extractDate(cell);
+      if (date) candidates.push(date);
+    }
+    if (candidates.length > 0) {
+      const currentYear = new Date().getFullYear();
+      const recent = candidates.filter((d) => {
+        const y = new Date(d).getFullYear();
+        return y >= 2000 && y <= currentYear + 1;
+      });
+      startDate = recent.length > 0
+        ? recent.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0]
+        : null;
     }
     
     representatives.push({
