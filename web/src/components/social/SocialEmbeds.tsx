@@ -106,9 +106,39 @@ function sanitizePlaylistId(raw: string): string {
   return raw.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 50) || '';
 }
 
+/** Normalize YouTube URL: ensure protocol and optional domain so URL() parses correctly. */
+function normalizeYouTubeInput(url: string): string {
+  const str = cleanStr(url);
+  if (!str) return '';
+  const withProtocol = safeHttpUrl(str);
+  if (withProtocol) return withProtocol;
+  // Already has domain (with or without protocol)
+  if (/^(www\.)?(youtube\.com|youtu\.be)/i.test(str) || str.startsWith('youtube.com') || str.startsWith('youtu.be')) {
+    return 'https://' + str.replace(/^https?:\/\//i, '').replace(/^\/+/, '');
+  }
+  if (str.includes('youtube.com') || str.includes('youtu.be')) {
+    return 'https://' + str.replace(/^https?:\/\//i, '').replace(/^\/+/, '');
+  }
+  // Partial paths that are commonly stored: add YouTube domain
+  if (/^\/?(watch|embed|shorts|v)\//i.test(str) || /^\/?watch\?/i.test(str)) {
+    return 'https://www.youtube.com/' + str.replace(/^\/+/, '');
+  }
+  return '';
+}
+
 /**
- * Parse YouTube URL
- * Returns object with channelUrl, optional embedUrl (for videos/playlists/channel uploads), and channelId/username for feed
+ * Parse YouTube URL.
+ * Returns channelUrl + optional embedUrl (in-page video) or channelId/username.
+ *
+ * EMBED (video plays on page):
+ *   - Full URL with video: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID, youtube.com/shorts/ID
+ *   - Partial path (we add domain): watch?v=ID, embed/ID, shorts/ID
+ *   - Playlist: ?list=PLAYLIST_ID or youtube.com/playlist?list=ID
+ *   - Channel by ID: youtube.com/channel/UCxxxxxxxxxxxxxxxxxxxxx (we embed uploads playlist)
+ *   - Legacy /user/Username (user_uploads) – may work for some channels
+ *
+ * LINK ONLY (no embed, "View on YouTube" button):
+ *   - youtube.com/@Handle or youtube.com/c/Name – YouTube doesn’t provide an embed URL for these
  */
 function parseYouTube(url: string): { 
   channelUrl: string; 
@@ -116,7 +146,7 @@ function parseYouTube(url: string): {
   channelId?: string;
   username?: string;
 } {
-  const safeUrl = safeHttpUrl(url);
+  const safeUrl = normalizeYouTubeInput(url);
   if (!safeUrl) {
     return { channelUrl: '' };
   }
@@ -130,20 +160,29 @@ function parseYouTube(url: string): {
       return { channelUrl: '' };
     }
     
-    // Check for video ID (youtu.be/<id> or youtube.com/watch?v=<id>)
+    // Check for video ID: youtu.be/<id>, watch?v=<id>, /embed/<id>, /shorts/<id>, /v/<id>
     let videoId = '';
     if (hostname === 'youtu.be') {
       const firstSegment = urlObj.pathname.replace(/^\/+|\/+$/g, '').split('/')[0] ?? '';
       videoId = sanitizeVideoId(firstSegment);
     } else {
       const v = urlObj.searchParams.get('v');
-      if (v) videoId = sanitizeVideoId(v);
+      if (v) {
+        videoId = sanitizeVideoId(v);
+      } else {
+        const path = urlObj.pathname.trim().replace(/^\/+|\/+$/g, '');
+        const pathLower = path.toLowerCase();
+        if (pathLower.startsWith('embed/') || pathLower.startsWith('shorts/') || pathLower.startsWith('v/')) {
+          const segment = path.split('/')[1] ?? '';
+          videoId = sanitizeVideoId(segment);
+        }
+      }
     }
     
     if (videoId) {
       return {
         channelUrl: safeUrl,
-        embedUrl: `https://www.youtube.com/embed/${videoId}`
+        embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}`
       };
     }
     
@@ -154,7 +193,7 @@ function parseYouTube(url: string): {
       if (id) {
         return {
           channelUrl: safeUrl,
-          embedUrl: `https://www.youtube.com/embed/videoseries?list=${id}`
+          embedUrl: `https://www.youtube-nocookie.com/embed/videoseries?list=${id}`
         };
       }
     }
@@ -174,7 +213,7 @@ function parseYouTube(url: string): {
     if (path.startsWith('user/')) {
       const username = (path.split('/')[1] ?? '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 100);
       const embedUrl = username
-        ? `https://www.youtube.com/embed?listType=user_uploads&list=${encodeURIComponent(username)}`
+        ? `https://www.youtube-nocookie.com/embed?listType=user_uploads&list=${encodeURIComponent(username)}`
         : undefined;
       return { 
         channelUrl: safeUrl,
@@ -473,7 +512,7 @@ export default function SocialEmbeds({ politician, hideTitle = false, platform }
                   (() => {
                     const id = youtube.channelId;
                     const uploadsPlaylistId = id.startsWith('UC') ? 'UU' + id.slice(2) : id;
-                    const playlistEmbedUrl = `https://www.youtube.com/embed/videoseries?list=${uploadsPlaylistId}`;
+                    const playlistEmbedUrl = `https://www.youtube-nocookie.com/embed/videoseries?list=${uploadsPlaylistId}`;
                     return (
                       <iframe
                         src={playlistEmbedUrl}

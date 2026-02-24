@@ -29,6 +29,10 @@
     "pb:backfill:reps-position-date:dry": "npx tsx server/src/scripts/backfillRepresentativesPositionStartDate.ts --dry-run",
     "pb:backfill:governors-position-date": "npx tsx server/src/scripts/backfillGovernorsPositionStartDate.ts",
     "pb:backfill:governors-position-date:dry": "npx tsx server/src/scripts/backfillGovernorsPositionStartDate.ts --dry-run",
+    "pb:backfill:governors-bios": "npx tsx server/src/scripts/backfillGovernorBios.ts",
+    "pb:backfill:governors-bios:dry": "npx tsx server/src/scripts/backfillGovernorBios.ts --dry-run",
+    "pb:backfill:reps-bios": "npx tsx server/src/scripts/backfillRepresentativesBios.ts",
+    "pb:backfill:reps-bios:dry": "npx tsx server/src/scripts/backfillRepresentativesBios.ts --dry-run",
     "pb:admin:create": "./pb_linux/pocketbase superuser create admin@vma.agency 'VMAmadmia42O200!' --dir=./pocketbase/pb_data --migrationsDir=./pocketbase/pb_migrations",
     "pb:sync-from-live": "npx tsx server/src/scripts/syncFromLiveToLocal.ts",
     "pb:sync-to-live": "npx tsx server/src/scripts/syncFromLocalToLive.ts",
@@ -41,12 +45,14 @@
     "pb:enrich:social": "npx tsx server/src/scripts/enrichPoliticiansFromWikipedia.ts --fresh",
     "pb:enrich:social:executive": "npx tsx server/src/scripts/enrichPoliticiansFromWikipedia.ts --office-type=executive --fresh",
     "pb:enrich:social:google": "npx tsx server/src/scripts/enrichSocialFromGoogle.ts",
-    "pb:enrich:social:google:executive": "npx tsx server/src/scripts/enrichSocialFromGoogle.ts --office-type=executive"
+    "pb:enrich:social:google:executive": "npx tsx server/src/scripts/enrichSocialFromGoogle.ts --office-type=executive",
+    "pb:enrich:social:google:governors": "npx tsx server/src/scripts/enrichSocialFromGoogle.ts --office-type=governor"
   },
   "dependencies": {
     "cheerio": "^1.2.0",
     "form-data": "^4.0.5",
     "node-fetch": "^2.7.0",
+    "openai": "^4.104.0",
     "pocketbase": "^0.22.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

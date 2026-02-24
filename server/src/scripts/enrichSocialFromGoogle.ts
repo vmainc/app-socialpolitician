@@ -1,6 +1,9 @@
 /**
- * Enrich politician social links and website from Google’s right-side panel
- * (Knowledge Panel) via SerpApi. Does not use Wikipedia.
+ * Enrich politician official website and social links from Google’s right-side
+ * Knowledge Panel via SerpApi. Does not use Wikipedia.
+ *
+ * Fetches: website_url, official_website_domain (from Knowledge Panel “Website”),
+ * plus x_url, facebook_url, instagram_url, youtube_url, tiktok_url, linkedin_url, truth_social_url.
  *
  * Requires: SERPAPI_API_KEY (get one at https://serpapi.com/)
  *
@@ -11,6 +14,10 @@
  *
  * Options:
  *   --office-type=executive|senator|representative|governor  only that type (default: all)
+ *
+ * Examples:
+ *   npm run pb:enrich:social:google:governors   # governors only
+ *   npm run pb:enrich:social:google:executive   # executive only
  */
 
 import PocketBase from 'pocketbase';
@@ -117,7 +124,7 @@ async function main() {
   const list = await pb.collection('politicians').getFullList<Record<string, unknown>>({
     filter: filter || undefined,
     sort: 'name',
-    fields: 'id,name,slug,office_type,website_url,x_url,facebook_url,instagram_url,youtube_url,tiktok_url,linkedin_url,truth_social_url',
+    fields: 'id,name,slug,office_type,current_position,office_title,website_url,official_website_domain,x_url,facebook_url,instagram_url,youtube_url,tiktok_url,linkedin_url,truth_social_url',
   });
 
   console.log(`Found ${list.length} politician(s). Querying Google for each...`);
@@ -143,9 +150,21 @@ async function main() {
 
       const updates: Record<string, string> = {};
 
+      // Official website from Knowledge Panel (only if we don't already have one)
       if (kg.website?.trim()) {
-        const cur = record.website_url;
-        if (!cur || String(cur).trim() === '') updates.website_url = kg.website.trim();
+        const curUrl = record.website_url;
+        const curDomain = record.official_website_domain;
+        const hasWebsite = (curUrl && String(curUrl).trim() !== '') || (curDomain && String(curDomain).trim() !== '');
+        if (!hasWebsite) {
+          const websiteUrl = kg.website.trim();
+          updates.website_url = websiteUrl;
+          try {
+            const host = new URL(websiteUrl).hostname.replace(/^www\./, '');
+            if (host) updates.official_website_domain = host;
+          } catch {
+            // keep only website_url
+          }
+        }
       }
 
       const profiles = kg.profiles ?? [];
