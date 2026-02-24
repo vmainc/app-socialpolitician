@@ -205,11 +205,6 @@ function parseYouTube(url: string): {
 
 const FB_SDK_VERSION = 'v18.0';
 
-/** Facebook Page Plugin requires an App ID (Meta for Developers). */
-const FB_APP_ID = typeof import.meta !== 'undefined' && import.meta.env?.VITE_FACEBOOK_APP_ID
-  ? String(import.meta.env.VITE_FACEBOOK_APP_ID).trim()
-  : '';
-
 export default function SocialEmbeds({ politician, hideTitle = false, platform }: SocialEmbedsProps) {
   const fbWrapRef = useRef<HTMLDivElement>(null);
   const [fbLoaded, setFbLoaded] = useState(false);
@@ -219,7 +214,6 @@ export default function SocialEmbeds({ politician, hideTitle = false, platform }
   const youtube = parseYouTube(politician?.youtube_url);
 
   const hasFacebook = facebookUrl !== '';
-  const hasFacebookEmbed = hasFacebook && FB_APP_ID !== '';
   const hasYouTube = youtube.channelUrl !== '';
   const hasAny = hasFacebook || hasYouTube;
 
@@ -234,9 +228,9 @@ export default function SocialEmbeds({ politician, hideTitle = false, platform }
     if (hasFacebook) setFbKey(prev => prev + 1);
   }, [facebookUrl, hasFacebook]);
 
-  // Facebook Page plugin: requires App ID; load SDK with appId, init, then XFBML.parse
+  // Facebook Page plugin: load SDK, init, then XFBML.parse
   useEffect(() => {
-    if (!hasFacebookEmbed || !fbWrapRef.current) return;
+    if (!hasFacebook || !fbWrapRef.current) return;
 
     let mounted = true;
     const container = fbWrapRef.current;
@@ -250,8 +244,7 @@ export default function SocialEmbeds({ politician, hideTitle = false, platform }
           document.body.prepend(fbRoot);
         }
 
-        const sdkUrl = `https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=${FB_SDK_VERSION}&appId=${encodeURIComponent(FB_APP_ID)}`;
-        await loadScriptOnce('fb-sdk', sdkUrl);
+        await loadScriptOnce('fb-sdk', `https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=${FB_SDK_VERSION}`);
         if (!mounted || !container?.parentNode) return;
 
         requestAnimationFrame(() => {
@@ -261,7 +254,7 @@ export default function SocialEmbeds({ politician, hideTitle = false, platform }
             return;
           }
           try {
-            window.FB.init({ appId: FB_APP_ID, version: FB_SDK_VERSION, xfbml: true });
+            window.FB.init({ version: FB_SDK_VERSION, xfbml: true });
           } catch (_) {
             // init may throw if already called
           }
@@ -307,7 +300,7 @@ export default function SocialEmbeds({ politician, hideTitle = false, platform }
       mounted = false;
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [hasFacebookEmbed, facebookUrl, fbKey]);
+  }, [hasFacebook, facebookUrl, fbKey]);
 
 
   if (!hasContentForPlatform) {
@@ -359,56 +352,37 @@ export default function SocialEmbeds({ politician, hideTitle = false, platform }
             }}>
               <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>Facebook</h3>
             </div>
-            {hasFacebookEmbed ? (
-              <WidgetErrorBoundary>
+            <WidgetErrorBoundary>
+              <div 
+                className="social-embed-widget-wrap"
+                key={`fb-widget-${fbKey}-${facebookUrl}`}
+                style={{
+                  height: '600px',
+                  overflow: 'auto',
+                  padding: '1rem',
+                  position: 'relative'
+                }}
+              >
+                {!fbLoaded && (
+                  <div style={{ 
+                    position: 'absolute', 
+                    top: '50%', 
+                    left: '50%', 
+                    transform: 'translate(-50%, -50%)',
+                    color: '#6b7280',
+                    zIndex: 1
+                  }}>
+                    Loading page...
+                  </div>
+                )}
                 <div 
-                  className="social-embed-widget-wrap"
-                  key={`fb-widget-${fbKey}-${facebookUrl}`}
-                  style={{
-                    height: '600px',
-                    overflow: 'auto',
-                    padding: '1rem',
-                    position: 'relative'
-                  }}
-                >
-                  {!fbLoaded && (
-                    <div style={{ 
-                      position: 'absolute', 
-                      top: '50%', 
-                      left: '50%', 
-                      transform: 'translate(-50%, -50%)',
-                      color: '#6b7280',
-                      zIndex: 1
-                    }}>
-                      Loading page...
-                    </div>
-                  )}
-                  <div 
-                    ref={fbWrapRef}
-                    suppressHydrationWarning
-                    className="social-embed-fb-inner"
-                    style={{ width: '100%', height: '100%', minHeight: '500px' }}
-                  />
-                </div>
-              </WidgetErrorBoundary>
-            ) : (
-              <div style={{
-                padding: '2rem 1rem',
-                textAlign: 'center',
-                color: '#6b7280',
-                backgroundColor: '#f9fafb',
-                minHeight: '120px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '1rem'
-              }}>
-                <p style={{ margin: 0, fontSize: '0.875rem' }}>
-                  To show the Facebook page embed, set <code style={{ fontSize: '0.8em', padding: '0.1em 0.3em', background: '#e5e7eb', borderRadius: '0.25rem' }}>VITE_FACEBOOK_APP_ID</code> in your environment (create an app at developers.facebook.com).
-                </p>
+                  ref={fbWrapRef}
+                  suppressHydrationWarning
+                  className="social-embed-fb-inner"
+                  style={{ width: '100%', height: '100%', minHeight: '500px' }}
+                />
               </div>
-            )}
+            </WidgetErrorBoundary>
             <div style={{
               padding: '1rem',
               borderTop: '1px solid #e5e7eb',

@@ -9,13 +9,17 @@ interface ProfileAccordionProps {
   title: string;
   children: ReactNode;
   defaultOpen?: boolean;
+  /** When true, children mount only when open. Use for third-party embeds (Facebook, YouTube) so they init when visible. */
+  mountContentOnlyWhenOpen?: boolean;
 }
 
-export default function ProfileAccordion({ title, children, defaultOpen = false }: ProfileAccordionProps) {
+export default function ProfileAccordion({ title, children, defaultOpen = false, mountContentOnlyWhenOpen = false }: ProfileAccordionProps) {
   const [open, setOpen] = useState(defaultOpen);
   const id = `profile-accordion-${title.replace(/\s+/g, '-').toLowerCase()}`;
   const panelId = `${id}-panel`;
   const triggerId = `${id}-trigger`;
+
+  const content = mountContentOnlyWhenOpen ? (open ? children : null) : children;
 
   return (
     <div className="profile-section profile-accordion">
@@ -40,7 +44,7 @@ export default function ProfileAccordion({ title, children, defaultOpen = false 
         aria-hidden={!open}
       >
         <div className="profile-accordion-content">
-          {children}
+          {content}
         </div>
       </div>
     </div>

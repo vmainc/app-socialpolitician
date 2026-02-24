@@ -397,38 +397,40 @@ function PoliticianProfile() {
           )}
         </div>
 
-        {/* Biography – accordion, closed by default */}
-        {showBiographyAccordion && (
-          <ProfileAccordion title="Biography">
-            <div className="profile-accordion-bio">
-              {bioParagraphs.length > 0
-                ? bioParagraphs.map((p, i) => (
-                    <p key={i} className="profile-accordion-para">{p}</p>
-                  ))
-                : <p className="profile-accordion-para">{decodeHtmlEntities(bioForAccordion)}</p>}
-            </div>
-          </ProfileAccordion>
-        )}
+        {/* Biography | Latest News – two columns side by side */}
+        <div className="profile-two-col">
+          {showBiographyAccordion && (
+            <ProfileAccordion title="Biography">
+              <div className="profile-accordion-bio">
+                {bioParagraphs.length > 0
+                  ? bioParagraphs.map((p, i) => (
+                      <p key={i} className="profile-accordion-para">{p}</p>
+                    ))
+                  : <p className="profile-accordion-para">{decodeHtmlEntities(bioForAccordion)}</p>}
+              </div>
+            </ProfileAccordion>
+          )}
+          {politician?.name && (
+            <ProfileAccordion title="Latest News">
+              <ProfileNewsFeed name={politician.name} limit={5} hideTitle />
+            </ProfileAccordion>
+          )}
+        </div>
 
-        {/* Latest News – accordion, closed by default */}
-        {politician?.name && (
-          <ProfileAccordion title="Latest News">
-            <ProfileNewsFeed name={politician.name} limit={5} hideTitle />
-          </ProfileAccordion>
-        )}
-
-        {/* Facebook – own accordion when politician has Facebook */}
-        {politician?.facebook_url && (
-          <ProfileAccordion title="Facebook">
-            <SocialEmbeds politician={politician} hideTitle platform="facebook" />
-          </ProfileAccordion>
-        )}
-
-        {/* YouTube – own accordion when politician has YouTube */}
-        {politician?.youtube_url && (
-          <ProfileAccordion title="YouTube">
-            <SocialEmbeds politician={politician} hideTitle platform="youtube" />
-          </ProfileAccordion>
+        {/* Facebook | YouTube – two columns side by side, not in accordions */}
+        {(politician?.facebook_url || politician?.youtube_url) && (
+          <div className="profile-two-col profile-feeds-row">
+            {politician.facebook_url && (
+              <div className="profile-feed-card">
+                <SocialEmbeds politician={politician} hideTitle platform="facebook" />
+              </div>
+            )}
+            {politician.youtube_url && (
+              <div className="profile-feed-card">
+                <SocialEmbeds politician={politician} hideTitle platform="youtube" />
+              </div>
+            )}
+          </div>
         )}
 
         {/* Comments – always visible section at the bottom */}
