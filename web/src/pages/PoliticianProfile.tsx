@@ -254,13 +254,19 @@ function PoliticianProfile() {
       if (!isNaN(d.getTime())) {
         const year = d.getFullYear();
         const currentYear = new Date().getFullYear();
-        // Reject likely birth years: office start should be within plausible tenure (e.g. not 50+ years ago)
-        const plausibleMinYear = currentYear - 50;
-        const isSameAsBirth =
-          birthDateRaw &&
-          typeof birthDateRaw === 'string' &&
-          new Date(birthDateRaw).getFullYear() === year;
-        if (year >= plausibleMinYear && !isSameAsBirth) {
+        const birthYear = birthDateRaw && typeof birthDateRaw === 'string'
+          ? new Date(birthDateRaw).getFullYear()
+          : null;
+        // Only show "since" when date is clearly office start, not birth: require either
+        // (1) we have birth_date and start year is at least 25 years after birth (House/Senate min age), or
+        // (2) no birth_date and start year is recent (>= currentYear - 28) to avoid showing birth years
+        const minOfficeYearNoBirth = currentYear - 28;
+        const isPlausibleOfficeStart =
+          birthYear !== null
+            ? year >= birthYear + 25 && year <= currentYear + 1
+            : year >= minOfficeYearNoBirth && year <= currentYear + 1;
+        const isSameAsBirth = birthYear !== null && year === birthYear;
+        if (isPlausibleOfficeStart && !isSameAsBirth) {
           sinceDate = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         }
       }
@@ -287,13 +293,15 @@ function PoliticianProfile() {
     return words.slice(0, limit).join(' ') + ' …';
   };
 
-  // Prefer short structured bio (like Abigail Spanberger) when we have the data; otherwise stored headline/bio.
+  // Headline under photo: one-liner (structured or stored). Accordion: prefer stored long bio when present.
   const raw = politician as unknown as Record<string, unknown>;
   const storedHeadline = stripCitationMarkers(((raw.headline ?? raw.bio) as string | undefined)?.trim() ?? '');
   const storedBioRaw = stripCitationMarkers((raw.bio as string | undefined)?.trim() ?? '');
   const storedBioCapped = truncateToWordLimit(storedBioRaw, BIO_DISPLAY_WORD_LIMIT);
   const headlineText = structuredBio ?? storedHeadline;
-  const bioForAccordion = structuredBio ?? storedBioCapped;
+  // Use stored bio in accordion when we have a real multi-paragraph/long bio; otherwise one-liner
+  const bioForAccordion =
+    storedBioRaw.length > 200 ? storedBioCapped : (structuredBio ?? storedBioCapped);
   const showBiographyAccordion = bioForAccordion.length > 0;
   const bioParagraphs = bioForAccordion
     ? bioForAccordion.split(/\n\s*\n/).map((p) => decodeHtmlEntities(p.trim())).filter(Boolean)
